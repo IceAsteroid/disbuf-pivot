@@ -24,3 +24,19 @@ jobs:
 
       - name: Checkdoc
         run: make checkdoc
+
+  consult:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: jcs090218/setup-emacs@master
+        with:
+          version: '31.1'
+
+      - name: Install dependencies
+        run: |
+          emacs -Q --batch --eval "(progn (require 'package) (add-to-list 'package-archives '(\"melpa\" . \"https://melpa.org/packages/\") t) (package-initialize) (package-refresh-contents) (package-install 'ace-window) (package-install 'avy) (package-install 'consult))"
+
+      - name: Check the optional consult library
+        run: make check-consult

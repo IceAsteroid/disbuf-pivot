@@ -6,11 +6,11 @@
 
 ;;; Commentary:
 ;; The tab bar's candidates, history, sort and annotations, and a plain
-;; `completing-read' reader for a tab name.  The consult integration and
-;; the tab-switch overrides are in `ia-tab-bar-modified-consult' in the
-;; `emacs-utils' repository.  That integration sets
-;; `display-buffer-pivot-tab-bar-read-function' so the display action's
-;; tab prompt uses its consult reader.
+;; `completing-read' reader for a tab name.  The optional
+;; `display-buffer-pivot-tab-bar-consult' library supplies a consult
+;; reader with previews and the mode that installs it.  The tab-switch
+;; commands and overrides are in `ia-tab-bar-modified-consult' in the
+;; `emacs-utils' repository, which consumes that library.
 
 (require 'cl-lib)
 (require 'tab-bar)
