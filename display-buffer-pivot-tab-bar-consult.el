@@ -2,7 +2,6 @@
 
 ;; Author: IceAsteroid
 ;; URL: https://github.com/IceAsteroid/display-buffer-pivot
-;; Package-Requires: ((consult "0"))
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;;; Commentary:
@@ -12,7 +11,7 @@
 ;; supplies a function with consult previews.  It deletes child frames
 ;; before saving the window state, because PGTK deadlocks when that state
 ;; contains invisible Corfu frames, and it preserves the minibuffer
-;; height while a preview selects a tab.  It requires consult; the core
+;; height while a preview selects a tab.  It requires `consult`; the core
 ;; display-buffer-pivot package does not.  The tab-switch commands and
 ;; overrides are in `ia-tab-bar-modified-consult' in the `emacs-utils'
 ;; repository, which consumes this library.

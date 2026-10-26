@@ -42,6 +42,10 @@ installs the pivot.
 - `display-buffer-pivot-tab-bar-consult` holds the optional consult
   reader and the mode that installs it.
 
+`display-buffer-pivot.el` is the package main file and carries the
+`Package-Requires` header.  The other libraries are loaded with
+`require`; their `Author`, `URL` and `SPDX` headers are comments.
+
 ## Completion
 
 `display-buffer-pivot-tab-bar-read-tab-name` reads a tab name with
@@ -57,9 +61,10 @@ reader with previews and the mode that installs it:
 The reader deletes child frames before saving the window state and
 preserves the minibuffer height while a preview selects a tab; both are
 PGTK workarounds.  The library requires `consult`; the core package does
-not.  The `ia-tab-bar-modified-consult` integration in the `emacs-utils`
-repository consumes this library and adds its tab-switch commands and
-overrides.  A completion frontend can also set
+not.  Consult is not in the package's main `Package-Requires`; install it
+separately.  The `ia-tab-bar-modified-consult` integration in the
+`emacs-utils` repository consumes this library and adds its tab-switch
+commands and overrides.  A completion frontend can also set
 `display-buffer-pivot-tab-bar-read-function` directly.
 
 ## column-popup

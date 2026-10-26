@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Doc: the optional consult library names `consult` in its Commentary
+  and the README; only display-buffer-pivot.el carries the package
+  `Package-Requires`.
 - Add: the display action mode, the window utility, the window prefix
   pivot and the tab bar reader.
 - Add: in display-buffer-pivot-tab-bar.el, the
