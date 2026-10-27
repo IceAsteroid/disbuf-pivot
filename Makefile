@@ -1,4 +1,4 @@
-# Run the checks for display-buffer-pivot.
+# Run the checks for disbuf-pivot.
 
 EMACS ?= emacs
 ELPA ?= $(HOME)/.emacs.d/elpa
@@ -12,7 +12,7 @@ LOAD_PATH = -L . -L $(ACE_WINDOW) -L $(AVY)
 # The optional consult library is checked by `check-consult', not by
 # `check', so the required checks do not need consult.
 FILES = $(wildcard *.el)
-CONSULT_FILES = display-buffer-pivot-tab-bar-consult.el
+CONSULT_FILES = disbuf-pivot-tab-bar-consult.el
 CHECK_FILES = $(filter-out $(CONSULT_FILES),$(FILES))
 
 .PHONY: all check check-consult check-deps check-deps-consult \

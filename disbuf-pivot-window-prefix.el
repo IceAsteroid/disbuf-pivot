@@ -1,4 +1,4 @@
-;;; display-buffer-pivot-window-prefix-pivot.el --- Pivot window prefix commands for special windows  -*- lexical-binding: t; -*-
+;;; disbuf-pivot-window-prefix.el --- Pivot window prefix commands for special windows  -*- lexical-binding: t; -*-
 
 ;; Author: IceAsteroid
 ;; URL: https://github.com/IceAsteroid/display-buffer-pivot
@@ -10,16 +10,16 @@
 ;; with `same-window-prefix'.  The mode solves this problem.
 
 (require 'cl-lib)
-(require 'display-buffer-pivot-window-utility)
-(require 'display-buffer-pivot)
+(require 'dp-window-utility)
+(require 'disbuf-pivot)
 
 ;;; Code:
 
-(defgroup display-buffer-pivot-window-prefix-pivot nil
+(defgroup dp-window-prefix nil
   "Pivot window prefix commands and better features."
   :group 'windows)
 
-(defun display-buffer-pivot-window-prefix-pivot--find-last-active-workspace ()
+(defun dp-window-prefix--find-last-active-workspace ()
   "Return the most recently used normal editing workspace window on this frame.
 Explicitly filters out active minibuffers and utility windows."
   (let ((frame-windows (window-list)))
@@ -30,10 +30,10 @@ Explicitly filters out active minibuffers and utility windows."
     ;; Iteratively scan for the first genuine text/code editing workspace
     (cl-find-if (lambda (w)
                   (not (or (window-minibuffer-p w)
-                           (display-buffer-pivot-window-utility-cannot-display-p w))))
+                           (dp-window-utility-cannot-display-p w))))
                 frame-windows)))
 
-(defun display-buffer-pivot-window-prefix-pivot-ad-display-buffer (orig-fun buffer &optional action)
+(defun dp-window-prefix-ad-display-buffer (orig-fun buffer &optional action)
   "Intercept `display-buffer' at the exact moment a window prefix executes.
 ORIG-FUN is the original `display-buffer'; BUFFER and ACTION are its
 arguments.  If a prefix rule is armed and executing from a utility popup,
@@ -41,8 +41,8 @@ dynamically pivots focus to the true code workspace before the display
 logic runs."
   (if (and display-buffer-overriding-action
            (not (equal display-buffer-overriding-action '(nil . nil))) ; Ensure a prefix is actually armed
-           (display-buffer-pivot-window-utility-cannot-display-p (selected-window)))
-      (let ((target-workspace (display-buffer-pivot-window-prefix-pivot--find-last-active-workspace)))
+           (dp-window-utility-cannot-display-p (selected-window)))
+      (let ((target-workspace (dp-window-prefix--find-last-active-workspace)))
         (if target-workspace
             ;; Execute the core display layout engine as if standing in the main workspace
             (with-selected-window target-workspace
@@ -51,7 +51,7 @@ logic runs."
     ;; Fall back to standard behavior if no prefix is live or we are in a normal window
     (funcall orig-fun buffer action)))
 
-(defcustom display-buffer-pivot-window-prefix-pivot-other-window-select t
+(defcustom dp-other-window-prefix-select t
   "Whether the window `aw-select' returns is selected.
 
 `t' selects that window after the buffer is displayed, so the display
@@ -68,9 +68,9 @@ selected again, the way `display-buffer' treats a `nil'
   :type '(choice (const :tag "Always select" t)
                  (const :tag "Let the caller decide" auto)
                  (const :tag "Never select" nil))
-  :group 'display-buffer-pivot-window-prefix-pivot)
+  :group 'dp-window-prefix)
 
-(defun display-buffer-pivot-window-prefix-pivot-other-window-prefix ()
+(defun dp-other-window-prefix ()
   "Display the buffer of the next command in an `ace-window` selected window.
 
 You can bind this command to override `other-window-prefix' keybinding."
@@ -82,10 +82,10 @@ You can bind this command to override `other-window-prefix' keybinding."
        ;; to pop up a new window, which also respects split
        ;; thresholds.  If it hits the limit, OR if popping up fails,
        ;; fall back to ace-window.
-       (if (and (display-buffer-pivot-window-utility-split-p)
+       (if (and (dp-window-utility-split-p)
                 (setq window (display-buffer-pop-up-window buffer alist)))
            (setq type 'window)
-         (let ((choice (display-buffer-pivot-window-utility-choose-display-window aw-scope aw-ignore-current
+         (let ((choice (dp-window-utility-choose-display-window aw-scope aw-ignore-current
                                                 "Ace Window")))
            (if choice
                (progn
@@ -93,25 +93,25 @@ You can bind this command to override `other-window-prefix' keybinding."
                        type 'reuse)
                  (let ((answering (selected-window)))
                    (window--display-buffer buffer choice 'reuse alist)
-                   (pcase display-buffer-pivot-window-prefix-pivot-other-window-select
+                   (pcase dp-other-window-prefix-select
                      ('t (select-window choice))
-                     ('nil (display-buffer-pivot-window-utility-select-window-post-command answering)))))
+                     ('nil (dp-window-utility-select-window-post-command answering)))))
              (setq window nil))))
        (cons window type)))
-     nil "[display-buffer-pivot-window-prefix-pivot-other-window-prefix]")
+     nil "[disbuf-pivot-other-window-prefix]")
   (message "Display next command buffer in a window via ace-window..."))
 
-(defvar display-buffer-pivot-window-prefix-pivot-other-tab-prefix--in-progress nil
-  "Non-nil while `display-buffer-pivot-window-prefix-pivot-other-tab-prefix' chooses the tab and its window.")
+(defvar dp-other-tab-prefix--in-progress nil
+  "Non-nil while `disbuf-pivot-other-tab-prefix' chooses the tab and its window.")
 
-(defun display-buffer-pivot-window-prefix-pivot-other-tab-prefix ()
+(defun dp-other-tab-prefix ()
   "Display the buffer of the next command in a tab.
 The next buffer is the buffer displayed by the next command invoked
 immediately after this command.  When the merged action alist names
 `reusable-frames', a tab that already displays the buffer is used first;
 otherwise read a tab name, where an empty name makes a new tab, and an
 existing name selects that tab.  The buffer is then displayed there by
-`display-buffer-pivot-action-functions'.
+`disbuf-pivot-action-functions'.
 
 A display made while the tab step runs -- `tab-bar-new-tab-choice' may
 display a buffer of its own -- is left to the other display rules, so it
@@ -119,27 +119,28 @@ does not show the tab prompt again."
   (interactive)
   (display-buffer-override-next-command
    (lambda (buffer alist)
-     (if display-buffer-pivot-window-prefix-pivot-other-tab-prefix--in-progress
+     (if dp-other-tab-prefix--in-progress
          (cons nil 'reuse)
-       (let ((display-buffer-pivot-window-prefix-pivot-other-tab-prefix--in-progress t))
-         (let ((result (display-buffer-pivot-action-tab buffer alist)))
+       (let ((dp-other-tab-prefix--in-progress t))
+         (let ((result (dp-action-tab buffer alist)))
            (cons (car-safe result) (or (cdr-safe result) 'reuse))))))
    nil "[other-tab]")
   (message "Display next command buffer in a tab..."))
 
 ;;;###autoload
-(define-minor-mode display-buffer-pivot-window-prefix-pivot-mode
+(define-minor-mode dp-window-prefix-mode
   "Global minor mode to make window prefixes intuitive when used inside popups."
   :global t
   :group 'windows
-  (if display-buffer-pivot-window-prefix-pivot-mode
-      (advice-add 'display-buffer :around #'display-buffer-pivot-window-prefix-pivot-ad-display-buffer)
-    (advice-remove 'display-buffer #'display-buffer-pivot-window-prefix-pivot-ad-display-buffer)))
+  (if dp-window-prefix-mode
+      (advice-add 'display-buffer :around #'dp-window-prefix-ad-display-buffer)
+    (advice-remove 'display-buffer #'dp-window-prefix-ad-display-buffer)))
 
 ;; Local Variables:
 ;; checkdoc-allow-quoting-nil-and-t: t
+;; read-symbol-shorthands: (("dp-" . "disbuf-pivot-"))
 ;; End:
 
-(provide 'display-buffer-pivot-window-prefix-pivot)
+(provide 'dp-window-prefix)
 
-;;; display-buffer-pivot-window-prefix-pivot.el ends here
+;;; disbuf-pivot-window-prefix.el ends here

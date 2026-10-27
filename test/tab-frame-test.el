@@ -1,8 +1,8 @@
 ;;; -*- lexical-binding: t; -*-
 ;; Behavioural checks for the tab and frame target of
-;; display-buffer-pivot-action.  Run: make test
-(require 'display-buffer-pivot)
-(require 'display-buffer-pivot-window-prefix-pivot)
+;; disbuf-pivot-action.  Run: make test
+(require 'disbuf-pivot)
+(require 'dp-window-prefix)
 (require 'buttercup)
 
 (defvar nfail 0)
@@ -21,31 +21,31 @@
 (setq w2 (split-window w1 nil 'below))
 
 ;;; ---- what the ACTION and ALIST ask for
-(let ((display-buffer-pivot-action--action
+(let ((dp-action--action
        '((display-buffer-in-tab) (inhibit-same-window . nil))))
   (check "target: a tab action asks for a tab"
-         (eq (display-buffer-pivot-action--target
+         (eq (dp-action--target
               '((inhibit-same-window . nil)))
              'tab)))
-(let ((display-buffer-pivot-action--action '((display-buffer-in-new-tab))))
+(let ((dp-action--action '((display-buffer-in-new-tab))))
   (check "target: a new-tab action asks for a tab"
-         (eq (display-buffer-pivot-action--target nil) 'tab)))
-(let ((display-buffer-pivot-action--action nil))
+         (eq (dp-action--target nil) 'tab)))
+(let ((dp-action--action nil))
   (check "target: tab-name asks for a tab"
-         (eq (display-buffer-pivot-action--target '((tab-name . "x"))) 'tab))
+         (eq (dp-action--target '((tab-name . "x"))) 'tab))
   (check "target: pop-up-frames asks for a frame"
-         (eq (display-buffer-pivot-action--target '((pop-up-frames . t)))
+         (eq (dp-action--target '((pop-up-frames . t)))
              'frame)))
-(let ((display-buffer-pivot-action--action '((display-buffer-pop-up-frame))))
+(let ((dp-action--action '((display-buffer-pop-up-frame))))
   (check "target: a frame action asks for a frame"
-         (eq (display-buffer-pivot-action--target nil) 'frame)))
-(let ((display-buffer-pivot-action--action '((display-buffer-pop-up-window))))
+         (eq (dp-action--target nil) 'frame)))
+(let ((dp-action--action '((display-buffer-pop-up-window))))
   (check "target: a plain window action asks for no target"
-         (null (display-buffer-pivot-action--target nil))))
-(let ((display-buffer-pivot-action--action
+         (null (dp-action--target nil))))
+(let ((dp-action--action
        '((display-buffer-in-child-frame) (parent-frame . nil))))
   (check "target: a child frame is left to the caller"
-         (null (display-buffer-pivot-action--target '((parent-frame))))))
+         (null (dp-action--target '((parent-frame))))))
 
 ;;; ---- stubs
 (defvar tab-calls)
@@ -78,7 +78,7 @@
             ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
             ((symbol-function 'aw-select) #'ask-stub)
             ((symbol-function 'completing-read) (lambda (&rest _) "two")))
-    (let ((result (display-buffer-pivot-action-tab
+    (let ((result (dp-action-tab
                    (get-buffer-create "*tab1*") '((tab-name . "two")))))
       (check "tab: an existing name selects that tab"
              (and (eq (car-safe result) w2)
@@ -97,7 +97,7 @@
             ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
             ((symbol-function 'aw-select) #'ask-stub)
             ((symbol-function 'completing-read) (lambda (&rest _) "")))
-    (let ((result (display-buffer-pivot-action-tab
+    (let ((result (dp-action-tab
                    (get-buffer-create "*tab2*") '((tab-group . "work")))))
       (check "tab: an empty name makes a new tab"
              (and (eq (car-safe result) w2)
@@ -117,7 +117,7 @@
             ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
             ((symbol-function 'aw-select) #'ask-stub)
             ((symbol-function 'completing-read) (lambda (&rest _) "three")))
-    (let ((result (display-buffer-pivot-action-tab
+    (let ((result (dp-action-tab
                    (get-buffer-create "*tab3*") nil)))
       (check "tab: a new name makes a tab with that name"
              (and (eq (car-safe result) w2)
@@ -133,7 +133,7 @@
             ((symbol-function 'get-buffer-window) (lambda (&rest _) w2))
             ((symbol-function 'aw-select)
              (lambda (&rest _) (setq ask-calls (1+ ask-calls)) w1)))
-    (let ((result (display-buffer-pivot-action-tab
+    (let ((result (dp-action-tab
                    (get-buffer-create "*tab-reuse*") '((tab-name . "two")))))
       (check "tab: a window showing the buffer is reused without a question"
              (and (eq (car-safe result) w2)
@@ -151,18 +151,18 @@
              (lambda (&rest _)
                (setq calls (1+ calls))
                (if (= calls 1) w1 w2))))
-    (let ((result (display-buffer-pivot-action-tab
+    (let ((result (dp-action-tab
                    (get-buffer-create "*tab-ask*") '((tab-name . "two")))))
       (check "tab: a dedicated choice asks again"
              (and (eq (car-safe result) w2) (= calls 2)))))
   (set-window-dedicated-p w1 nil))
 
 ;;; ---- the tab package's reader supplies the name
-(let ((original (symbol-function 'display-buffer-pivot-tab-bar-read-tab-name)))
+(let ((original (symbol-function 'dp-tab-bar-read-tab-name)))
   (unwind-protect
       (progn
         (let (reader-args)
-          (fset 'display-buffer-pivot-tab-bar-read-tab-name
+          (fset 'dp-tab-bar-read-tab-name
                 (lambda (&optional prompt initial)
                   (setq reader-args (list prompt initial))
                   "two"))
@@ -176,7 +176,7 @@
                       ((symbol-function 'aw-select) #'ask-stub)
                       ((symbol-function 'completing-read)
                        (lambda (&rest _) (setq reader-calls (1+ reader-calls)) "")))
-              (let ((result (display-buffer-pivot-action-tab
+              (let ((result (dp-action-tab
                              (get-buffer-create "*tab-reader*") nil)))
                 (check "tab: the tab package's reader supplies the name"
                        (and (eq (car-safe result) w2)
@@ -186,18 +186,18 @@
                        (equal reader-args
                               '("Display buffer in tab (empty for a new tab): "
                                 ""))))))))
-    (fset 'display-buffer-pivot-tab-bar-read-tab-name original)))
+    (fset 'dp-tab-bar-read-tab-name original)))
 
 ;;; ---- the reader function set by a completion frontend
 (let* ((seen nil)
-       (display-buffer-pivot-tab-bar--history nil)
-       (display-buffer-pivot-tab-bar-read-function
+       (dp-tab-bar--history nil)
+       (dp-tab-bar-read-function
         (lambda (prompt candidates initial)
           (setq seen (list prompt candidates initial))
           "two")))
   (cl-letf (((symbol-function 'tab-bar-tabs) #'tab-stub-tabs))
     (check "reader function: it reads the name"
-           (equal (display-buffer-pivot-tab-bar-read-tab-name
+           (equal (dp-tab-bar-read-tab-name
                    "Prompt: " "two")
                   "two"))
     (check "reader function: it gets the prompt, candidates and initial"
@@ -217,7 +217,7 @@
              (lambda (&rest _) (push '(new) tab-calls)))
             ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
             ((symbol-function 'aw-select) #'ask-stub))
-    (display-buffer-pivot-action-tab
+    (dp-action-tab
      (get-buffer-create "*tab-dup*") '((tab-name . "dup<2>")))
     (check "tab: a duplicate name selects its own tab"
            (equal (nreverse tab-calls) '((select 2))))))
@@ -226,38 +226,38 @@
 (let ((aw-dispatch-alist
        '((?s aw-split-window-vert "Split Vert Window")
          (?x aw-delete-window "Delete Window"))))
-  (let ((actions (display-buffer-pivot-action--split-actions)))
+  (let ((actions (dp-action--split-actions)))
     (check "split help: the user's split key is used"
            (string-match-p "s: Split Vert Window"
-                           (display-buffer-pivot-action--split-help actions)))
+                           (dp-action--split-help actions)))
     (check "split help: a delete action is left out"
            (not (string-match-p "Delete Window"
-                                (display-buffer-pivot-action--split-help actions))))))
+                                (dp-action--split-help actions))))))
 
 ;;; ---- the sole window's key
 (let ((aw-dispatch-alist '((?s aw-split-window-vert "Split Test"))))
   (cl-letf (((symbol-function 'read-char) (lambda (&rest _) ?x)))
     (check "sole window: any other key uses it"
-           (eq (display-buffer-pivot-action--choose-sole-window w1) w1)))
+           (eq (dp-action--choose-sole-window w1) w1)))
   (cl-letf (((symbol-function 'read-char) (lambda (&rest _) ?s))
             ((symbol-function 'aw-split-window-vert)
              (lambda (_window) w2)))
     (check "sole window: a split key uses the new window"
-           (eq (display-buffer-pivot-action--choose-sole-window w1) w2))))
+           (eq (dp-action--choose-sole-window w1) w2))))
 
 ;;; ---- batch asks nothing
 (let ((noninteractive t))
   (check "tab: batch asks nothing"
-         (null (display-buffer-pivot-action-tab
+         (null (dp-action-tab
                 (get-buffer-create "*tab4*") '((tab-name . "four")))))
   (check "frame: batch asks nothing"
-         (null (display-buffer-pivot-action--frame
+         (null (dp-action--frame
                 (get-buffer-create "*frame3*") '((pop-up-frames . t))))))
 
 ;;; ---- the frame question
 (let ((noninteractive nil)
       (calls nil))
-  (cl-letf (((symbol-function 'display-buffer-pivot-action--frames)
+  (cl-letf (((symbol-function 'dp-action--frames)
              (lambda (&rest _) (list (selected-frame))))
             ((symbol-function 'completing-read)
              (lambda (&rest _)
@@ -270,20 +270,20 @@
             ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
             ((symbol-function 'aw-select) #'ask-stub))
     (check "frame: a title selects that frame"
-           (and (eq (display-buffer-pivot-action--frame
+           (and (eq (dp-action--frame
                      (get-buffer-create "*frame1*") nil)
                     w2)
                 (eq (cadr calls) (selected-frame))))))
 (let ((noninteractive nil)
       (calls nil))
-  (cl-letf (((symbol-function 'display-buffer-pivot-action--frames)
+  (cl-letf (((symbol-function 'dp-action--frames)
              (lambda (&rest _) (list (selected-frame))))
             ((symbol-function 'completing-read)
              (lambda (&rest _) ""))
             ((symbol-function 'display-buffer-pop-up-frame)
              (lambda (&rest _) (setq calls (list 'new)) w2)))
     (check "frame: an empty title makes a new frame"
-           (and (eq (display-buffer-pivot-action--frame
+           (and (eq (dp-action--frame
                      (get-buffer-create "*frame2*")
                      '((pop-up-frames . t)))
                     w2)
@@ -291,7 +291,7 @@
 (let ((noninteractive nil)
       (tab-calls nil)
       (answers (list (frame-parameter (selected-frame) 'name) "two")))
-  (cl-letf (((symbol-function 'display-buffer-pivot-action--frames)
+  (cl-letf (((symbol-function 'dp-action--frames)
              (lambda (&rest _) (list (selected-frame))))
             ((symbol-function 'completing-read)
              (lambda (&rest _) (pop answers)))
@@ -305,13 +305,13 @@
             ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
             ((symbol-function 'aw-select) #'ask-stub))
     (check "frame: a frame with several tabs asks the tab, then the window"
-           (and (eq (display-buffer-pivot-action--frame
+           (and (eq (dp-action--frame
                      (get-buffer-create "*frame4*") nil)
                     w2)
                 (equal (nreverse tab-calls) '((select 2)))))))
 
 ;;; ---- the core tab action through display-buffer
-(display-buffer-pivot-action-mode +1)
+(dp-action-mode +1)
 (let ((noninteractive nil)
       (asked 0)
       (made 0))
@@ -335,7 +335,7 @@
 (let ((noninteractive nil)
       (asked 0)
       (popped 0))
-  (cl-letf (((symbol-function 'display-buffer-pivot-action--frames)
+  (cl-letf (((symbol-function 'dp-action--frames)
              (lambda (&rest _) nil))
             ((symbol-function 'completing-read)
              (lambda (&rest _) (setq asked (1+ asked)) ""))
@@ -357,7 +357,7 @@
             ((symbol-function 'tab-bar-select-tab)
              (lambda (index) (push (list 'select index) calls)))
             ((symbol-function 'get-buffer-window) (lambda (&rest _) w2)))
-    (let ((result (display-buffer-pivot-action-tab
+    (let ((result (dp-action-tab
                    (get-buffer-create "*tab-reuse2*")
                    '((reusable-frames . t)))))
       (check "tab: a reusable tab is selected before the window rule"
@@ -369,27 +369,27 @@
 
 ;;; ---- the other-tab prefix
 (let ((noninteractive nil))
-  (cl-letf (((symbol-function 'display-buffer-pivot-action-tab)
+  (cl-letf (((symbol-function 'dp-action-tab)
              (lambda (_buffer _alist) (cons w2 'tab))))
-    (display-buffer-pivot-window-prefix-pivot-other-tab-prefix)
+    (dp-other-tab-prefix)
     (let ((win (display-buffer (get-buffer-create "*otp*"))))
       (check "other-tab prefix: the tab step decides"
              (and (eq win w2)
                   (eq (window-buffer w2) (get-buffer "*otp*")))))))
 (let ((noninteractive nil)
       (calls 0))
-  (cl-letf (((symbol-function 'display-buffer-pivot-action-tab)
+  (cl-letf (((symbol-function 'dp-action-tab)
              (lambda (_buffer _alist)
                (setq calls (1+ calls))
                (display-buffer (get-buffer-create "*nested*"))
                (cons w2 'tab))))
-    (display-buffer-pivot-window-prefix-pivot-other-tab-prefix)
+    (dp-other-tab-prefix)
     (let ((win (display-buffer (get-buffer-create "*outer*"))))
       (check "other-tab prefix: a nested display does not ask again"
              (and (eq win w2)
                   (= calls 1)
                   (eq (window-buffer w2) (get-buffer "*outer*")))))))
-(display-buffer-pivot-action-mode -1)
+(dp-action-mode -1)
 
 (princ (if (zerop nfail) "\nALL PASSED\n"
          (format "\n%d CHECK(S) FAILED\n" nfail)))
@@ -398,3 +398,6 @@
 (describe "ia tab and frame target"
   (it "runs the tab and frame checks"
     (tab-frame-checks)))
+;; Local Variables:
+;; read-symbol-shorthands: (("dp-" . "disbuf-pivot-"))
+;; End:

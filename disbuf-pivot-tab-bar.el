@@ -1,4 +1,4 @@
-;;; display-buffer-pivot-tab-bar.el --- Tab bar data, history and plain reader  -*- lexical-binding: t; -*-
+;;; disbuf-pivot-tab-bar.el --- Tab bar data, history and plain reader  -*- lexical-binding: t; -*-
 
 ;; Author: IceAsteroid
 ;; URL: https://github.com/IceAsteroid/display-buffer-pivot
@@ -7,7 +7,7 @@
 ;;; Commentary:
 ;; The tab bar's candidates, history, sort and annotations, and a plain
 ;; `completing-read' reader for a tab name.  The optional
-;; `display-buffer-pivot-tab-bar-consult' library supplies a consult
+;; `disbuf-pivot-tab-bar-consult' library supplies a consult
 ;; reader with previews and the mode that installs it.  The tab-switch
 ;; commands and overrides are in `ia-tab-bar-modified-consult' in the
 ;; `emacs-utils' repository, which consumes that library.
@@ -20,101 +20,101 @@
 
 ;;; Code:
 
-(defgroup display-buffer-pivot-tab-bar nil
+(defgroup dp-tab-bar nil
   "Customizations for index-safe tab bar management."
   :group 'tab-bar)
 
-(defcustom display-buffer-pivot-tab-bar-enable-history t
+(defcustom dp-tab-bar-enable-history t
   "Non-nil to enable history tracking and display closed tabs as candidates."
   :type 'boolean
-  :group 'display-buffer-pivot-tab-bar)
+  :group 'dp-tab-bar)
 
-(defcustom display-buffer-pivot-tab-bar-sanitize-new-tab nil
+(defcustom dp-tab-bar-sanitize-new-tab nil
   "Non-nil to not bring previous selected buffer window to the new tab."
   :type 'boolean
-  :group 'display-buffer-pivot-tab-bar)
+  :group 'dp-tab-bar)
 
-(defcustom display-buffer-pivot-tab-bar-disable-marginalia t
+(defcustom dp-tab-bar-disable-marginalia t
   "Non-nil to natively suppress Marginalia during tab switching."
   :type 'boolean
-  :group 'display-buffer-pivot-tab-bar)
+  :group 'dp-tab-bar)
 
-(defcustom display-buffer-pivot-tab-bar-show-extra-states nil
+(defcustom dp-tab-bar-show-extra-states nil
   "Non-nil to display the active buffer, window count, and group in completion."
   :type 'boolean
-  :group 'display-buffer-pivot-tab-bar)
+  :group 'dp-tab-bar)
 
-(defcustom display-buffer-pivot-tab-bar-rename-include-active t
+(defcustom dp-tab-bar-rename-include-active t
   "Non-nil to include active tab names as candidates when renaming a tab."
   :type 'boolean
-  :group 'display-buffer-pivot-tab-bar)
+  :group 'dp-tab-bar)
 
-(defcustom display-buffer-pivot-tab-bar-rename-enable-history t
+(defcustom dp-tab-bar-rename-enable-history t
   "Non-nil to include closed tab history as candidates when renaming a tab."
   :type 'boolean
-  :group 'display-buffer-pivot-tab-bar)
+  :group 'dp-tab-bar)
 
-(defcustom display-buffer-pivot-tab-bar-history-limit 20
+(defcustom dp-tab-bar-history-limit 20
   "Maximum number of history candidates to persist for tab names."
   :type 'integer
-  :group 'display-buffer-pivot-tab-bar
+  :group 'dp-tab-bar
   :set (lambda (symbol value)
          (set-default symbol value)
-         (put 'display-buffer-pivot-tab-bar--history 'history-length value)))
+         (put 'dp-tab-bar--history 'history-length value)))
 
-(defcustom display-buffer-pivot-tab-bar-sort-function #'display-buffer-pivot-tab-bar-sort-active-first
+(defcustom dp-tab-bar-sort-function #'dp-tab-bar-sort-active-first
   "Function to sort completion candidates before rendering."
-  :type '(choice (const :tag "Active Tabs First" display-buffer-pivot-tab-bar-sort-active-first)
+  :type '(choice (const :tag "Active Tabs First" dp-tab-bar-sort-active-first)
                  (const :tag "Let Frontend Sort" nil)
                  (function :tag "Custom Sort Function"))
-  :group 'display-buffer-pivot-tab-bar)
+  :group 'dp-tab-bar)
 
-(defcustom display-buffer-pivot-tab-bar-read-function nil
+(defcustom dp-tab-bar-read-function nil
   "Function to read a tab name, or nil to use `completing-read'.
 It is called with PROMPT, CANDIDATES and INITIAL.  CANDIDATES is the
-alist `display-buffer-pivot-tab-bar--get-candidates' returns.  INITIAL
+alist `disbuf-pivot-tab-bar--get-candidates' returns.  INITIAL
 is the initial input; an empty string means a new tab.  The function
 returns the chosen name.  A completion frontend sets this to show its
 own candidates and previews; the consult integration in
 `ia-tab-bar-modified-consult' sets it to a reader with previews."
   :type '(choice (const :tag "completing-read" nil) function)
-  :group 'display-buffer-pivot-tab-bar)
+  :group 'dp-tab-bar)
 
-(defvar display-buffer-pivot-tab-bar--history nil
+(defvar dp-tab-bar--history nil
   "Tracked history list containing raw selection entries.")
 
 ;; --- Custom Faces ---
 
-(defface display-buffer-pivot-tab-bar-index-face
+(defface dp-tab-bar-index-face
   '((t :inherit font-lock-type-face))
   "Face for active tab indices."
-  :group 'display-buffer-pivot-tab-bar)
+  :group 'dp-tab-bar)
 
-(defface display-buffer-pivot-tab-bar-closed-face
+(defface dp-tab-bar-closed-face
   '((t :inherit shadow))
   "Face for closed history tab indicators."
-  :group 'display-buffer-pivot-tab-bar)
+  :group 'dp-tab-bar)
 
-(defface display-buffer-pivot-tab-bar-buffer-face
+(defface dp-tab-bar-buffer-face
   '((t :inherit font-lock-doc-face))
   "Face for tab buffer names."
-  :group 'display-buffer-pivot-tab-bar)
+  :group 'dp-tab-bar)
 
-(defface display-buffer-pivot-tab-bar-window-face
+(defface dp-tab-bar-window-face
   '((t :inherit font-lock-constant-face))
   "Face for tab window counts."
-  :group 'display-buffer-pivot-tab-bar)
+  :group 'dp-tab-bar)
 
-(defface display-buffer-pivot-tab-bar-group-face
+(defface dp-tab-bar-group-face
   '((t :inherit font-lock-comment-face))
   "Face for tab group names."
-  :group 'display-buffer-pivot-tab-bar)
+  :group 'dp-tab-bar)
 
 ;; --- Core Logic ---
 
-(defun display-buffer-pivot-tab-bar-sort-active-first (cands candidates-alist)
+(defun dp-tab-bar-sort-active-first (cands candidates-alist)
   "Sort CANDS so live tabs dynamically bubble above closed history tabs.
-CANDIDATES-ALIST is the alist that `display-buffer-pivot-tab-bar--get-candidates'
+CANDIDATES-ALIST is the alist that `disbuf-pivot-tab-bar--get-candidates'
 returns."
   (let ((active nil)
         (closed nil))
@@ -127,7 +127,7 @@ returns."
                                    (nth 1 (assoc-string b candidates-alist))))))
     (append active (nreverse closed))))
 
-(defun display-buffer-pivot-tab-bar--extract-visible-buffers (ws)
+(defun dp-tab-bar--extract-visible-buffers (ws)
   "Recursively extract only currently visible buffers from a window state WS."
   (let ((buffers nil))
     (cl-labels ((walk (node)
@@ -140,7 +140,7 @@ returns."
       (walk ws))
     (nreverse buffers)))
 
-(defun display-buffer-pivot-tab-bar--get-tab-data (tab)
+(defun dp-tab-bar--get-tab-data (tab)
   "Extract a static list of (BUFFER-STRING WINDOW-COUNT GROUP) from TAB."
   (let* ((ws (alist-get 'ws tab))
          (group (alist-get 'group tab))
@@ -153,7 +153,7 @@ returns."
                 buf-str (mapconcat (lambda (w) (buffer-name (window-buffer w))) wins " ")
                 group (or group (frame-parameter nil 'tab-bar-group))))
       (if ws
-          (let ((bufs (display-buffer-pivot-tab-bar--extract-visible-buffers ws)))
+          (let ((bufs (dp-tab-bar--extract-visible-buffers ws)))
             (setq win-count (max 1 (length bufs))
                   buf-str (if bufs (mapconcat #'identity bufs " ") "unknown")))
         (setq win-count 0
@@ -161,18 +161,18 @@ returns."
 
     (list buf-str win-count group)))
 
-(defun display-buffer-pivot-tab-bar--sanitize-history ()
+(defun dp-tab-bar--sanitize-history ()
   "Strip text properties and natively deduplicate the history list.
 Prevents duplicates where visually identical strings fail `equal'
 comparisons due to hidden text properties."
-  (when display-buffer-pivot-tab-bar--history
-    (setq display-buffer-pivot-tab-bar--history
-          (delete-dups (mapcar #'substring-no-properties display-buffer-pivot-tab-bar--history)))))
+  (when dp-tab-bar--history
+    (setq dp-tab-bar--history
+          (delete-dups (mapcar #'substring-no-properties dp-tab-bar--history)))))
 
-(defun display-buffer-pivot-tab-bar--get-candidates (&optional force-history)
+(defun dp-tab-bar--get-candidates (&optional force-history)
   "Generate a static snapshot alist for stable previews.
 FORCE-HISTORY includes the closed names even when
-`display-buffer-pivot-tab-bar-enable-history' is nil."
+`disbuf-pivot-tab-bar-enable-history' is nil."
   (let* ((tabs (tab-bar-tabs))
          (active-names nil)
          (candidates nil)
@@ -181,7 +181,7 @@ FORCE-HISTORY includes the closed names even when
     (cl-loop for tab in tabs
              for idx from 1
              for raw-name = (alist-get 'name tab)
-             for data = (display-buffer-pivot-tab-bar--get-tab-data tab)
+             for data = (dp-tab-bar--get-tab-data tab)
              for buffer = (nth 0 data)
              for win-count = (nth 1 data)
              for group = (nth 2 data)
@@ -193,11 +193,11 @@ FORCE-HISTORY includes the closed names even when
              (push (list unique-name idx raw-name buffer win-count group) candidates))
     (setq candidates (nreverse candidates))
 
-    (if (not (or display-buffer-pivot-tab-bar-enable-history force-history))
+    (if (not (or dp-tab-bar-enable-history force-history))
         candidates
       (let ((history-cands nil)
             (seen-history nil))
-        (dolist (hist-item display-buffer-pivot-tab-bar--history)
+        (dolist (hist-item dp-tab-bar--history)
           (when (stringp hist-item)
             (unless (or (string= hist-item "")
                         (member hist-item active-names)
@@ -206,19 +206,19 @@ FORCE-HISTORY includes the closed names even when
               (push (list hist-item nil hist-item nil nil nil) history-cands))))
         (append candidates (nreverse history-cands))))))
 
-(defun display-buffer-pivot-tab-bar-read-tab-name (&optional prompt initial)
+(defun dp-tab-bar-read-tab-name (&optional prompt initial)
   "Read a tab name with this package's candidates and history.
 The live tabs come first, sorted by
-`display-buffer-pivot-tab-bar-sort-function', followed by the closed
-names in `display-buffer-pivot-tab-bar--history'.  The chosen name is
+`disbuf-pivot-tab-bar-sort-function', followed by the closed
+names in `disbuf-pivot-tab-bar--history'.  The chosen name is
 returned; selecting the tab or making a new one is the caller's.
 PROMPT is the prompt string and defaults to \"Switch Workspace (or
 create new): \".  INITIAL is the initial minibuffer input and defaults
 to the current tab's name; pass \"\" when the empty name should mean a
-new tab.  When `display-buffer-pivot-tab-bar-read-function' is
+new tab.  When `disbuf-pivot-tab-bar-read-function' is
 non-nil, call it with PROMPT, the candidate alist and INITIAL instead
 of `completing-read'."
-  (let* ((candidates (display-buffer-pivot-tab-bar--get-candidates))
+  (let* ((candidates (dp-tab-bar--get-candidates))
          (names (mapcar #'car candidates))
          (prompt (or prompt "Switch Workspace (or create new): "))
          (current (or initial
@@ -228,38 +228,38 @@ of `completing-read'."
                                   (1+ (tab-bar--current-tab-index))))
                             candidates)))))
     (unwind-protect
-        (if display-buffer-pivot-tab-bar-read-function
-            (funcall display-buffer-pivot-tab-bar-read-function
+        (if dp-tab-bar-read-function
+            (funcall dp-tab-bar-read-function
                      prompt candidates current)
           (let ((marginalia-annotators
-                 (if display-buffer-pivot-tab-bar-disable-marginalia
+                 (if dp-tab-bar-disable-marginalia
                      nil
                    (bound-and-true-p marginalia-annotators)))
                 (history-delete-duplicates t))
             (let ((completion-extra-properties
                    (list :category 'tab
                          :display-sort-function
-                         (if display-buffer-pivot-tab-bar-sort-function
+                         (if dp-tab-bar-sort-function
                              (lambda (cands)
-                               (funcall display-buffer-pivot-tab-bar-sort-function
+                               (funcall dp-tab-bar-sort-function
                                         cands candidates))
                            #'identity)
                          :affixation-function
-                         (if display-buffer-pivot-tab-bar-disable-marginalia
+                         (if dp-tab-bar-disable-marginalia
                              (let ((annotator
-                                    (display-buffer-pivot-tab-bar--build-annotator
+                                    (dp-tab-bar--build-annotator
                                      candidates)))
                                (lambda (cands) (mapcar annotator cands)))
                            nil))))
               (completing-read
                prompt
                names nil nil nil
-               (and display-buffer-pivot-tab-bar-enable-history
-                    'display-buffer-pivot-tab-bar--history)
+               (and dp-tab-bar-enable-history
+                    'dp-tab-bar--history)
                current))))
-      (display-buffer-pivot-tab-bar--sanitize-history))))
+      (dp-tab-bar--sanitize-history))))
 
-(defun display-buffer-pivot-tab-bar--build-annotator (candidates)
+(defun dp-tab-bar--build-annotator (candidates)
   "Pre-calculate column widths for CANDIDATES and return an annotation closure."
   (let ((max-base 0) (max-win 0) (max-grp 0))
 
@@ -284,42 +284,45 @@ of `completing-read'."
              (win   (nth 4 match))
              (grp   (nth 5 match))
              (i-str (if idx (format " [%d]" idx) " (closed)"))
-             (i-face (if idx 'display-buffer-pivot-tab-bar-index-face 'display-buffer-pivot-tab-bar-closed-face))
+             (i-face (if idx 'dp-tab-bar-index-face 'dp-tab-bar-closed-face))
              (base-w (+ (string-width cand) (string-width i-str)))
              (pad-base (make-string (max 1 (+ (- max-base base-w) 4)) ?\s))
              (suffix (concat (propertize i-str 'face i-face) pad-base)))
 
-        (when (and display-buffer-pivot-tab-bar-show-extra-states win)
+        (when (and dp-tab-bar-show-extra-states win)
           (let* ((w-str (format "win:%d" win))
                  (g-str (format "group:%s" (if (> (length grp) 0) grp "none")))
                  (w-pad (make-string (max 1 (+ (- max-win (length w-str)) 2)) ?\s))
                  (g-pad (make-string (max 1 (+ (- max-grp (length g-str)) 2)) ?\s)))
             (setq suffix (concat suffix
-                                 (propertize w-str 'face 'display-buffer-pivot-tab-bar-window-face) w-pad
-                                 (propertize g-str 'face 'display-buffer-pivot-tab-bar-group-face) g-pad
-                                 (propertize buf 'face 'display-buffer-pivot-tab-bar-buffer-face)))))
+                                 (propertize w-str 'face 'dp-tab-bar-window-face) w-pad
+                                 (propertize g-str 'face 'dp-tab-bar-group-face) g-pad
+                                 (propertize buf 'face 'dp-tab-bar-buffer-face)))))
 
         ;; Returning a 3-element list maps natively to Consult and Affixation UI
         (list cand "" suffix)))))
 
-(defun display-buffer-pivot-tab-bar-remove-history-item ()
+(defun dp-tab-bar-remove-history-item ()
   "Selectively remove a specific item from the tab history."
   (interactive)
-  (if (not display-buffer-pivot-tab-bar--history)
+  (if (not dp-tab-bar--history)
       (user-error "Tab history is already empty")
     (let ((target (completing-read "Remove history item: "
-                                   display-buffer-pivot-tab-bar--history
+                                   dp-tab-bar--history
                                    nil t)))
-      (setq display-buffer-pivot-tab-bar--history
-            (delete target display-buffer-pivot-tab-bar--history))
+      (setq dp-tab-bar--history
+            (delete target dp-tab-bar--history))
       (message "Removed '%s' from tab history." target))))
 
-(defun display-buffer-pivot-tab-bar-clear-history ()
+(defun dp-tab-bar-clear-history ()
   "Completely clear the tab bar history."
   (interactive)
-  (setq display-buffer-pivot-tab-bar--history nil)
+  (setq dp-tab-bar--history nil)
   (message "Tab bar history cleared."))
 
-(provide 'display-buffer-pivot-tab-bar)
+(provide 'dp-tab-bar)
 
-;;; display-buffer-pivot-tab-bar.el ends here
+;;; disbuf-pivot-tab-bar.el ends here
+;; Local Variables:
+;; read-symbol-shorthands: (("dp-" . "disbuf-pivot-"))
+;; End:

@@ -1,4 +1,4 @@
-;;; display-buffer-pivot-window-utility.el --- Small snippets for window management  -*- lexical-binding: t; -*-
+;;; disbuf-pivot-window-utility.el --- Small snippets for window management  -*- lexical-binding: t; -*-
 
 ;; Author: IceAsteroid
 ;; URL: https://github.com/IceAsteroid/display-buffer-pivot
@@ -13,54 +13,54 @@
 (require 'ace-window)
 (require 'cl-lib)
 
-(defun display-buffer-pivot-window-utility-cannot-display-p (window)
+(defun dp-window-utility-cannot-display-p (window)
   "Return non-nil if WINDOW does not take another buffer's display.
 That is a window dedicated to its buffer or a side window."
   (or (window-dedicated-p window)
       (window-parameter window 'window-side)))
 
-(defcustom display-buffer-pivot-window-utility-split-maximum 4
+(defcustom dp-window-utility-split-maximum 4
   "The number of windows under which a split is preferred over asking.
 When fewer windows than this can take a buffer's display, split a new
 one with `display-buffer-pop-up-window'; at this number or more, ask
-for a window with `ace-window' instead.  `display-buffer-pivot-window-utility-split-p' makes the
+for a window with `ace-window' instead.  `disbuf-pivot-window-utility-split-p' makes the
 test."
   :group 'windows
   :type 'integer)
 
-(defcustom display-buffer-pivot-window-utility-split-maximum-exclude-side t
-  "Non-nil to leave side windows out of `display-buffer-pivot-window-utility-split-maximum'."
+(defcustom dp-window-utility-split-maximum-exclude-side t
+  "Non-nil to leave side windows out of `disbuf-pivot-window-utility-split-maximum'."
   :group 'windows
   :type 'boolean)
 
-(defcustom display-buffer-pivot-window-utility-split-maximum-exclude-dedicated t
-  "Non-nil to leave dedicated windows out of `display-buffer-pivot-window-utility-split-maximum'."
+(defcustom dp-window-utility-split-maximum-exclude-dedicated t
+  "Non-nil to leave dedicated windows out of `disbuf-pivot-window-utility-split-maximum'."
   :group 'windows
   :type 'boolean)
 
-(defun display-buffer-pivot-window-utility-split-p ()
+(defun dp-window-utility-split-p ()
   "Return non-nil when a split is preferred over asking for a window.
 Count the windows `aw-window-list' offers, leaving out the side windows
-and dedicated windows that `display-buffer-pivot-window-utility-split-maximum-exclude-side' and
-`display-buffer-pivot-window-utility-split-maximum-exclude-dedicated' exclude, and compare the
-count with `display-buffer-pivot-window-utility-split-maximum'."
+and dedicated windows that `disbuf-pivot-window-utility-split-maximum-exclude-side' and
+`disbuf-pivot-window-utility-split-maximum-exclude-dedicated' exclude, and compare the
+count with `disbuf-pivot-window-utility-split-maximum'."
   (let ((count (cl-count-if
                 (lambda (window)
-                  (and (not (and display-buffer-pivot-window-utility-split-maximum-exclude-side
+                  (and (not (and dp-window-utility-split-maximum-exclude-side
                                  (window-parameter window 'window-side)))
-                       (not (and display-buffer-pivot-window-utility-split-maximum-exclude-dedicated
+                       (not (and dp-window-utility-split-maximum-exclude-dedicated
                                  (window-dedicated-p window)))))
                 (aw-window-list))))
-    (< count display-buffer-pivot-window-utility-split-maximum)))
+    (< count dp-window-utility-split-maximum)))
 
-(defun display-buffer-pivot-window-utility-choose-display-window (scope ignore-current &optional mode-line)
+(defun dp-window-utility-choose-display-window (scope ignore-current &optional mode-line)
   "Ask for a window with `aw-select' to display a buffer in.
 SCOPE and IGNORE-CURRENT are bound to `aw-scope' and
 `aw-ignore-current' for the choice; MODE-LINE is passed to `aw-select'
 and defaults to \"Display buffer in window\".
 
 Ask again while the chosen window cannot display the buffer, a window
-`display-buffer-pivot-window-utility-cannot-display-p' answers for.  Should the choice return the
+`disbuf-pivot-window-utility-cannot-display-p' answers for.  Should the choice return the
 window it was told to ignore -- `aw-select' has none other to offer --
 choose nothing.
 
@@ -86,11 +86,11 @@ display it is."
          ((and aw-ignore-current (eq win (selected-window)))
           (setq done t
                 win nil))
-         ((display-buffer-pivot-window-utility-cannot-display-p win))
+         ((dp-window-utility-cannot-display-p win))
          (t (setq done t))))
       win)))
 
-(defun display-buffer-pivot-window-utility-select-window-post-command (window)
+(defun dp-window-utility-select-window-post-command (window)
   "Select WINDOW when the current command ends.
 The entry that does it is added to `post-command-hook' and removes
 itself when it runs, so no later command sees it.  This is the way
@@ -104,10 +104,11 @@ itself when it runs, so no later command sees it.  This is the way
       (add-hook 'post-command-hook postfun))))
 
 
-(provide 'display-buffer-pivot-window-utility)
+(provide 'dp-window-utility)
 
 ;; Local Variables:
 ;; checkdoc-allow-quoting-nil-and-t: t
+;; read-symbol-shorthands: (("dp-" . "disbuf-pivot-"))
 ;; End:
 
-;;; display-buffer-pivot-window-utility.el ends here
+;;; disbuf-pivot-window-utility.el ends here

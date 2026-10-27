@@ -1,8 +1,8 @@
 ;;; -*- lexical-binding: t; -*-
-;; Behavioural checks for display-buffer-pivot-action-mode and the re-ask
-;; loop in display-buffer-pivot-window-prefix-pivot-other-window-prefix.  Run: make test
-(require 'display-buffer-pivot)
-(require 'display-buffer-pivot-window-prefix-pivot)
+;; Behavioural checks for disbuf-pivot-action-mode and the re-ask
+;; loop in disbuf-pivot-other-window-prefix.  Run: make test
+(require 'disbuf-pivot)
+(require 'dp-window-prefix)
 (require 'buttercup)
 
 (defvar nfail 0)
@@ -18,46 +18,46 @@
 
 ;;; ---- the entry, the mode's install and its removal
 (check "mode off: no entry"
-       (null (assq 'display-buffer-pivot-action-control-p display-buffer-alist)))
-(display-buffer-pivot-action-mode +1)
+       (null (assq 'dp-action-control-p display-buffer-alist)))
+(dp-action-mode +1)
 (check "mode on: the entry is first when column-popup's is absent"
        (eq (caar display-buffer-alist)
-           'display-buffer-pivot-action-control-p))
+           'dp-action-control-p))
 (check "mode on: `display-buffer-base-action' is untouched"
        (equal display-buffer-base-action '(nil . nil)))
-(display-buffer-pivot-action-mode -1)
+(dp-action-mode -1)
 (check "mode off: the entry is removed"
-       (null (assq 'display-buffer-pivot-action-control-p display-buffer-alist)))
+       (null (assq 'dp-action-control-p display-buffer-alist)))
 (check "mode off: `display-buffer-base-action' is still untouched"
        (equal display-buffer-base-action '(nil . nil)))
 
 ;; enabling twice leaves one entry; disabling twice removes it once
-(display-buffer-pivot-action-mode +1)
-(display-buffer-pivot-action-mode +1)
+(dp-action-mode +1)
+(dp-action-mode +1)
 (check "enable twice: one entry"
        (= 1 (length (cl-remove-if-not
-                     (lambda (e) (eq (car e) 'display-buffer-pivot-action-control-p))
+                     (lambda (e) (eq (car e) 'dp-action-control-p))
                      display-buffer-alist))))
-(display-buffer-pivot-action-mode -1)
-(display-buffer-pivot-action-mode -1)
+(dp-action-mode -1)
+(dp-action-mode -1)
 (check "disable twice: no entry"
-       (null (assq 'display-buffer-pivot-action-control-p display-buffer-alist)))
+       (null (assq 'dp-action-control-p display-buffer-alist)))
 
 ;; the entry is consed at the front, above another package's entry
 (let ((display-buffer-alist
        (list (cons 'column-popup-display-control-p '((ignore))))))
-  (display-buffer-pivot-action-mode +1)
+  (dp-action-mode +1)
   (check "the entry is consed at the front"
          (and (eq (caar display-buffer-alist)
-                  'display-buffer-pivot-action-control-p)
+                  'dp-action-control-p)
               (eq (car (nth 1 display-buffer-alist))
                   'column-popup-display-control-p)))
-  (display-buffer-pivot-action-mode -1)
+  (dp-action-mode -1)
   (check "disabling leaves the other entry alone"
          (and (= 1 (length display-buffer-alist))
               (eq (caar display-buffer-alist)
                   'column-popup-display-control-p))))
-(display-buffer-pivot-action-mode +1)
+(dp-action-mode +1)
 
 ;;; ---- layout: w1 above w2
 (defvar w1) (defvar w2)
@@ -67,41 +67,41 @@
 ;;; ---- the split rule: under the maximum, split before asking
 (let ((windows (list w1 w2)))
   (cl-letf (((symbol-function 'aw-window-list) (lambda () windows)))
-    (let ((display-buffer-pivot-window-utility-split-maximum 3))
+    (let ((dp-window-utility-split-maximum 3))
       (check "split: two windows are under a maximum of three"
-             (display-buffer-pivot-window-utility-split-p)))
-    (let ((display-buffer-pivot-window-utility-split-maximum 2))
+             (dp-window-utility-split-p)))
+    (let ((dp-window-utility-split-maximum 2))
       (check "split: two windows are not under a maximum of two"
-             (not (display-buffer-pivot-window-utility-split-p))))
+             (not (dp-window-utility-split-p))))
     (set-window-dedicated-p w2 t)
-    (let ((display-buffer-pivot-window-utility-split-maximum 2)
-          (display-buffer-pivot-window-utility-split-maximum-exclude-dedicated t))
+    (let ((dp-window-utility-split-maximum 2)
+          (dp-window-utility-split-maximum-exclude-dedicated t))
       (check "split: a dedicated window is left out"
-             (display-buffer-pivot-window-utility-split-p)))
-    (let ((display-buffer-pivot-window-utility-split-maximum 2)
-          (display-buffer-pivot-window-utility-split-maximum-exclude-dedicated nil))
+             (dp-window-utility-split-p)))
+    (let ((dp-window-utility-split-maximum 2)
+          (dp-window-utility-split-maximum-exclude-dedicated nil))
       (check "split: a dedicated window is counted when not excluded"
-             (not (display-buffer-pivot-window-utility-split-p))))
+             (not (dp-window-utility-split-p))))
     (set-window-dedicated-p w2 nil)))
 (let ((side (display-buffer-in-side-window (get-buffer-create "*side-free*")
                                            '((side . right))))
       (windows nil))
   (setq windows (list w1 side))
   (cl-letf (((symbol-function 'aw-window-list) (lambda () windows)))
-    (let ((display-buffer-pivot-window-utility-split-maximum 2)
-          (display-buffer-pivot-window-utility-split-maximum-exclude-side t))
+    (let ((dp-window-utility-split-maximum 2)
+          (dp-window-utility-split-maximum-exclude-side t))
       (check "split: a side window is left out"
-             (display-buffer-pivot-window-utility-split-p)))
-    (let ((display-buffer-pivot-window-utility-split-maximum 2)
-          (display-buffer-pivot-window-utility-split-maximum-exclude-side nil)
-          (display-buffer-pivot-window-utility-split-maximum-exclude-dedicated nil))
+             (dp-window-utility-split-p)))
+    (let ((dp-window-utility-split-maximum 2)
+          (dp-window-utility-split-maximum-exclude-side nil)
+          (dp-window-utility-split-maximum-exclude-dedicated nil))
       (check "split: a side window is counted when not excluded"
-             (not (display-buffer-pivot-window-utility-split-p)))))
+             (not (dp-window-utility-split-p)))))
   (delete-window side))
 
 ;;; ---- the action function splits under the maximum, asks at it
 (let ((noninteractive nil)
-      (display-buffer-pivot-action-select 'auto)
+      (dp-action-select 'auto)
       (split-calls 0)
       (ask-calls 0)
       (windows (list w1 w2)))
@@ -110,17 +110,17 @@
              (lambda (_buffer _alist) (setq split-calls (1+ split-calls)) w2))
             ((symbol-function 'aw-select)
              (lambda (&rest _) (setq ask-calls (1+ ask-calls)) w2)))
-    (let ((display-buffer-pivot-window-utility-split-maximum 4))
+    (let ((dp-window-utility-split-maximum 4))
       (check "split-or-ask: under the maximum, the split decides"
-             (and (eq (display-buffer-pivot-action-split-or-ask
+             (and (eq (dp-action-split-or-ask
                        (get-buffer-create "*split*") nil)
                       w2)
                   (= split-calls 1)
                   (= ask-calls 0))))
     (setq split-calls 0)
-    (let ((display-buffer-pivot-window-utility-split-maximum 2))
+    (let ((dp-window-utility-split-maximum 2))
       (check "split-or-ask: at the maximum, the question decides"
-             (and (eq (display-buffer-pivot-action-split-or-ask
+             (and (eq (dp-action-split-or-ask
                        (get-buffer-create "*split2*") nil)
                       w2)
                   (= split-calls 0)
@@ -129,16 +129,16 @@
           ask-calls 0)
     (cl-letf (((symbol-function 'display-buffer-pop-up-window)
                (lambda (&rest _) nil)))
-      (let ((display-buffer-pivot-window-utility-split-maximum 4))
+      (let ((dp-window-utility-split-maximum 4))
         (check "split-or-ask: a failed split asks"
-               (and (eq (display-buffer-pivot-action-split-or-ask
+               (and (eq (dp-action-split-or-ask
                          (get-buffer-create "*split3*") nil)
                         w2)
                     (= split-calls 0)
                     (= ask-calls 1)))))))
 
 ;; The question path is what the rest of the checks below exercise.
-(setq display-buffer-pivot-window-utility-split-maximum 0)
+(setq dp-window-utility-split-maximum 0)
 
 ;;; ---- the rule, with the batch gate lifted and aw-select stubbed
 (let ((noninteractive nil))
@@ -152,7 +152,7 @@
         (check "plain window: the choice never runs" (= calls 0)))))
   ;; a dedicated selected window asks; a dedicated choice asks again
   (set-window-dedicated-p w1 t)
-  (let* ((display-buffer-pivot-action-select 'auto)
+  (let* ((dp-action-select 'auto)
          (w3 (split-window w2 nil 'below))
          (calls 0)
          (choices (list w2 w3)))
@@ -197,14 +197,14 @@
                     (eq (window-parameter win 'window-side) 'right))))))
   ;; t selects the chosen window
   (select-window w1)
-  (let ((display-buffer-pivot-action-select t))
+  (let ((dp-action-select t))
     (cl-letf (((symbol-function 'aw-select) (lambda (&rest _) w2)))
       (display-buffer (get-buffer-create "*t5*"))
       (check "select t: the chosen window is selected"
              (eq (selected-window) w2))))
   ;; auto selects nothing and installs nothing
   (select-window w1)
-  (let ((display-buffer-pivot-action-select 'auto)
+  (let ((dp-action-select 'auto)
         (post-command-hook nil))
     (cl-letf (((symbol-function 'aw-select) (lambda (&rest _) w2)))
       (display-buffer (get-buffer-create "*t6*"))
@@ -214,7 +214,7 @@
              (null post-command-hook))))
   ;; nil undoes a caller that selects, at the end of the command
   (select-window w1)
-  (let ((display-buffer-pivot-action-select nil)
+  (let ((dp-action-select nil)
         (post-command-hook nil))
     (cl-letf (((symbol-function 'aw-select) (lambda (&rest _) w2)))
       (let ((pop-up-windows t))
@@ -236,10 +236,10 @@
       (probe (get-buffer-create "*list-default*")))
   (set-window-buffer w2 probe)
   (select-window w1)
-  (let ((display-buffer-pivot-action-functions
+  (let ((dp-action-functions
          '(display-buffer-reuse-window
            display-buffer-same-window
-           display-buffer-pivot-action-choose-window)))
+           dp-action-choose-window)))
     (let ((win (display-buffer probe)))
       (check "the default list: one view, the existing window wins"
              (and (eq win w2)
@@ -249,9 +249,9 @@
       (probe (get-buffer-create "*list-same*")))
   (set-window-buffer w2 probe)
   (select-window w1)
-  (let ((display-buffer-pivot-action-functions
+  (let ((dp-action-functions
          '(display-buffer-same-window
-           display-buffer-pivot-action-choose-window)))
+           dp-action-choose-window)))
     (let ((win (display-buffer probe)))
       (check "a reordered list: two views, the selected window wins"
              (and (eq win w1)
@@ -261,7 +261,7 @@
 (let ((noninteractive nil)
       (calls 0))
   (set-window-dedicated-p w1 t)
-  (let ((display-buffer-pivot-action-functions '(display-buffer-reuse-window)))
+  (let ((dp-action-functions '(display-buffer-reuse-window)))
     (cl-letf (((symbol-function 'aw-select)
                (lambda (&rest _) (setq calls (1+ calls)) nil)))
       (display-buffer (get-buffer-create "*night*"))
@@ -273,7 +273,7 @@
       (pop-up-windows nil)
       (calls 0))
   (set-window-dedicated-p w2 t)
-  (display-buffer-pivot-window-prefix-pivot-other-window-prefix)
+  (dp-other-window-prefix)
   (let ((choices (list w2 w1)))
     (cl-letf (((symbol-function 'display-buffer-pop-up-window)
                (lambda (&rest _) nil))
@@ -293,14 +293,14 @@
       (pop-up-windows nil)
       (split-calls 0)
       (ask-calls 0)
-      (display-buffer-pivot-window-utility-split-maximum 4))
+      (dp-window-utility-split-maximum 4))
   (select-window w1)
   (cl-letf (((symbol-function 'aw-window-list) (lambda () (list w1 w2)))
             ((symbol-function 'display-buffer-pop-up-window)
              (lambda (_buffer _alist) (setq split-calls (1+ split-calls)) w2))
             ((symbol-function 'aw-select)
              (lambda (&rest _) (setq ask-calls (1+ ask-calls)) w1)))
-    (display-buffer-pivot-window-prefix-pivot-other-window-prefix)
+    (dp-other-window-prefix)
     (let ((result (display-buffer (get-buffer-create "*prefix-split*"))))
       (check "prefix: under the maximum, the split decides"
              (and (eq result w2)
@@ -311,8 +311,8 @@
 (let ((noninteractive nil)
       (pop-up-windows nil))
   (select-window w1)
-  (let ((display-buffer-pivot-window-prefix-pivot-other-window-select t))
-    (display-buffer-pivot-window-prefix-pivot-other-window-prefix)
+  (let ((dp-other-window-prefix-select t))
+    (dp-other-window-prefix)
     (cl-letf (((symbol-function 'display-buffer-pop-up-window)
                (lambda (&rest _) nil))
               ((symbol-function 'aw-select) (lambda (&rest _) w2)))
@@ -321,8 +321,8 @@
              (eq (selected-window) w2))))
   (setq display-buffer-overriding-action '(nil . nil))
   (select-window w1)
-  (let ((display-buffer-pivot-window-prefix-pivot-other-window-select 'auto))
-    (display-buffer-pivot-window-prefix-pivot-other-window-prefix)
+  (let ((dp-other-window-prefix-select 'auto))
+    (dp-other-window-prefix)
     (cl-letf (((symbol-function 'display-buffer-pop-up-window)
                (lambda (&rest _) nil))
               ((symbol-function 'aw-select) (lambda (&rest _) w2)))
@@ -331,8 +331,8 @@
              (eq (selected-window) w1))))
   (setq display-buffer-overriding-action '(nil . nil))
   (select-window w1)
-  (let ((display-buffer-pivot-window-prefix-pivot-other-window-select nil))
-    (display-buffer-pivot-window-prefix-pivot-other-window-prefix)
+  (let ((dp-other-window-prefix-select nil))
+    (dp-other-window-prefix)
     (cl-letf (((symbol-function 'display-buffer-pop-up-window)
                (lambda (&rest _) nil))
               ((symbol-function 'aw-select) (lambda (&rest _) w2)))
@@ -348,7 +348,7 @@
 (let ((noninteractive nil)
       (split-height-threshold 10)
       (split-width-threshold 20)
-      (display-buffer-pivot-window-utility-split-maximum 4)
+      (dp-window-utility-split-maximum 4)
       (ask-calls 0))
   (set-window-dedicated-p w1 t)
   (select-window w1)
@@ -384,9 +384,9 @@
                (not (eq (window-buffer start) probe)))))))
 
 ;;; ---- the mode's disable removes only its entry
-(display-buffer-pivot-action-mode -1)
+(dp-action-mode -1)
 (check "final: the entry is removed, `display-buffer-base-action' untouched"
-       (and (null (assq 'display-buffer-pivot-action-control-p display-buffer-alist))
+       (and (null (assq 'dp-action-control-p display-buffer-alist))
             (equal display-buffer-base-action '(nil . nil))))
 
 (princ (if (zerop nfail) "\nALL PASSED\n"
@@ -396,3 +396,6 @@
 (describe "ia display action"
   (it "runs the display checks"
     (display-ask-checks)))
+;; Local Variables:
+;; read-symbol-shorthands: (("dp-" . "disbuf-pivot-"))
+;; End:

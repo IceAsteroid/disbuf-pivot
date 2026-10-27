@@ -4,7 +4,7 @@
 ;; after it, and a named place left to the caller.
 ;; Run: make test
 (require 'man)
-(require 'display-buffer-pivot)
+(require 'disbuf-pivot)
 (require 'buttercup)
 
 (defvar nfail 0)
@@ -31,14 +31,14 @@
   (setq cp-hits (1+ cp-hits))
   (set-window-buffer w2 buffer)
   w2)
-(display-buffer-pivot-action-mode +1)
+(dp-action-mode +1)
 ;; the popup manager's mode enabled after ours: its entry is consed above
 (push (cons 'column-popup-display-control-p '(column-popup--stub-display))
       display-buffer-alist)
 (check "O1 the popup manager's entry is above the action's"
        (and (eq (caar display-buffer-alist) 'column-popup-display-control-p)
             (eq (car (nth 1 display-buffer-alist))
-                'display-buffer-pivot-action-control-p)))
+                'dp-action-control-p)))
 (let ()
   (let ((calls 0))
     (cl-letf (((symbol-function 'aw-select)
@@ -52,7 +52,7 @@
                (lambda (&rest _) (setq calls (1+ calls)) w2)))
       (display-buffer (get-buffer-create "*not-a-popup*"))
       (check "O2 another buffer reaches the entry" (= cp-hits 1))))
-  (display-buffer-pivot-action-mode -1))
+  (dp-action-mode -1))
 
 ;;; ---- O3: the entry pre-empts a caller's ACTION
 (defvar man-win (get-buffer-create "*man-win*"))
@@ -60,7 +60,7 @@
 (set-window-buffer w2 man-win)
 (let ((noninteractive nil)
       (calls 0))
-  (display-buffer-pivot-action-mode +1)
+  (dp-action-mode +1)
   (cl-letf (((symbol-function 'aw-select)
              (lambda (&rest _) (setq calls (1+ calls)) w2)))
     (select-window w1)
@@ -83,7 +83,7 @@
                     (eq (window-parameter win 'window-side) 'bottom))))))
   ;; ACTION t (the C-x 4 b shape) still asks
   (let ((calls 0)
-        (display-buffer-pivot-action-select 'auto))
+        (dp-action-select 'auto))
     (cl-letf (((symbol-function 'aw-select)
                (lambda (&rest _) (setq calls (1+ calls)) w2)))
       (check "O5 ACTION t asks instead of using the selected window"
@@ -91,7 +91,7 @@
                   (= calls 1)))))
   ;; a pop-to-buffer caller selects the chosen window
   (let ((calls 0)
-        (display-buffer-pivot-action-select 'auto))
+        (dp-action-select 'auto))
     (cl-letf (((symbol-function 'aw-select)
                (lambda (&rest _) (setq calls (1+ calls)) w2)))
       (let ((pop-up-windows t))
@@ -102,19 +102,19 @@
   ;; the three select values: w1 must be unable to display for the choice
   ;; to run at all
   (set-window-dedicated-p w1 t)
-  (let ((display-buffer-pivot-action-select t))
+  (let ((dp-action-select t))
     (cl-letf (((symbol-function 'aw-select) (lambda (&rest _) w2)))
       (check "S t: the chosen window is selected"
              (progn (display-buffer (get-buffer-create "*s1*"))
                     (eq (selected-window) w2)))))
   (select-window w1)
-  (let ((display-buffer-pivot-action-select 'auto))
+  (let ((dp-action-select 'auto))
     (cl-letf (((symbol-function 'aw-select) (lambda (&rest _) w2)))
       (check "S auto: the selection is unchanged"
              (progn (display-buffer (get-buffer-create "*s2*"))
                     (eq (selected-window) w1)))))
   (select-window w1)
-  (let ((display-buffer-pivot-action-select nil))
+  (let ((dp-action-select nil))
     (cl-letf (((symbol-function 'aw-select) (lambda (&rest _) w2)))
       (let ((pop-up-windows t))
         (pop-to-buffer (get-buffer-create "*s3*") t))
@@ -124,7 +124,7 @@
       (check "S nil: the selection returns at the end"
              (eq (selected-window) w1))))
   (set-window-dedicated-p w1 nil)
-  (display-buffer-pivot-action-mode -1))
+  (dp-action-mode -1))
 
 (princ (if (zerop nfail) "\nALL PASSED\n"
          (format "\n%d CHECK(S) FAILED\n" nfail)))
@@ -133,3 +133,6 @@
 (describe "ia display action ordering"
   (it "runs the ordering checks"
     (order-checks)))
+;; Local Variables:
+;; read-symbol-shorthands: (("dp-" . "disbuf-pivot-"))
+;; End:
