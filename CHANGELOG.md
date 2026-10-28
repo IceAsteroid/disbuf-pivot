@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Refactor: disbuf-pivot-window-prefix.el renames to
+  disbuf-pivot-prefix.el, and its feature, group, mode and private
+  helpers take the prefix name, because the library holds the tab prefix
+  as well as the window prefix.
 - Refactor: the window prompt moves to disbuf-pivot-window-utility.el
   and tab selection to disbuf-pivot-tab-bar.el, beside the code they
   use.

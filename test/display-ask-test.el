@@ -2,7 +2,7 @@
 ;; Behavioural checks for disbuf-pivot-action-mode and the re-ask
 ;; loop in disbuf-pivot-other-window-prefix.  Run: make test
 (require 'disbuf-pivot)
-(require 'dp-window-prefix)
+(require 'dp-prefix)
 (require 'buttercup)
 
 (defvar nfail 0)
@@ -380,7 +380,7 @@
              (lambda (frame &optional _minibuf)
                (setq seen frame)
                windows)))
-    (let ((result (dp-window-prefix--find-last-active-workspace)))
+    (let ((result (dp-prefix--find-last-active-workspace)))
       (check "pivot: a child frame searches its parent frame"
              (and (eq seen 'parent)
                   (memq result windows))))))

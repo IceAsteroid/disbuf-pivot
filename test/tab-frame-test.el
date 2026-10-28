@@ -2,7 +2,7 @@
 ;; Behavioural checks for the tab and frame target of
 ;; disbuf-pivot-action.  Run: make test
 (require 'disbuf-pivot)
-(require 'dp-window-prefix)
+(require 'dp-prefix)
 (require 'buttercup)
 
 (defvar nfail 0)

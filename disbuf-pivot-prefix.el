@@ -1,13 +1,21 @@
-;;; disbuf-pivot-window-prefix.el --- Pivot window prefix commands for special windows  -*- lexical-binding: t; -*-
+;;; disbuf-pivot-prefix.el --- Pivot prefix commands for windows and tabs  -*- lexical-binding: t; -*-
 
 ;; Author: IceAsteroid
 ;; URL: https://github.com/IceAsteroid/display-buffer-pivot
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;;; Commentary:
+;; The prefix commands choose where the buffer of the next command is
+;; displayed.  `disbuf-pivot-other-window-prefix' asks with `ace-window' and
+;; can split a window; `disbuf-pivot-other-tab-prefix' asks for a tab and
+;; then for a window of that tab.  They replace `other-window-prefix' and
+;; `other-tab-prefix'.
+;;
 ;; A buffer displayed by `same-window-prefix' in a dedicated window does not
-;; use the most recently used window; `other-window-prefix' does the opposite
-;; with `same-window-prefix'.  The mode solves this problem.
+;; use the most recently used window, and `other-window-prefix' does the
+;; opposite of `same-window-prefix'.  `disbuf-pivot-prefix-mode' solves
+;; that problem: a prefix issued from a utility popup acts on the last
+;; editing workspace of the frame, not on the popup.
 
 (require 'cl-lib)
 (require 'dp-window-utility)
@@ -15,11 +23,11 @@
 
 ;;; Code:
 
-(defgroup dp-window-prefix nil
-  "Pivot window prefix commands and better features."
+(defgroup dp-prefix nil
+  "Pivot prefix commands for windows and tabs."
   :group 'windows)
 
-(defun dp-window-prefix--find-last-active-workspace ()
+(defun dp-prefix--find-last-active-workspace ()
   "Return the most recently used normal editing workspace window.
 Use the selected frame, or its parent frame when the selected frame is a
 child frame.  Explicitly filters out active minibuffers and utility
@@ -37,7 +45,7 @@ windows."
                            (dp-window-utility-cannot-display-p w))))
                 frame-windows)))
 
-(defun dp-window-prefix-ad-display-buffer (orig-fun buffer &optional action)
+(defun dp-prefix--ad-display-buffer (orig-fun buffer &optional action)
   "Intercept `display-buffer' at the exact moment a window prefix executes.
 ORIG-FUN is the original `display-buffer'; BUFFER and ACTION are its
 arguments.  If a prefix rule is armed and executing from a utility popup,
@@ -46,7 +54,7 @@ logic runs."
   (if (and display-buffer-overriding-action
            (not (equal display-buffer-overriding-action '(nil . nil))) ; Ensure a prefix is actually armed
            (dp-window-utility-cannot-display-p (selected-window)))
-      (let ((target-workspace (dp-window-prefix--find-last-active-workspace)))
+      (let ((target-workspace (dp-prefix--find-last-active-workspace)))
         (if target-workspace
             ;; Execute the core display layout engine as if standing in the main workspace
             (with-selected-window target-workspace
@@ -72,7 +80,7 @@ selected again, the way `display-buffer' treats a `nil'
   :type '(choice (const :tag "Always select" t)
                  (const :tag "Let the caller decide" auto)
                  (const :tag "Never select" nil))
-  :group 'dp-window-prefix)
+  :group 'dp-prefix)
 
 (defun dp-other-window-prefix ()
   "Display the buffer of the next command in an `ace-window` selected window.
@@ -139,19 +147,20 @@ does not show the tab prompt again."
   (message "Display next command buffer in a tab..."))
 
 ;;;###autoload
-(define-minor-mode dp-window-prefix-mode
-  "Global minor mode to make window prefixes intuitive when used inside popups."
+(define-minor-mode dp-prefix-mode
+  "Global minor mode to make the prefix commands act on the last editing
+workspace when they are issued from a utility popup."
   :global t
-  :group 'windows
-  (if dp-window-prefix-mode
-      (advice-add 'display-buffer :around #'dp-window-prefix-ad-display-buffer)
-    (advice-remove 'display-buffer #'dp-window-prefix-ad-display-buffer)))
+  :group 'dp-prefix
+  (if dp-prefix-mode
+      (advice-add 'display-buffer :around #'dp-prefix--ad-display-buffer)
+    (advice-remove 'display-buffer #'dp-prefix--ad-display-buffer)))
 
 ;; Local Variables:
 ;; checkdoc-allow-quoting-nil-and-t: t
 ;; read-symbol-shorthands: (("dp-" . "disbuf-pivot-"))
 ;; End:
 
-(provide 'dp-window-prefix)
+(provide 'dp-prefix)
 
-;;; disbuf-pivot-window-prefix.el ends here
+;;; disbuf-pivot-prefix.el ends here
