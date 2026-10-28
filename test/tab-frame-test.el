@@ -263,29 +263,29 @@
 (let ((aw-dispatch-alist
        '((?s aw-split-window-vert "Split Vert Window")
          (?x aw-delete-window "Delete Window"))))
-  (let ((actions (dp-action--split-actions)))
+  (let ((actions (dp-window-utility--split-actions)))
     (check "split help: the user's split key is used"
            (string-match-p "s: Split Vert Window"
-                           (dp-action--split-help actions)))
+                           (dp-window-utility--split-help actions)))
     (check "split help: a delete action is left out"
            (not (string-match-p "Delete Window"
-                                (dp-action--split-help actions))))))
+                                (dp-window-utility--split-help actions))))))
 
 ;;; ---- the sole window's key
 (let ((aw-dispatch-alist '((?s aw-split-window-vert "Split Test"))))
   (cl-letf (((symbol-function 'read-char) (lambda (&rest _) ?x)))
     (check "sole window: any other key uses it"
-           (eq (dp-action--choose-sole-window w1) w1)))
+           (eq (dp-window-utility-choose-sole-window w1) w1)))
   (cl-letf (((symbol-function 'read-char) (lambda (&rest _) ?s))
             ((symbol-function 'aw-split-window-vert)
              (lambda (_window) w2)))
     (check "sole window: a split key uses the new window"
-           (eq (dp-action--choose-sole-window w1) w2))))
+           (eq (dp-window-utility-choose-sole-window w1) w2))))
 (let ((aw-dispatch-alist '((?s aw-split-window-vert "Split Test"))))
   (select-window w1)
   (cl-letf (((symbol-function 'read-char) (lambda (&rest _) ?x)))
     (check "sole window: an ignored selected window cancels"
-           (null (dp-action--choose-sole-window w1 t)))))
+           (null (dp-window-utility-choose-sole-window w1 t)))))
 
 ;;; ---- batch asks nothing
 (let ((noninteractive t))

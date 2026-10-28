@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Refactor: the window prompt moves to disbuf-pivot-window-utility.el
+  and tab selection to disbuf-pivot-tab-bar.el, beside the code they
+  use.
 - Fix: a nil `pop-up-frames` value no longer asks for a frame; the frame
   prompt offers top-level frames with unique names and asks again for an
   unknown name; the tab and frame window prompt honor

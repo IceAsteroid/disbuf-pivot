@@ -5,8 +5,10 @@
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;;; Commentary:
-;; The window test, the split options and the window prompt used by the
-;; display action and the window prefix commands.
+;; The window test and the split options; the window prompt that the
+;; display action and the prefix commands use; and the post-command
+;; selection that `display-buffer' uses for a `nil'
+;; `post-command-select-window' entry.
 
 ;;; Code:
 
@@ -103,6 +105,84 @@ itself when it runs, so no later command sees it.  This is the way
                 (remove-hook 'post-command-hook postfun))))
       (add-hook 'post-command-hook postfun))))
 
+(defun dp-window-utility--split-actions ()
+  "Return the `aw-dispatch-alist' entries that split a window.
+The keys and descriptions are the user's, so a rebound split key is
+shown as it is bound.  Actions that delete, swap or otherwise change
+another window are left out: this prompt only chooses where to display
+a buffer."
+  (cl-remove-if-not
+   (lambda (action)
+     (memq (nth 1 action)
+           '(aw-split-window-vert aw-split-window-horz aw-split-window-fair)))
+   aw-dispatch-alist))
+
+(defun dp-window-utility--split-help (actions)
+  "Return ACTIONS with their keys and descriptions, one per line.
+The format is the one `aw-show-dispatch-help' uses; that command ends by
+calling `ace-window', so its text is made here from the same alist."
+  (mapconcat
+   (lambda (action)
+     (cl-destructuring-bind (key function &optional description) action
+       (format "%s: %s"
+               (propertize (char-to-string key) 'face 'aw-key-face)
+               (or description function))))
+   actions
+   "\n"))
+
+(defun dp-window-utility-choose-sole-window (window &optional ignore-current)
+  "Return WINDOW, or the window a split key makes from it.
+Read one key.  A key bound to a split action in `aw-dispatch-alist'
+splits WINDOW and the new window is returned; any other key returns
+WINDOW.  The split keys and their descriptions are shown first.  When
+IGNORE-CURRENT is non-nil and WINDOW is the selected window, only a split
+key is accepted; any other key returns nil.  C-g quits."
+  (let* ((split-actions (dp-window-utility--split-actions))
+         (ignore (and ignore-current (eq window (selected-window)))))
+    (message "%s"
+             (if split-actions
+                 (format "%s\n%s"
+                         (dp-window-utility--split-help split-actions)
+                         (if ignore
+                             "Any other key cancels"
+                           "Any other key uses this window"))
+               (if ignore
+                   "Any other key cancels"
+                 "Any other key uses this window")))
+    (let* ((key (read-char))
+           (action (assq key split-actions)))
+      (if action
+          (let ((new (funcall (nth 1 action) window)))
+            (if (window-live-p new) new window))
+        (unless ignore
+          window)))))
+
+(defun dp-window-utility-choose-tab-window (alist)
+  "Ask for a window of the selected frame for ALIST.
+With one window, `disbuf-pivot-window-utility-choose-sole-window' shows the
+split keys and reads a key.  With more, `aw-select' shows the labels and
+the user's `aw-dispatch-alist' actions.  Ask again while the chosen window
+cannot display a buffer.  The `inhibit-same-window' entry of ALIST, and a
+selected window that cannot display a buffer, are excluded.  Return the
+window, or nil."
+  (let ((windows (window-list nil 'no-minibuf))
+        (ignore-current
+         (or (cdr (assq 'inhibit-same-window alist))
+             (dp-window-utility-cannot-display-p (selected-window)))))
+    (if (null (cdr windows))
+        (dp-window-utility-choose-sole-window (car windows) ignore-current)
+      (let ((aw-scope 'frame)
+            (aw-ignore-current ignore-current)
+            (aw-dispatch-when-more-than 0)
+            done win)
+        (while (and (not done)
+                    (setq win (aw-select "Display buffer in window"))
+                    (window-live-p win))
+          (cond
+           ((dp-window-utility-cannot-display-p win))
+           ((and aw-ignore-current (eq win (selected-window))))
+           (t (setq done t))))
+        win))))
 
 (provide 'dp-window-utility)
 

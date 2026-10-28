@@ -5,14 +5,19 @@
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;;; Commentary:
-;; The tab bar's candidates, history, sort and annotations, and a plain
-;; `completing-read' reader for a tab name.  The optional
-;; `disbuf-pivot-tab-bar-consult' library supplies a consult
+;; The tab bar's candidates, history, sort and annotations; the tab
+;; selection the display action uses; and a plain `completing-read'
+;; reader for a tab name.  A call that asks for a tab -- the action's tab
+;; target, the frame target when the chosen frame has more than one tab,
+;; and `disbuf-pivot-other-tab-prefix' -- reads the name here, selects an
+;; existing tab or makes a new one, and shows the buffer in its window.
+;; The optional `disbuf-pivot-tab-bar-consult' library supplies a consult
 ;; reader with previews and the mode that installs it.  The tab-switch
 ;; commands and overrides are in `ia-tab-bar-modified-consult' in the
 ;; `emacs-utils' repository, which consumes that library.
 
 (require 'cl-lib)
+(require 'subr-x)
 (require 'tab-bar)
 
 ;; Pacify the compiler for dynamic overrides
@@ -319,6 +324,33 @@ of `completing-read'."
   (interactive)
   (setq dp-tab-bar--history nil)
   (message "Tab bar history cleared."))
+
+(defun dp-tab-bar-select-tab (buffer alist name)
+  "Select the tab NAME for BUFFER, or make a new tab with that name.
+An existing name selects its tab and returns `reuse'; a new or empty
+name makes a tab and returns `tab'.  The `tab-group' entry of ALIST
+names the group of a new tab; a function there is called with BUFFER and
+ALIST."
+  (let* ((candidates (dp-tab-bar--get-candidates))
+         (match (and name (assoc-string name candidates)))
+         (index (nth 1 match))
+         (target-name (if match (nth 2 match) name)))
+    (if index
+        (progn
+          (tab-bar-select-tab index)
+          'reuse)
+      (tab-bar-new-tab)
+      (when (bound-and-true-p dp-tab-bar-sanitize-new-tab)
+        (set-window-prev-buffers (selected-window) nil)
+        (set-window-next-buffers (selected-window) nil))
+      (unless (or (null name) (string-empty-p name))
+        (tab-bar-rename-tab target-name))
+      (let ((group (alist-get 'tab-group alist)))
+        (when (functionp group)
+          (setq group (funcall group buffer alist)))
+        (when group
+          (tab-bar-change-tab-group group)))
+      'tab)))
 
 (provide 'dp-tab-bar)
 
