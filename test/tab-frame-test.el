@@ -311,25 +311,29 @@
             ((symbol-function 'tab-bar-tabs) (lambda () '(((name . "one")))))
             ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
             ((symbol-function 'aw-select) #'ask-stub))
-    (check "frame: a title selects that frame"
+    (check "frame: a name selects that frame"
            (and (eq (dp-action--frame
                      (get-buffer-create "*frame1*") nil)
                     w2)
                 (eq (cadr calls) (selected-frame))))))
 (let ((noninteractive nil)
-      (calls nil))
+      (calls nil)
+      (named nil))
   (cl-letf (((symbol-function 'dp-action--frames)
              (lambda (&rest _) (list (selected-frame))))
             ((symbol-function 'completing-read)
              (lambda (&rest _) ""))
             ((symbol-function 'display-buffer-pop-up-frame)
-             (lambda (&rest _) (setq calls (list 'new)) w2)))
-    (check "frame: an empty title makes a new frame"
+             (lambda (&rest _) (setq calls (list 'new)) w2))
+            ((symbol-function 'set-frame-parameter)
+             (lambda (&rest _) (setq named t))))
+    (check "frame: an empty name makes a new frame"
            (and (eq (dp-action--frame
                      (get-buffer-create "*frame2*")
                      '((pop-up-frames . t)))
                     w2)
-                (equal calls '(new))))))
+                (equal calls '(new))
+                (not named)))))
 (let ((noninteractive nil)
       (tab-calls nil)
       (answers (list (frame-parameter (selected-frame) 'name) "two")))
@@ -375,26 +379,26 @@
                     w2)
                 (eq focus 'frame-two)))))
 
-;;; ---- an unknown frame name asks again
+;;; ---- a new frame name makes a named frame
 (let ((noninteractive nil)
-      (answers (list "missing" (frame-parameter (selected-frame) 'name)))
-      (asks 0))
+      (popped nil)
+      (named nil))
   (cl-letf (((symbol-function 'dp-action--frames)
              (lambda (&rest _) (list (selected-frame))))
             ((symbol-function 'completing-read)
-             (lambda (&rest _)
-               (setq asks (1+ asks))
-               (pop answers)))
-            ((symbol-function 'select-frame-set-input-focus) #'ignore)
-            ((symbol-function 'tab-bar-tabs)
-             (lambda () '(((name . "one")))))
-            ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
-            ((symbol-function 'aw-select) #'ask-stub))
-    (check "frame: an unknown name asks again"
+             (lambda (&rest _) "fresh"))
+            ((symbol-function 'display-buffer-pop-up-frame)
+             (lambda (&rest _) (setq popped t) w2))
+            ((symbol-function 'set-frame-parameter)
+             (lambda (frame parameter value)
+               (setq named (list frame parameter value)))))
+    (check "frame: a new name makes a named frame"
            (and (eq (dp-action--frame
-                     (get-buffer-create "*frame-unknown*") nil)
+                     (get-buffer-create "*frame-new-name*") nil)
                     w2)
-                (= asks 2)))))
+                popped
+                (equal named
+                       (list (window-frame w2) 'name "fresh"))))))
 
 ;;; ---- the core tab action through display-buffer
 (dp-action-mode +1)

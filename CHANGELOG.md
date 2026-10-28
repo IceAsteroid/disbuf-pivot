@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add: a frame name that matches no frame makes a new frame with that
+  name; an empty name makes a new frame with the default name.
 - Doc: add AGENTS.md and TERM_AND_CONVENTION.md; define the package
   terms there, use Emacs's terms directly in the README, and keep term
   explanations out of the README.

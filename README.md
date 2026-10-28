@@ -17,12 +17,14 @@ For every buffer an earlier entry does not take, the entry:
   or child frame -- to the caller's action functions;
 - asks for a tab when the request names a tab, and for a frame when it
   names a frame.  A tab name can come from `tab-name`; a frame name is
-  read from the top-level frames.  An empty name makes a new tab or
-  frame.  A tab asks for its window when no window in it displays the
-  buffer; an existing frame asks for its tab when it has more than one,
-  then for its window, while a new frame uses its selected window.  The
-  tab and frame window prompts honor `inhibit-same-window` and can split
-  a window;
+  read from the top-level frames.  A name on the tab bar selects that
+  tab; a frame name selects its frame; an empty name makes a new tab or
+  frame; any other name makes a new tab or a new frame with that name.
+  A tab asks for its window when no window in it displays the buffer;
+  an existing frame asks for its tab when it has more than one, then for
+  its window, while a new frame uses its selected window.  The tab and
+  frame window prompts honor `inhibit-same-window` and can split a
+  window;
 - otherwise tries `disbuf-pivot-action-functions`: reuse a window that
   displays the buffer, the selected window, then split when the split
   rule allows it or ask with `ace-window`.
@@ -120,8 +122,8 @@ Commentary.  The source files use `dp-` as a shorthand for
   that needs its own action should name a place or use an overriding
   action.
 - The frame prompt offers visible top-level frames only.  A repeated
-  frame name is disambiguated, an unknown non-empty name asks again, and
-  an empty name makes a new frame.
+  frame name is disambiguated; a new name makes a new frame with that
+  name; an empty name makes a new frame.
 - `disbuf-pivot-prefix-mode` searches the selected frame, or its parent
   frame when a child frame is selected.  A window in another frame is
   not searched.  A caller's overriding action that is not a prefix is
