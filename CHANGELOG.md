@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Doc: state that a new frame uses its selected window and that an
+  existing frame asks for its tab first.
+- Doc: wrap the option and action docstrings at 80 columns.
+- Doc: describe the problem and the explicit choice in the README and
+  the main Commentary; leave option defaults to the docstrings and quote
+  the quit key in the window prompt docstrings.
 - Refactor: disbuf-pivot-window-prefix.el renames to
   disbuf-pivot-prefix.el, and its feature, group, mode and private
   helpers take the prefix name, because the library holds the tab prefix

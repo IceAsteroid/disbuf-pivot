@@ -25,27 +25,31 @@ That is a window dedicated to its buffer or a side window."
   "The number of windows under which a split is preferred over asking.
 When fewer windows than this can take a buffer's display, split a new
 one with `display-buffer-pop-up-window'; at this number or more, ask
-for a window with `ace-window' instead.  `disbuf-pivot-window-utility-split-p' makes the
-test."
+for a window with `ace-window' instead.
+`disbuf-pivot-window-utility-split-p' makes the test."
   :group 'windows
   :type 'integer)
 
 (defcustom dp-window-utility-split-maximum-exclude-side t
-  "Non-nil to leave side windows out of `disbuf-pivot-window-utility-split-maximum'."
+  "Non-nil to leave side windows out of the split count.
+See `disbuf-pivot-window-utility-split-maximum'."
   :group 'windows
   :type 'boolean)
 
 (defcustom dp-window-utility-split-maximum-exclude-dedicated t
-  "Non-nil to leave dedicated windows out of `disbuf-pivot-window-utility-split-maximum'."
+  "Non-nil to leave dedicated windows out of the split count.
+See `disbuf-pivot-window-utility-split-maximum'."
   :group 'windows
   :type 'boolean)
 
 (defun dp-window-utility-split-p ()
   "Return non-nil when a split is preferred over asking for a window.
 Count the windows `aw-window-list' offers, leaving out the side windows
-and dedicated windows that `disbuf-pivot-window-utility-split-maximum-exclude-side' and
-`disbuf-pivot-window-utility-split-maximum-exclude-dedicated' exclude, and compare the
-count with `disbuf-pivot-window-utility-split-maximum'."
+and dedicated windows that
+`disbuf-pivot-window-utility-split-maximum-exclude-side' and
+`disbuf-pivot-window-utility-split-maximum-exclude-dedicated' exclude,
+and compare the count with
+`disbuf-pivot-window-utility-split-maximum'."
   (let ((count (cl-count-if
                 (lambda (window)
                   (and (not (and dp-window-utility-split-maximum-exclude-side
@@ -62,14 +66,14 @@ SCOPE and IGNORE-CURRENT are bound to `aw-scope' and
 and defaults to \"Display buffer in window\".
 
 Ask again while the chosen window cannot display the buffer, a window
-`disbuf-pivot-window-utility-cannot-display-p' answers for.  Should the choice return the
-window it was told to ignore -- `aw-select' has none other to offer --
-choose nothing.
+`disbuf-pivot-window-utility-cannot-display-p' answers for.  Should the
+choice return the window it was told to ignore -- `aw-select' has none
+other to offer -- choose nothing.
 
 Return the chosen window, or `nil' when SCOPE is nil, in batch, while
 the minibuffer is active, when the choice is cancelled, or when no
-window was chosen.  Cancelling the choice (C-g) quits the command whose
-display it is."
+window was chosen.  Cancelling the choice (`\\[keyboard-quit]')
+quits the command whose display it is."
   (when (and scope
              (not noninteractive)
              (not (active-minibuffer-window)))
@@ -136,7 +140,8 @@ Read one key.  A key bound to a split action in `aw-dispatch-alist'
 splits WINDOW and the new window is returned; any other key returns
 WINDOW.  The split keys and their descriptions are shown first.  When
 IGNORE-CURRENT is non-nil and WINDOW is the selected window, only a split
-key is accepted; any other key returns nil.  C-g quits."
+key is accepted; any other key returns nil.  `\\[keyboard-quit]'
+quits."
   (let* ((split-actions (dp-window-utility--split-actions))
          (ignore (and ignore-current (eq window (selected-window)))))
     (message "%s"

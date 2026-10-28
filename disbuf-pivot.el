@@ -8,23 +8,22 @@
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;;; Commentary:
-;; The package is `disbuf-pivot'; `disbuf' is the short form of
-;; `display-buffer', and the pivot is the display target: a window, a
-;; tab or a frame.
-;;
 ;; When the selected window cannot display a buffer -- it is dedicated
-;; or a side window -- the window the buffer goes to is
-;; Emacs's choice, made by its default action functions, so the buffer
-;; lands where the user does not expect it.  `disbuf-pivot-action-mode'
-;; replaces that with one rule and one choice: a buffer is displayed in a
-;; window that already displays it, else in the selected window, and a
-;; buffer the selected window cannot display is displayed in a new window
-;; when `disbuf-pivot-window-utility-split-p' says a split is preferred, else in a window
-;; the user chooses with `ace-window' -- choosing again while the chosen
-;; window is one that cannot display it either.  A call that asks for a
-;; tab or a frame is asked which one, or a new one, and the window inside
-;; it is chosen with `aw-select' after a window that already displays the
-;; buffer is used.
+;; or a side window -- the window the buffer goes to is Emacs's choice,
+;; made by its default action functions, so the buffer can go where the
+;; user does not expect it.  `disbuf-pivot-action-mode' replaces that
+;; with one rule and one explicit choice.  By default the action
+;; functions display a buffer in a window that already displays it,
+;; else in the selected window, and a buffer the selected window cannot
+;; display in a new window when `disbuf-pivot-window-utility-split-p'
+;; says a split is preferred, else in a window the user chooses with
+;; `ace-window' -- choosing again while the chosen window cannot display
+;; it either.  `disbuf-pivot-action-functions' changes the functions and
+;; their order, so the rule is the user's.  A call that asks for a tab
+;; or a frame is asked which one, or a new one.  A tab asks for its
+;; window when no window in it displays the buffer; an existing frame
+;; asks for its tab when it has more than one, then for its window,
+;; while a new frame uses its selected window.
 ;;
 ;; The mode conses one `display-buffer-alist' entry at the front of the
 ;; list, matched by every buffer an earlier entry does not take.  Priority
@@ -75,8 +74,9 @@ selected again, the way `display-buffer' treats a `nil'
 Each is called with the buffer and the action alist, and the first one
 that returns a window decides the display.  The default shows a buffer
 in a window that already displays it, else in the selected window, and
-otherwise splits a new window when `disbuf-pivot-window-utility-split-p' says a split is
-preferred, or asks for a window with `ace-window'.
+otherwise splits a new window when
+`disbuf-pivot-window-utility-split-p' says a split is preferred, or
+asks for a window with `ace-window'.
 
 An action function can be added, dropped or reordered here: putting
 `display-buffer-same-window' first gives a buffer that another window
@@ -287,11 +287,11 @@ or a frame that is not a child frame is asked about instead."
 
 (defun dp-action-choose-window (buffer alist)
   "Display BUFFER in a window chosen with `ace-window'.
-`disbuf-pivot-window-utility-choose-display-window' asks for the window: it asks again while the
-chosen window cannot display BUFFER, and chooses nothing when no window
-can answer.  The chosen window displays BUFFER through
-`window--display-buffer' with ALIST, so the caller's entries -- a
-`body-function' among them -- still take effect.  What
+`disbuf-pivot-window-utility-choose-display-window' asks for the
+window: it asks again while the chosen window cannot display BUFFER,
+and chooses nothing when no window can answer.  The chosen window
+displays BUFFER through `window--display-buffer' with ALIST, so the
+caller's entries -- a `body-function' among them -- still take effect.  What
 `disbuf-pivot-action-select' does with the selected window is its
 own choice: `t' selects the chosen window, `auto' selects nothing, and
 `nil' selects nothing now and selects the answering window again at the
@@ -312,8 +312,9 @@ end of the command."
 
 (defun dp-action-split-or-ask (buffer alist)
   "Display BUFFER in a new window when a split is preferred, else ask.
-`disbuf-pivot-window-utility-split-p' decides through `disbuf-pivot-window-utility-split-maximum' and its
-two exclusion options.  When it says a split is preferred, try
+`disbuf-pivot-window-utility-split-p' decides through
+`disbuf-pivot-window-utility-split-maximum' and its two exclusion
+options.  When it says a split is preferred, try
 `display-buffer-pop-up-window'; when that fails, and when the count is
 not under the maximum, ask with `disbuf-pivot-action-choose-window'.
 BUFFER and ALIST are passed to whichever of the two displays it."
@@ -363,11 +364,11 @@ list, matching every buffer an earlier entry does not take.  Priority is
 list order: a popup manager's rule takes precedence for its buffers when
 that manager's mode is enabled after this one, since its entry is then
 consed above.  The entry's function displays a buffer in a window that
-already displays it or in the selected window, then splits a new window
-when `disbuf-pivot-window-utility-split-p' says a split is preferred, and otherwise asks
-for a window with `ace-window', by the action functions
-`disbuf-pivot-action-functions' lists in order.  A call that asks
-for a tab or a frame -- through `tab-name', `tab-group',
+already displays it or in the selected window, then splits a new
+window when `disbuf-pivot-window-utility-split-p' says a split is
+preferred, and otherwise asks for a window with `ace-window', by the
+action functions `disbuf-pivot-action-functions' lists in order.  A
+call that asks for a tab or a frame -- through `tab-name', `tab-group',
 `pop-up-frames', or a tab or frame action function in its ACTION -- is
 asked which one, or a new one, then asked for the window inside it with
 `aw-select', where the split dispatch keys split the chosen window.  A
