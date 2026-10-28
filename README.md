@@ -1,10 +1,12 @@
 # disbuf-pivot
 
 `display-buffer` picks a window from an action list.  The pick is
-convenient, but it is made without the user: a utility popup, a dedicated
-or side window, a buffer visible in another tab or frame, and a repeated
-tab or frame title can all send the buffer to a place the user did not
-choose.  disbuf-pivot replaces that implicit pick with an explicit one.
+convenient, but it is made without the user: a dedicated window, a side
+window, or a child frame; a buffer visible in another tab or frame; and a
+repeated tab or frame name can all send the buffer to a place the user
+did not choose.  disbuf-pivot replaces that implicit pick with an
+explicit one.  It calls the window, tab, or frame where the buffer is
+displayed the *pivot*.
 
 ## The display action
 
@@ -19,7 +21,7 @@ For every buffer an earlier entry does not take, the entry:
   frame.  A tab asks for its window when no window in it displays the
   buffer; an existing frame asks for its tab when it has more than one,
   then for its window, while a new frame uses its selected window.  The
-  tab and frame window prompt honor `inhibit-same-window` and can split
+  tab and frame window prompts honor `inhibit-same-window` and can split
   a window;
 - otherwise tries `disbuf-pivot-action-functions`: reuse a window that
   displays the buffer, the selected window, then split when the split
@@ -34,11 +36,11 @@ display the buffer; the remaining `display-buffer` rules then apply.
 ## The prefix commands
 
 `disbuf-pivot-prefix-mode` advises `display-buffer`.  When a prefix has
-armed `display-buffer-overriding-action` and the selected window cannot
+set `display-buffer-overriding-action` and the selected window cannot
 display the buffer, the mode runs the display in the most recently used
 editing window of the frame, or of the parent frame when a child frame is
 selected.  The built-in prefixes then act on the editing window, not on
-the popup.
+the selected window that cannot display the buffer.
 
 The package also provides two prefix commands:
 
@@ -112,17 +114,18 @@ Commentary.  The source files use `dp-` as a shorthand for
 ## Scope
 
 - The package displays a buffer the caller supplies; it does not make a
-  buffer and does not manage popup windows.
+  buffer and does not manage pop-up windows.
 - It installs one `display-buffer-alist` entry; a caller's
   `display-buffer-overriding-action` is consulted before it.  A caller
   that needs its own action should name a place or use an overriding
   action.
 - The frame prompt offers visible top-level frames only.  A repeated
-  frame title is disambiguated, an unknown non-empty name asks again,
-  and an empty name makes a new frame.
-- The pivot mode searches the selected frame or its parent frame.  A
-  utility popup in another frame is not found.  A caller's overriding
-  action that is not a prefix is pivoted as well.
+  frame name is disambiguated, an unknown non-empty name asks again, and
+  an empty name makes a new frame.
+- `disbuf-pivot-prefix-mode` searches the selected frame, or its parent
+  frame when a child frame is selected.  A window in another frame is
+  not searched.  A caller's overriding action that is not a prefix is
+  pivoted as well.
 - When no other window can display the buffer, the other-window prefix
   can use the selected window rather than fail.
 - The tests cover the action, the prefix commands, the tab and frame
@@ -134,7 +137,9 @@ Commentary.  The source files use `dp-` as a shorthand for
 `make check` byte-compiles the package and runs the buttercup tests under
 `test/`.  `make check-consult` compiles and checks the optional consult
 library.  `make checkdoc` reports the docstring findings.  The test files
-keep the `check` harness they had in `emacs-utils`.
+keep the `check` harness they had in `emacs-utils`.  The repository
+guidance is in `AGENTS.md`; the terms and commit rules are in
+`TERM_AND_CONVENTION.md`.
 
 ## Naming and license
 

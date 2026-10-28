@@ -5,17 +5,19 @@
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;;; Commentary:
-;; The prefix commands choose where the buffer of the next command is
-;; displayed.  `disbuf-pivot-other-window-prefix' asks with `ace-window' and
-;; can split a window; `disbuf-pivot-other-tab-prefix' asks for a tab and
-;; then for a window of that tab.  They replace `other-window-prefix' and
+;; The prefix commands set `display-buffer-overriding-action' for the next
+;; command, as `other-window-prefix' does.
+;; `disbuf-pivot-other-window-prefix' asks with `ace-window' and can split
+;; a window; `disbuf-pivot-other-tab-prefix' asks for a tab and then for a
+;; window of that tab.  They replace `other-window-prefix' and
 ;; `other-tab-prefix'.
 ;;
 ;; A buffer displayed by `same-window-prefix' in a dedicated window does not
 ;; use the most recently used window, and `other-window-prefix' does the
 ;; opposite of `same-window-prefix'.  `disbuf-pivot-prefix-mode' solves
-;; that problem: a prefix issued from a utility popup acts on the last
-;; editing workspace of the frame, not on the popup.
+;; that problem: a prefix issued from a window that cannot display a buffer
+;; acts on the last editing window of the frame, or of the parent frame when
+;; a child frame is selected, not on that window.
 
 (require 'cl-lib)
 (require 'dp-window-utility)
@@ -28,10 +30,9 @@
   :group 'windows)
 
 (defun dp-prefix--find-last-active-workspace ()
-  "Return the most recently used normal editing workspace window.
-Use the selected frame, or its parent frame when the selected frame is a
-child frame.  Explicitly filters out active minibuffers and utility
-windows."
+  "Return the most recently used editing window of the selected frame.
+Use the parent frame when the selected frame is a child frame.  Leave out
+minibuffer windows and windows that cannot display a buffer."
   (let* ((frame (selected-frame))
          (parent (frame-parent frame))
          (frame-windows (window-list (or parent frame) 'no-minibuf)))
@@ -39,28 +40,28 @@ windows."
     (setq frame-windows (sort frame-windows
                               (lambda (w1 w2)
                                 (> (window-use-time w1) (window-use-time w2)))))
-    ;; Iteratively scan for the first genuine text/code editing workspace
+    ;; Scan for the first editing window
     (cl-find-if (lambda (w)
                   (not (or (window-minibuffer-p w)
                            (dp-window-utility-cannot-display-p w))))
                 frame-windows)))
 
 (defun dp-prefix--ad-display-buffer (orig-fun buffer &optional action)
-  "Intercept `display-buffer' at the exact moment a window prefix executes.
+  "Intercept `display-buffer' before a window prefix runs.
 ORIG-FUN is the original `display-buffer'; BUFFER and ACTION are its
-arguments.  If a prefix rule is armed and executing from a utility popup,
-dynamically pivots focus to the true code workspace before the display
-logic runs."
+arguments.  If a prefix rule is set and the selected window cannot
+display a buffer, run the display with the last editing window of the
+frame selected."
   (if (and display-buffer-overriding-action
-           (not (equal display-buffer-overriding-action '(nil . nil))) ; Ensure a prefix is actually armed
+           (not (equal display-buffer-overriding-action '(nil . nil))) ; Ensure a prefix actually sets an action
            (dp-window-utility-cannot-display-p (selected-window)))
       (let ((target-workspace (dp-prefix--find-last-active-workspace)))
         (if target-workspace
-            ;; Execute the core display layout engine as if standing in the main workspace
+            ;; Run the display with the editing window selected
             (with-selected-window target-workspace
               (funcall orig-fun buffer action))
           (funcall orig-fun buffer action)))
-    ;; Fall back to standard behavior if no prefix is live or we are in a normal window
+    ;; Fall back to the standard behavior when no prefix action is set
     (funcall orig-fun buffer action)))
 
 (defcustom dp-other-window-prefix-select t
@@ -148,8 +149,9 @@ does not show the tab prompt again."
 
 ;;;###autoload
 (define-minor-mode dp-prefix-mode
-  "Global minor mode to make the prefix commands act on the last editing
-workspace when they are issued from a utility popup."
+  "Global minor mode for prefix commands from a dedicated or side window.
+Such a prefix acts on the last editing window of the frame, or of the
+parent frame when a child frame is selected."
   :global t
   :group 'dp-prefix
   (if dp-prefix-mode

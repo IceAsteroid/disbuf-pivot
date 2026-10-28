@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Doc: add AGENTS.md and TERM_AND_CONVENTION.md; define the package
+  terms there, use Emacs's terms directly in the README, and keep term
+  explanations out of the README.
 - Doc: state that a new frame uses its selected window and that an
   existing frame asks for its tab first.
 - Doc: wrap the option and action docstrings at 80 columns.
