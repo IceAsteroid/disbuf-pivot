@@ -149,6 +149,6 @@ guidance is in `AGENTS.md`; the terms and commit rules are in
 
 ## Naming and license
 
-The package name shortens display-buffer pivot; `disbuf` is not an Emacs
-term.  The repository keeps the full name `display-buffer-pivot`.
+The package and repository are `disbuf-pivot`; the name shortens
+display-buffer pivot, and `disbuf` is not an Emacs term.
 GPL-3.0-or-later; see `LICENSE`.

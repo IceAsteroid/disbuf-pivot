@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Doc: the package and repository are `disbuf-pivot`; the source URL
+  headers name the new repository, and the local checkout directory
+  remains `display-buffer-pivot` until it is renamed.
 - Add: `disbuf-pivot-other-frame-prefix`, the frame prefix command; it
   asks for a frame, its tab when it has more than one, and its window.
 - Add: a frame name that matches no frame makes a new frame with that

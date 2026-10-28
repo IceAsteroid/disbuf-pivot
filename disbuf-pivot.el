@@ -1,7 +1,7 @@
 ;;; disbuf-pivot.el --- Choose where to display a buffer the selected window cannot display  -*- lexical-binding: t; -*-
 
 ;; Author: IceAsteroid
-;; URL: https://github.com/IceAsteroid/display-buffer-pivot
+;; URL: https://github.com/IceAsteroid/disbuf-pivot
 ;; Version: 0.0.0
 ;; Package-Requires: ((emacs "31.1") (ace-window "0"))
 ;; Keywords: convenience, windows

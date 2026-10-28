@@ -1,7 +1,7 @@
 ;;; disbuf-pivot-window-utility.el --- Small snippets for window management  -*- lexical-binding: t; -*-
 
 ;; Author: IceAsteroid
-;; URL: https://github.com/IceAsteroid/display-buffer-pivot
+;; URL: https://github.com/IceAsteroid/disbuf-pivot
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;;; Commentary:
