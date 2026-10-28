@@ -344,6 +344,47 @@
            (eq (selected-window) w1)))
   (setq display-buffer-overriding-action '(nil . nil)))
 
+;;; ---- the prefix's ace scope and same-window exclusion
+(let ((noninteractive nil)
+      (pop-up-windows nil)
+      (ask-scope nil)
+      (ask-ignore nil))
+  (select-window w1)
+  (cl-letf (((symbol-function 'display-buffer-pop-up-window)
+             (lambda (&rest _) nil))
+            ((symbol-function 'aw-select)
+             (lambda (&rest _)
+               (setq ask-scope aw-scope
+                     ask-ignore aw-ignore-current)
+               w2)))
+    (unwind-protect
+        (progn
+          (dp-other-window-prefix)
+          (display-buffer
+           (get-buffer-create "*prefix-scope*")
+           '(nil (reusable-frames . visible)
+             (inhibit-same-window . t)))
+          (check "prefix: the ace scope follows reusable-frames"
+                 (eq ask-scope 'visible))
+          (check "prefix: inhibit-same-window reaches ace-window"
+                 ask-ignore))
+      (setq display-buffer-overriding-action '(nil . nil)))))
+
+;;; ---- the pivot searches the parent frame
+(let ((windows (list w1 w2))
+      (seen nil))
+  (cl-letf (((symbol-function 'selected-frame) (lambda () 'child))
+            ((symbol-function 'frame-parent)
+             (lambda (frame) (and (eq frame 'child) 'parent)))
+            ((symbol-function 'window-list)
+             (lambda (frame &optional _minibuf)
+               (setq seen frame)
+               windows)))
+    (let ((result (dp-window-prefix--find-last-active-workspace)))
+      (check "pivot: a child frame searches its parent frame"
+             (and (eq seen 'parent)
+                  (memq result windows))))))
+
 ;;; ---- the default list reaches the split rule
 (let ((noninteractive nil)
       (split-height-threshold 10)

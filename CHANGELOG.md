@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Fix: a nil `pop-up-frames` value no longer asks for a frame; the frame
+  prompt offers top-level frames with unique names and asks again for an
+  unknown name; the tab and frame window prompt honor
+  `inhibit-same-window`; the other-window prefix follows
+  `reusable-frames` and `inhibit-same-window`; the pivot searches the
+  parent frame of a child frame.
 - Doc: the optional consult library names `consult` in its Commentary
   and the README; only disbuf-pivot.el carries the package
   `Package-Requires`.

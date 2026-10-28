@@ -116,7 +116,7 @@ before the caller's ACTION argument, the special action,
   "Return `tab', `frame' or nil for the display ALIST and its ACTION.
 A tab is asked for through `tab-name' or `tab-group', or through
 `display-buffer-in-tab' or `display-buffer-in-new-tab' in the ACTION.  A
-frame is asked for through `pop-up-frames', or through
+frame is asked for through a non-nil `pop-up-frames', or through
 `display-buffer-pop-up-frame' or `display-buffer-use-some-frame' in the
 ACTION.  A child frame named by `parent-frame' is left to the caller."
   (let ((functions (dp-action--functions
@@ -127,7 +127,7 @@ ACTION.  A child frame named by `parent-frame' is left to the caller."
           (memq 'display-buffer-in-tab functions)
           (memq 'display-buffer-in-new-tab functions))
       'tab)
-     ((or (assq 'pop-up-frames alist)
+     ((or (alist-get 'pop-up-frames alist)
           (memq 'display-buffer-pop-up-frame functions)
           (memq 'display-buffer-use-some-frame functions))
       'frame))))
@@ -205,36 +205,49 @@ calling `ace-window', so its text is made here from the same alist."
    actions
    "\n"))
 
-(defun dp-action--choose-sole-window (window)
+(defun dp-action--choose-sole-window (window &optional ignore-current)
   "Return WINDOW, or the window a split key makes from it.
 Read one key.  A key bound to a split action in `aw-dispatch-alist'
 splits WINDOW and the new window is returned; any other key returns
-WINDOW.  The split keys and their descriptions are shown first.  C-g
-quits."
-  (let* ((split-actions (dp-action--split-actions)))
+WINDOW.  The split keys and their descriptions are shown first.  When
+IGNORE-CURRENT is non-nil and WINDOW is the selected window, only a split
+key is accepted; any other key returns nil.  C-g quits."
+  (let* ((split-actions (dp-action--split-actions))
+         (ignore (and ignore-current (eq window (selected-window)))))
     (message "%s"
              (if split-actions
-                 (format "%s\nAny other key uses this window"
-                         (dp-action--split-help split-actions))
-               "Any other key uses this window"))
+                 (format "%s\n%s"
+                         (dp-action--split-help split-actions)
+                         (if ignore
+                             "Any other key cancels"
+                           "Any other key uses this window"))
+               (if ignore
+                   "Any other key cancels"
+                 "Any other key uses this window")))
     (let* ((key (read-char))
            (action (assq key split-actions)))
       (if action
           (let ((new (funcall (nth 1 action) window)))
             (if (window-live-p new) new window))
-        window))))
+        (unless ignore
+          window)))))
 
-(defun dp-action--choose-tab-window ()
-  "Ask for a window of the selected frame.
-With one window, `disbuf-pivot-action--choose-sole-window' shows
-the split keys and reads a key.  With more, `aw-select' shows the labels
-and the user's `aw-dispatch-alist' actions.  Ask again while the chosen
-window cannot display a buffer.  Return the window, or nil."
-  (let ((windows (window-list nil 'no-minibuf)))
+(defun dp-action--choose-tab-window (alist)
+  "Ask for a window of the selected frame for ALIST.
+With one window, `disbuf-pivot-action--choose-sole-window' shows the
+split keys and reads a key.  With more, `aw-select' shows the labels and
+the user's `aw-dispatch-alist' actions.  Ask again while the chosen window
+cannot display a buffer.  The `inhibit-same-window' entry of ALIST, and a
+selected window that cannot display a buffer, are excluded.  Return the
+window, or nil."
+  (let ((windows (window-list nil 'no-minibuf))
+        (ignore-current
+         (or (cdr (assq 'inhibit-same-window alist))
+             (dp-window-utility-cannot-display-p (selected-window)))))
     (if (null (cdr windows))
-        (dp-action--choose-sole-window (car windows))
+        (dp-action--choose-sole-window (car windows) ignore-current)
       (let ((aw-scope 'frame)
-            (aw-ignore-current nil)
+            (aw-ignore-current ignore-current)
             (aw-dispatch-when-more-than 0)
             done win)
         (while (and (not done)
@@ -242,23 +255,28 @@ window cannot display a buffer.  Return the window, or nil."
                     (window-live-p win))
           (cond
            ((dp-window-utility-cannot-display-p win))
+           ((and aw-ignore-current (eq win (selected-window))))
            (t (setq done t))))
         win))))
 
 (defun dp-action--display-in-tab (buffer alist)
   "Display BUFFER in the selected tab, reusing a window or asking.
 A window of the selected frame that already displays BUFFER is used
-first.  Otherwise ask with `disbuf-pivot-action--choose-tab-window'
-and display BUFFER in the chosen or split window.  ALIST is passed to
+first, unless ALIST's `inhibit-same-window' names the selected window.
+Otherwise ask with `disbuf-pivot-action--choose-tab-window' and display
+BUFFER in the chosen or split window.  ALIST is passed to
 `window--display-buffer'.  Return the window and `reuse' as a cons, or
 nil when no window was chosen."
-  (if-let* ((window (get-buffer-window buffer (selected-frame))))
-      (progn
+  (let ((window (get-buffer-window buffer (selected-frame)))
+        (inhibit-same (alist-get 'inhibit-same-window alist)))
+    (if (and window
+             (not (and inhibit-same (eq window (selected-window)))))
+        (progn
+          (window--display-buffer buffer window 'reuse alist)
+          (cons window 'reuse))
+      (when-let* ((window (dp-action--choose-tab-window alist)))
         (window--display-buffer buffer window 'reuse alist)
-        (cons window 'reuse))
-    (when-let* ((window (dp-action--choose-tab-window)))
-      (window--display-buffer buffer window 'reuse alist)
-      (cons window 'reuse))))
+        (cons window 'reuse)))))
 
 (defun dp-action-tab (buffer alist)
   "Display BUFFER in a tab, asking which and in which window.
@@ -296,12 +314,14 @@ window and the tab's type as a cons, `reuse' for an existing tab and
 (defun dp-action--frames (alist)
   "Return the live visible frames the frame prompt can offer.
 A `frame-predicate' entry in ALIST filters them, as it does for
-`display-buffer-use-some-frame'."
+`display-buffer-use-some-frame'.  A child frame is not offered: it is a
+popup, not a frame the user chooses for a buffer."
   (let ((frames
          (cl-remove-if-not
           (lambda (frame)
             (and (frame-live-p frame)
                  (frame-visible-p frame)
+                 (not (frame-parent frame))
                  (not (eq (frame-parameter frame 'minibuffer) 'only))))
           (frame-list)))
         (predicate (alist-get 'frame-predicate alist)))
@@ -309,30 +329,43 @@ A `frame-predicate' entry in ALIST filters them, as it does for
         (cl-remove-if-not predicate frames)
       frames)))
 
+(defun dp-action--frame-candidates (frames)
+  "Return (NAME . FRAME) for FRAMES, disambiguating repeated names.
+A frame without a name is `frame'; a repeated name gets `<N>' appended,
+as the tab reader does for repeated tab names."
+  (let ((counts (make-hash-table :test 'equal))
+        (result nil))
+    (dolist (frame frames)
+      (let* ((raw (or (frame-parameter frame 'name) "frame"))
+             (count (gethash raw counts 0))
+             (name (if (= count 0) raw (format "%s<%d>" raw (1+ count)))))
+        (puthash raw (1+ count) counts)
+        (push (cons name frame) result)))
+    (nreverse result)))
+
 (defun dp-action--frame (buffer alist)
   "Display BUFFER in a frame, asking which frame and which window.
-Read a frame title; an empty title makes a new frame through
+Read a frame name; an empty name makes a new frame through
 `display-buffer-pop-up-frame', which keeps the `pop-up-frame-parameters'
-of ALIST.  A title that names a frame selects it, giving focus unless
-`inhibit-switch-frame'; when that frame has more than one tab, read a
-tab name and select or make that tab.  Then reuse a window of the tab
-that already displays BUFFER, or ask with `aw-select', where the split
-dispatch keys split the chosen window.  Return the window, or nil in
-batch or while the minibuffer is active."
+of ALIST.  A name that names a frame selects it, giving focus unless
+`inhibit-switch-frame'; an unknown non-empty name asks again.  When that
+frame has more than one tab, read a tab name and select or make that tab.
+Then reuse a window of the tab that already displays BUFFER, or ask with
+`aw-select', where the split dispatch keys split the chosen window.
+Return the window, or nil in batch or while the minibuffer is active."
   (when (and (not noninteractive)
              (not (active-minibuffer-window)))
     (let* ((frames (dp-action--frames alist))
+           (candidates (dp-action--frame-candidates frames))
+           (names (mapcar #'car candidates))
            (name (completing-read
-                  "Frame (empty for a new frame): "
-                  (delq nil (mapcar (lambda (frame)
-                                      (frame-parameter frame 'name))
-                                    frames))
-                  nil nil))
-           (frame (and (not (string-empty-p name))
-                       (cl-find name frames
-                                :key (lambda (frame)
-                                       (frame-parameter frame 'name))
-                                :test #'equal))))
+                  "Frame (empty for a new frame): " names nil nil))
+           (frame (cdr (assoc-string name candidates))))
+      (while (and (not (string-empty-p name)) (not frame))
+        (setq name (completing-read
+                    "Frame name not found; try again (empty for a new frame): "
+                    names nil nil)
+              frame (cdr (assoc-string name candidates))))
       (if frame
           (progn
             (if (alist-get 'inhibit-switch-frame alist)

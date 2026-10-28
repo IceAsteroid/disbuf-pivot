@@ -36,6 +36,9 @@
   (check "target: pop-up-frames asks for a frame"
          (eq (dp-action--target '((pop-up-frames . t)))
              'frame)))
+(let ((dp-action--action nil))
+  (check "target: pop-up-frames nil asks for no frame"
+         (null (dp-action--target '((pop-up-frames . nil))))))
 (let ((dp-action--action '((display-buffer-pop-up-frame))))
   (check "target: a frame action asks for a frame"
          (eq (dp-action--target nil) 'frame)))
@@ -46,6 +49,24 @@
        '((display-buffer-in-child-frame) (parent-frame . nil))))
   (check "target: a child frame is left to the caller"
          (null (dp-action--target '((parent-frame))))))
+
+;;; ---- the frames the prompt may offer
+(let ((parent (selected-frame))
+      (child 'fake-child))
+  (cl-letf (((symbol-function 'frame-list)
+             (lambda () (list parent child)))
+            ((symbol-function 'frame-live-p)
+             (lambda (frame) (memq frame (list parent child))))
+            ((symbol-function 'frame-visible-p)
+             (lambda (_frame) t))
+            ((symbol-function 'frame-parent)
+             (lambda (frame) (and (eq frame child) parent)))
+            ((symbol-function 'frame-parameter)
+             (lambda (frame parameter)
+               (and (eq parameter 'name)
+                    (if (eq frame child) "child" "parent")))))
+    (check "frames: a child frame is not offered"
+           (equal (dp-action--frames nil) (list parent)))))
 
 ;;; ---- stubs
 (defvar tab-calls)
@@ -222,6 +243,22 @@
     (check "tab: a duplicate name selects its own tab"
            (equal (nreverse tab-calls) '((select 2))))))
 
+;;; ---- inhibit-same-window in the tab path
+(let ((noninteractive nil)
+      (aw-called 0))
+  (select-window w1)
+  (cl-letf (((symbol-function 'get-buffer-window)
+             (lambda (&rest _) (selected-window)))
+            ((symbol-function 'aw-select)
+             (lambda (&rest _)
+               (setq aw-called (1+ aw-called))
+               w2)))
+    (let ((result (dp-action--display-in-tab
+                   (get-buffer-create "*tab-inhibit*")
+                   '((inhibit-same-window . t)))))
+      (check "tab: inhibit-same-window declines the selected window"
+             (and (eq (car-safe result) w2) (= aw-called 1))))))
+
 ;;; ---- the split help follows the user's dispatch list
 (let ((aw-dispatch-alist
        '((?s aw-split-window-vert "Split Vert Window")
@@ -244,6 +281,11 @@
              (lambda (_window) w2)))
     (check "sole window: a split key uses the new window"
            (eq (dp-action--choose-sole-window w1) w2))))
+(let ((aw-dispatch-alist '((?s aw-split-window-vert "Split Test"))))
+  (select-window w1)
+  (cl-letf (((symbol-function 'read-char) (lambda (&rest _) ?x)))
+    (check "sole window: an ignored selected window cancels"
+           (null (dp-action--choose-sole-window w1 t)))))
 
 ;;; ---- batch asks nothing
 (let ((noninteractive t))
@@ -309,6 +351,50 @@
                      (get-buffer-create "*frame4*") nil)
                     w2)
                 (equal (nreverse tab-calls) '((select 2)))))))
+
+;;; ---- a repeated frame name selects the second frame
+(let ((noninteractive nil)
+      (frames (list 'frame-one 'frame-two))
+      (focus nil))
+  (cl-letf (((symbol-function 'dp-action--frames)
+             (lambda (&rest _) frames))
+            ((symbol-function 'frame-parameter)
+             (lambda (_frame parameter)
+               (and (eq parameter 'name) "same")))
+            ((symbol-function 'completing-read)
+             (lambda (&rest _) "same<2>"))
+            ((symbol-function 'select-frame-set-input-focus)
+             (lambda (frame) (setq focus frame)))
+            ((symbol-function 'tab-bar-tabs)
+             (lambda () '(((name . "one")))))
+            ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
+            ((symbol-function 'aw-select) #'ask-stub))
+    (check "frame: a repeated name selects the second frame"
+           (and (eq (dp-action--frame
+                     (get-buffer-create "*frame-dup*") nil)
+                    w2)
+                (eq focus 'frame-two)))))
+
+;;; ---- an unknown frame name asks again
+(let ((noninteractive nil)
+      (answers (list "missing" (frame-parameter (selected-frame) 'name)))
+      (asks 0))
+  (cl-letf (((symbol-function 'dp-action--frames)
+             (lambda (&rest _) (list (selected-frame))))
+            ((symbol-function 'completing-read)
+             (lambda (&rest _)
+               (setq asks (1+ asks))
+               (pop answers)))
+            ((symbol-function 'select-frame-set-input-focus) #'ignore)
+            ((symbol-function 'tab-bar-tabs)
+             (lambda () '(((name . "one")))))
+            ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
+            ((symbol-function 'aw-select) #'ask-stub))
+    (check "frame: an unknown name asks again"
+           (and (eq (dp-action--frame
+                     (get-buffer-create "*frame-unknown*") nil)
+                    w2)
+                (= asks 2)))))
 
 ;;; ---- the core tab action through display-buffer
 (dp-action-mode +1)

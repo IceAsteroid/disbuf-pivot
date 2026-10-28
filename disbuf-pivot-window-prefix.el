@@ -20,9 +20,13 @@
   :group 'windows)
 
 (defun dp-window-prefix--find-last-active-workspace ()
-  "Return the most recently used normal editing workspace window on this frame.
-Explicitly filters out active minibuffers and utility windows."
-  (let ((frame-windows (window-list)))
+  "Return the most recently used normal editing workspace window.
+Use the selected frame, or its parent frame when the selected frame is a
+child frame.  Explicitly filters out active minibuffers and utility
+windows."
+  (let* ((frame (selected-frame))
+         (parent (frame-parent frame))
+         (frame-windows (window-list (or parent frame) 'no-minibuf)))
     ;; Sort windows by their last interaction timestamp (newest first)
     (setq frame-windows (sort frame-windows
                               (lambda (w1 w2)
@@ -77,7 +81,14 @@ You can bind this command to override `other-window-prefix' keybinding."
   (interactive)
   (display-buffer-override-next-command
    (lambda (buffer alist)
-     (let (window type)
+     (let ((aw-scope (cl-case (cdr (assq 'reusable-frames alist))
+                       ((nil) 'frame)
+                       (visible 'visible)
+                       ((0 t) 'global)))
+           (aw-ignore-current
+            (or (cdr (assq 'inhibit-same-window alist))
+                (dp-window-utility-cannot-display-p (selected-window))))
+           window type)
        ;; If the current windows are less than the maximum amount, try
        ;; to pop up a new window, which also respects split
        ;; thresholds.  If it hits the limit, OR if popping up fails,
