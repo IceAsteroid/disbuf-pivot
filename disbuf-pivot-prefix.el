@@ -1,4 +1,4 @@
-;;; disbuf-pivot-prefix.el --- Pivot prefix commands for windows and tabs  -*- lexical-binding: t; -*-
+;;; disbuf-pivot-prefix.el --- Pivot prefix commands for windows, tabs and frames  -*- lexical-binding: t; -*-
 
 ;; Author: IceAsteroid
 ;; URL: https://github.com/IceAsteroid/display-buffer-pivot
@@ -7,10 +7,12 @@
 ;;; Commentary:
 ;; The prefix commands set `display-buffer-overriding-action' for the next
 ;; command, as `other-window-prefix' does.
-;; `disbuf-pivot-other-window-prefix' asks with `ace-window' and can split
-;; a window; `disbuf-pivot-other-tab-prefix' asks for a tab and then for a
-;; window of that tab.  They replace `other-window-prefix' and
-;; `other-tab-prefix'.
+;; `disbuf-pivot-other-window-prefix' asks with `ace-window' and can split a
+;; window; `disbuf-pivot-other-tab-prefix' asks for a tab and then for a
+;; window of that tab; `disbuf-pivot-other-frame-prefix' asks for a frame,
+;; its tab when it has more than one, and its window; a new frame name
+;; makes a new frame with that name.  They replace `other-window-prefix',
+;; `other-tab-prefix' and `other-frame-prefix'.
 ;;
 ;; A buffer displayed by `same-window-prefix' in a dedicated window does not
 ;; use the most recently used window, and `other-window-prefix' does the
@@ -26,7 +28,7 @@
 ;;; Code:
 
 (defgroup dp-prefix nil
-  "Pivot prefix commands for windows and tabs."
+  "Pivot prefix commands for windows, tabs and frames."
   :group 'windows)
 
 (defun dp-prefix--find-last-active-workspace ()
@@ -146,6 +148,32 @@ does not show the tab prompt again."
            (cons (car-safe result) (or (cdr-safe result) 'reuse))))))
    nil "[other-tab]")
   (message "Display next command buffer in a tab..."))
+
+(defvar dp-other-frame-prefix--in-progress nil
+  "Non-nil while `disbuf-pivot-other-frame-prefix' chooses its display.")
+
+(defun dp-other-frame-prefix ()
+  "Display the buffer of the next command in a frame.
+The next buffer is the buffer displayed by the next command invoked
+immediately after this command.  Read a frame name: an existing name
+selects that frame, and when it has more than one tab, read a tab name
+and select or make that tab.  A new name makes a new frame with that
+name; an empty name makes a new frame with the default name and uses
+its selected window.  In an existing frame, a window that already
+displays the buffer is used; otherwise ask with `ace-window', where the
+split dispatch keys split the chosen window.
+
+A display made while the frame step runs is left to the other display
+rules, so it does not show the frame prompt again."
+  (interactive)
+  (display-buffer-override-next-command
+   (lambda (buffer alist)
+     (if dp-other-frame-prefix--in-progress
+         (cons nil 'reuse)
+       (let ((dp-other-frame-prefix--in-progress t))
+         (cons (dp-action--frame buffer alist) 'reuse))))
+   nil "[other-frame]")
+  (message "Display next command buffer in a frame..."))
 
 ;;;###autoload
 (define-minor-mode dp-prefix-mode

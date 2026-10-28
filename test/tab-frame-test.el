@@ -479,6 +479,29 @@
              (and (eq win w2)
                   (= calls 1)
                   (eq (window-buffer w2) (get-buffer "*outer*")))))))
+;;; ---- the other-frame prefix
+(let ((noninteractive nil))
+  (cl-letf (((symbol-function 'dp-action--frame)
+             (lambda (_buffer _alist) w2)))
+    (dp-other-frame-prefix)
+    (let ((win (display-buffer (get-buffer-create "*ofp*"))))
+      (check "other-frame prefix: the frame step decides"
+             (and (eq win w2)
+                  (eq (window-buffer w2) (get-buffer "*ofp*")))))))
+(let ((noninteractive nil)
+      (calls 0))
+  (cl-letf (((symbol-function 'dp-action--frame)
+             (lambda (_buffer _alist)
+               (setq calls (1+ calls))
+               (when (= calls 1)
+                 (display-buffer (get-buffer-create "*nested-frame*")))
+               w2)))
+    (dp-other-frame-prefix)
+    (let ((win (display-buffer (get-buffer-create "*outer-frame*"))))
+      (check "other-frame prefix: a nested display does not ask again"
+             (and (eq win w2)
+                  (= calls 1)
+                  (eq (window-buffer w2) (get-buffer "*outer-frame*")))))))
 (dp-action-mode -1)
 
 (princ (if (zerop nfail) "\nALL PASSED\n"

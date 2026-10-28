@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add: `disbuf-pivot-other-frame-prefix`, the frame prefix command; it
+  asks for a frame, its tab when it has more than one, and its window.
 - Add: a frame name that matches no frame makes a new frame with that
   name; an empty name makes a new frame with the default name.
 - Doc: add AGENTS.md and TERM_AND_CONVENTION.md; define the package

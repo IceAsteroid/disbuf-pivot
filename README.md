@@ -44,7 +44,7 @@ editing window of the frame, or of the parent frame when a child frame is
 selected.  The built-in prefixes then act on the editing window, not on
 the selected window that cannot display the buffer.
 
-The package also provides two prefix commands:
+The package also provides three prefix commands:
 
 - `disbuf-pivot-other-window-prefix` splits when the split rule allows
   it, and otherwise asks with `ace-window`.  It follows
@@ -55,6 +55,9 @@ The package also provides two prefix commands:
   buffer, and otherwise reads a tab name and asks for its window.  A
   display made while the tab is made is left to the other display rules,
   so the tab prompt does not run again.
+- `disbuf-pivot-other-frame-prefix` asks for a frame, its tab when it has
+  more than one, and its window.  A new frame name makes a new frame with
+  that name; an empty name makes a new frame with the default name.
 
 ## The tab reader
 
@@ -87,8 +90,9 @@ require the libraries and enable the modes:
 (disbuf-pivot-prefix-mode +1)
 ```
 
-The commands are `disbuf-pivot-other-window-prefix` and
-`disbuf-pivot-other-tab-prefix`.  The optional consult reader is a
+The commands are `disbuf-pivot-other-window-prefix`,
+`disbuf-pivot-other-tab-prefix`, and
+`disbuf-pivot-other-frame-prefix`.  The optional consult reader is a
 separate library:
 
 ```elisp
