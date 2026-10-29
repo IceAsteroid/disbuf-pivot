@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Doc: wrap the frame prompt docstring at 80 columns.
 - Doc: the package and repository are `disbuf-pivot`; the source URL
   headers name the new repository, and the local checkout directory
   remains `display-buffer-pivot` until it is renamed.

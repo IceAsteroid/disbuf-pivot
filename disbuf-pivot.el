@@ -244,10 +244,11 @@ Read a frame name; an existing name selects that frame, a new name makes
 a new frame with that name, and an empty name makes a new frame with
 the default name.  Selecting a frame gives it focus unless
 `inhibit-switch-frame'.  When that frame has more than one tab, read a
-tab name and select or make that tab.  Then reuse a window of the tab that already displays BUFFER,
-or ask with `aw-select', where the split dispatch keys split the chosen
-window.  ALIST is passed to the display functions.  Return the
-window, or nil in batch or while the minibuffer is active."
+tab name and select or make that tab.  Then reuse a window of the tab
+that already displays BUFFER, or ask with `aw-select', where the split
+dispatch keys split the chosen window.  ALIST is passed to the display
+functions.  Return the window, or nil in batch or while the minibuffer
+is active."
   (when (and (not noninteractive)
              (not (active-minibuffer-window)))
     (let* ((frames (dp-action--frames alist))
