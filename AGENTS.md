@@ -16,8 +16,9 @@ and frame prompts, and the mode.
 `disbuf-pivot-window-utility.el` holds the window test, the split
 options, the prompt that reads a window, and the post-command selection.
 
-`disbuf-pivot-prefix.el` holds the prefix commands, the pivot mode, and
-its advice.
+`disbuf-pivot-prefix.el` holds the prefix commands and the global minor
+mode that remaps the built-in prefix commands.  The mode uses a keymap;
+it does not advise `display-buffer`.
 
 `disbuf-pivot-tab-bar.el` holds the tab candidates, history, tab
 selection, and the plain tab reader.

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add: `disbuf-pivot-same-window-prefix`; `disbuf-pivot-prefix-mode`
+  remaps the four built-in prefix commands to the package commands and
+  no longer advises `display-buffer`.  The prefix commands choose the
+  last editing window themselves.
 - Doc: wrap the frame prompt docstring at 80 columns.
 - Doc: the package and repository are `disbuf-pivot`; the source URL
   headers name the new repository, and the local checkout directory

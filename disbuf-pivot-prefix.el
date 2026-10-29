@@ -6,20 +6,18 @@
 
 ;;; Commentary:
 ;; The prefix commands set `display-buffer-overriding-action' for the next
-;; command, as `other-window-prefix' does.
-;; `disbuf-pivot-other-window-prefix' asks with `ace-window' and can split a
-;; window; `disbuf-pivot-other-tab-prefix' asks for a tab and then for a
+;; command, as `other-window-prefix' does.  They choose the last editing
+;; window of the frame, or of the parent frame when a child frame is
+;; selected, when the selected window cannot display a buffer.
+;; `disbuf-pivot-same-window-prefix' displays in that window;
+;; `disbuf-pivot-other-window-prefix' asks with `ace-window' and can split
+;; a window; `disbuf-pivot-other-tab-prefix' asks for a tab and then for a
 ;; window of that tab; `disbuf-pivot-other-frame-prefix' asks for a frame,
 ;; its tab when it has more than one, and its window; a new frame name
-;; makes a new frame with that name.  They replace `other-window-prefix',
-;; `other-tab-prefix' and `other-frame-prefix'.
-;;
-;; A buffer displayed by `same-window-prefix' in a dedicated window does not
-;; use the most recently used window, and `other-window-prefix' does the
-;; opposite of `same-window-prefix'.  `disbuf-pivot-prefix-mode' solves
-;; that problem: a prefix issued from a window that cannot display a buffer
-;; acts on the last editing window of the frame, or of the parent frame when
-;; a child frame is selected, not on that window.
+;; makes a new frame with that name.  `disbuf-pivot-prefix-mode' remaps
+;; `same-window-prefix', `other-window-prefix', `other-tab-prefix', and
+;; `other-frame-prefix' to these commands; it does not advise
+;; `display-buffer'.
 
 (require 'cl-lib)
 (require 'dp-window-utility)
@@ -31,7 +29,7 @@
   "Pivot prefix commands for windows, tabs and frames."
   :group 'windows)
 
-(defun dp-prefix--find-last-active-workspace ()
+(defun dp-prefix--find-last-active-window ()
   "Return the most recently used editing window of the selected frame.
 Use the parent frame when the selected frame is a child frame.  Leave out
 minibuffer windows and windows that cannot display a buffer."
@@ -48,23 +46,18 @@ minibuffer windows and windows that cannot display a buffer."
                            (dp-window-utility-cannot-display-p w))))
                 frame-windows)))
 
-(defun dp-prefix--ad-display-buffer (orig-fun buffer &optional action)
-  "Intercept `display-buffer' before a window prefix runs.
-ORIG-FUN is the original `display-buffer'; BUFFER and ACTION are its
-arguments.  If a prefix rule is set and the selected window cannot
-display a buffer, run the display with the last editing window of the
-frame selected."
-  (if (and display-buffer-overriding-action
-           (not (equal display-buffer-overriding-action '(nil . nil))) ; Ensure a prefix actually sets an action
-           (dp-window-utility-cannot-display-p (selected-window)))
-      (let ((target-workspace (dp-prefix--find-last-active-workspace)))
-        (if target-workspace
-            ;; Run the display with the editing window selected
-            (with-selected-window target-workspace
-              (funcall orig-fun buffer action))
-          (funcall orig-fun buffer action)))
-    ;; Fall back to the standard behavior when no prefix action is set
-    (funcall orig-fun buffer action)))
+(defun dp-prefix--with-editing-window (function)
+  "Call FUNCTION with the editing window selected when one is needed.
+When the selected window cannot display a buffer, select the most
+recently used editing window of the frame, or of the parent frame when a
+child frame is selected.  FUNCTION runs with that window selected, and
+the previous selection is restored when it returns."
+  (let ((window (if (dp-window-utility-cannot-display-p (selected-window))
+                    (dp-prefix--find-last-active-window)
+                  (selected-window))))
+    (if (and window (not (eq window (selected-window))))
+        (with-selected-window window (funcall function))
+      (funcall function))))
 
 (defcustom dp-other-window-prefix-select t
   "Whether the window `aw-select' returns is selected.
@@ -86,42 +79,67 @@ selected again, the way `display-buffer' treats a `nil'
   :group 'dp-prefix)
 
 (defun dp-other-window-prefix ()
-  "Display the buffer of the next command in an `ace-window` selected window.
-
-You can bind this command to override `other-window-prefix' keybinding."
+  "Display the buffer of the next command in an `ace-window' selected window.
+`disbuf-pivot-prefix-mode' remaps `other-window-prefix' to this command."
   (interactive)
   (display-buffer-override-next-command
    (lambda (buffer alist)
-     (let ((aw-scope (cl-case (cdr (assq 'reusable-frames alist))
-                       ((nil) 'frame)
-                       (visible 'visible)
-                       ((0 t) 'global)))
-           (aw-ignore-current
-            (or (cdr (assq 'inhibit-same-window alist))
-                (dp-window-utility-cannot-display-p (selected-window))))
-           window type)
-       ;; If the current windows are less than the maximum amount, try
-       ;; to pop up a new window, which also respects split
-       ;; thresholds.  If it hits the limit, OR if popping up fails,
-       ;; fall back to ace-window.
-       (if (and (dp-window-utility-split-p)
-                (setq window (display-buffer-pop-up-window buffer alist)))
-           (setq type 'window)
-         (let ((choice (dp-window-utility-choose-display-window aw-scope aw-ignore-current
-                                                "Ace Window")))
-           (if choice
-               (progn
-                 (setq window choice
-                       type 'reuse)
-                 (let ((answering (selected-window)))
-                   (window--display-buffer buffer choice 'reuse alist)
-                   (pcase dp-other-window-prefix-select
-                     ('t (select-window choice))
-                     ('nil (dp-window-utility-select-window-post-command answering)))))
-             (setq window nil))))
-       (cons window type)))
-     nil "[disbuf-pivot-other-window-prefix]")
+     (let (choice answering result)
+       (setq result
+             (dp-prefix--with-editing-window
+              (lambda ()
+                (let ((aw-scope (cl-case (cdr (assq 'reusable-frames alist))
+                                  ((nil) 'frame)
+                                  (visible 'visible)
+                                  ((0 t) 'global)))
+                      (aw-ignore-current
+                       (or (cdr (assq 'inhibit-same-window alist))
+                           (dp-window-utility-cannot-display-p
+                            (selected-window))))
+                      window type)
+                  ;; If the current windows are less than the maximum amount,
+                  ;; try to pop up a new window, which also respects split
+                  ;; thresholds.  If it hits the limit, OR if popping up
+                  ;; fails, fall back to ace-window.
+                  (if (and (dp-window-utility-split-p)
+                           (setq window
+                                 (display-buffer-pop-up-window buffer alist)))
+                      (setq type 'window)
+                    (setq choice (dp-window-utility-choose-display-window
+                                  aw-scope aw-ignore-current "Ace Window"))
+                    (if choice
+                        (progn
+                          (setq window choice
+                                type 'reuse
+                                answering (selected-window))
+                          (window--display-buffer buffer choice 'reuse alist))
+                      (setq window nil)))
+                  (cons window type)))))
+       (when choice
+         (pcase dp-other-window-prefix-select
+           ('t (select-window choice))
+           ('nil (dp-window-utility-select-window-post-command answering))))
+       result))
+   nil "[disbuf-pivot-other-window-prefix]")
   (message "Display next command buffer in a window via ace-window..."))
+
+(defun dp-same-window-prefix ()
+  "Display the buffer of the next command in the same window.
+When the selected window cannot display a buffer, use the most recently
+used editing window of the frame, or of the parent frame when a child
+frame is selected.  `disbuf-pivot-prefix-mode' remaps
+`same-window-prefix' to this command."
+  (interactive)
+  (display-buffer-override-next-command
+   (lambda (buffer alist)
+     (dp-prefix--with-editing-window
+      (lambda ()
+        (let ((alist (cons '(inhibit-same-window . nil) alist)))
+          (cons (or (display-buffer-same-window buffer alist)
+                    (display-buffer-use-some-window buffer alist))
+                'reuse)))))
+   nil "[same-window]")
+  (message "Display next command buffer in the same window..."))
 
 (defvar dp-other-tab-prefix--in-progress nil
   "Non-nil while `disbuf-pivot-other-tab-prefix' chooses the tab and its window.")
@@ -141,11 +159,13 @@ does not show the tab prompt again."
   (interactive)
   (display-buffer-override-next-command
    (lambda (buffer alist)
-     (if dp-other-tab-prefix--in-progress
-         (cons nil 'reuse)
-       (let ((dp-other-tab-prefix--in-progress t))
-         (let ((result (dp-action-tab buffer alist)))
-           (cons (car-safe result) (or (cdr-safe result) 'reuse))))))
+     (dp-prefix--with-editing-window
+      (lambda ()
+        (if dp-other-tab-prefix--in-progress
+            (cons nil 'reuse)
+          (let ((dp-other-tab-prefix--in-progress t))
+            (let ((result (dp-action-tab buffer alist)))
+              (cons (car-safe result) (or (cdr-safe result) 'reuse))))))))
    nil "[other-tab]")
   (message "Display next command buffer in a tab..."))
 
@@ -168,23 +188,32 @@ rules, so it does not show the frame prompt again."
   (interactive)
   (display-buffer-override-next-command
    (lambda (buffer alist)
-     (if dp-other-frame-prefix--in-progress
-         (cons nil 'reuse)
-       (let ((dp-other-frame-prefix--in-progress t))
-         (cons (dp-action--frame buffer alist) 'reuse))))
+     (dp-prefix--with-editing-window
+      (lambda ()
+        (if dp-other-frame-prefix--in-progress
+            (cons nil 'reuse)
+          (let ((dp-other-frame-prefix--in-progress t))
+            (cons (dp-action--frame buffer alist) 'reuse))))))
    nil "[other-frame]")
   (message "Display next command buffer in a frame..."))
 
+(defvar-keymap dp-prefix-mode-map
+  :doc "Keymap for `disbuf-pivot-prefix-mode'."
+  "<remap> <same-window-prefix>" #'dp-same-window-prefix
+  "<remap> <other-window-prefix>" #'dp-other-window-prefix
+  "<remap> <other-tab-prefix>" #'dp-other-tab-prefix
+  "<remap> <other-frame-prefix>" #'dp-other-frame-prefix)
+
 ;;;###autoload
 (define-minor-mode dp-prefix-mode
-  "Global minor mode for prefix commands from a dedicated or side window.
-Such a prefix acts on the last editing window of the frame, or of the
-parent frame when a child frame is selected."
+  "Global minor mode that remaps the built-in prefix commands.
+When enabled, the bindings of `same-window-prefix',
+`other-window-prefix', `other-tab-prefix', and `other-frame-prefix'
+run the package's prefix commands.  A built-in command invoked by name
+or from a menu is unchanged."
   :global t
-  :group 'dp-prefix
-  (if dp-prefix-mode
-      (advice-add 'display-buffer :around #'dp-prefix--ad-display-buffer)
-    (advice-remove 'display-buffer #'dp-prefix--ad-display-buffer)))
+  :keymap dp-prefix-mode-map
+  :group 'dp-prefix)
 
 ;; Local Variables:
 ;; checkdoc-allow-quoting-nil-and-t: t

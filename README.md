@@ -37,15 +37,23 @@ display the buffer; the remaining `display-buffer` rules then apply.
 
 ## The prefix commands
 
-`disbuf-pivot-prefix-mode` advises `display-buffer`.  When a prefix has
-set `display-buffer-overriding-action` and the selected window cannot
-display the buffer, the mode runs the display in the most recently used
-editing window of the frame, or of the parent frame when a child frame is
-selected.  The built-in prefixes then act on the editing window, not on
-the selected window that cannot display the buffer.
+`disbuf-pivot-prefix-mode` is a global minor mode that remaps the
+built-in prefix commands to the package commands.  While it is enabled,
+the bindings of `same-window-prefix`, `other-window-prefix`,
+`other-tab-prefix`, and `other-frame-prefix` run
+`disbuf-pivot-same-window-prefix`,
+`disbuf-pivot-other-window-prefix`,
+`disbuf-pivot-other-tab-prefix`, and
+`disbuf-pivot-other-frame-prefix`.  When the mode is disabled, the
+built-in bindings return.  The mode changes key bindings; a built-in
+command invoked by name or from a menu is unchanged.
 
-The package also provides three prefix commands:
+The package provides four prefix commands.  Each uses the most recently
+used editing window of the frame, or of the parent frame when a child
+frame is selected, when the selected window cannot display a buffer.
 
+- `disbuf-pivot-same-window-prefix` displays the buffer in the same
+  window.
 - `disbuf-pivot-other-window-prefix` splits when the split rule allows
   it, and otherwise asks with `ace-window`.  It follows
   `reusable-frames`, passes `inhibit-same-window` as the ignored window,
@@ -90,7 +98,8 @@ require the libraries and enable the modes:
 (disbuf-pivot-prefix-mode +1)
 ```
 
-The commands are `disbuf-pivot-other-window-prefix`,
+The commands are `disbuf-pivot-same-window-prefix`,
+`disbuf-pivot-other-window-prefix`,
 `disbuf-pivot-other-tab-prefix`, and
 `disbuf-pivot-other-frame-prefix`.  The optional consult reader is a
 separate library:
@@ -128,10 +137,10 @@ Commentary.  The source files use `dp-` as a shorthand for
 - The frame prompt offers visible top-level frames only.  A repeated
   frame name is disambiguated; a new name makes a new frame with that
   name; an empty name makes a new frame.
-- `disbuf-pivot-prefix-mode` searches the selected frame, or its parent
-  frame when a child frame is selected.  A window in another frame is
-  not searched.  A caller's overriding action that is not a prefix is
-  pivoted as well.
+- The prefix commands search the selected frame, or its parent frame
+  when a child frame is selected.  A window in another frame is not
+  searched.  A caller's overriding action that is not one of these
+  commands is not changed.
 - When no other window can display the buffer, the other-window prefix
   can use the selected window rather than fail.
 - The tests cover the action, the prefix commands, the tab and frame

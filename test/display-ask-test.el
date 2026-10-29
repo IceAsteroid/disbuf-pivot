@@ -1,6 +1,6 @@
 ;;; -*- lexical-binding: t; -*-
-;; Behavioural checks for disbuf-pivot-action-mode and the re-ask
-;; loop in disbuf-pivot-other-window-prefix.  Run: make test
+;; Behavioural checks for disbuf-pivot-action-mode and the prefix
+;; commands.  Run: make test
 (require 'disbuf-pivot)
 (require 'dp-prefix)
 (require 'buttercup)
@@ -380,7 +380,7 @@
              (lambda (frame &optional _minibuf)
                (setq seen frame)
                windows)))
-    (let ((result (dp-prefix--find-last-active-workspace)))
+    (let ((result (dp-prefix--find-last-active-window)))
       (check "pivot: a child frame searches its parent frame"
              (and (eq seen 'parent)
                   (memq result windows))))))
@@ -423,6 +423,47 @@
                     (eq (window-buffer win) probe)))
         (check "one window, ACTION t: the selected window keeps its buffer"
                (not (eq (window-buffer start) probe)))))))
+
+;;; ---- the prefix mode remaps the built-in prefix commands
+(dp-prefix-mode +1)
+(dolist (pair '((same-window-prefix . dp-same-window-prefix)
+                (other-window-prefix . dp-other-window-prefix)
+                (other-tab-prefix . dp-other-tab-prefix)
+                (other-frame-prefix . dp-other-frame-prefix)))
+  (check (format "prefix mode: remaps %s" (car pair))
+         (eq (lookup-key dp-prefix-mode-map
+                         (vector 'remap (car pair)))
+             (cdr pair))))
+(check "prefix mode: C-x 4 1 runs the same-window command"
+       (eq (key-binding (kbd "C-x 4 1")) #'dp-same-window-prefix))
+(check "prefix mode: C-x 4 4 runs the other-window command"
+       (eq (key-binding (kbd "C-x 4 4")) #'dp-other-window-prefix))
+(check "prefix mode: C-x t t runs the other-tab command"
+       (eq (key-binding (kbd "C-x t t")) #'dp-other-tab-prefix))
+(check "prefix mode: C-x 5 5 runs the other-frame command"
+       (eq (key-binding (kbd "C-x 5 5")) #'dp-other-frame-prefix))
+(dp-prefix-mode -1)
+(check "prefix mode off: C-x 4 1 runs the built-in command"
+       (eq (key-binding (kbd "C-x 4 1")) #'same-window-prefix))
+
+;;; ---- the same-window prefix chooses the editing window itself
+(let ((noninteractive nil)
+      (pop-up-windows nil))
+  (delete-other-windows)
+  (let* ((editing (selected-window))
+         (dedicated (split-window editing nil 'below))
+         (probe (get-buffer-create "*same-window-prefix*")))
+    (select-window dedicated)
+    (set-window-dedicated-p dedicated t)
+    (dp-same-window-prefix)
+    (let ((window (display-buffer probe)))
+      (check "same-window prefix: the editing window gets the buffer"
+             (and (eq window editing)
+                  (eq (window-buffer editing) probe)))
+      (check "same-window prefix: the dedicated window keeps its buffer"
+             (not (eq (window-buffer dedicated) probe))))
+    (set-window-dedicated-p dedicated nil)
+    (delete-window dedicated)))
 
 ;;; ---- the mode's disable removes only its entry
 (dp-action-mode -1)
