@@ -31,8 +31,10 @@ For every buffer an earlier entry does not take, the entry:
 
 `disbuf-pivot-action-functions` changes the functions and their order.
 `disbuf-pivot-action-select` says whether the window chosen with
-`ace-window` is selected.  The action declines in batch, while the
-minibuffer is active, when the user cancels, and when no window can
+`ace-window` is selected.  The window prompt shows `? for actions` when
+`aw-dispatch-alist` binds `?`, and says in the echo area when a chosen
+window cannot display the buffer.  The action declines in batch, while
+the minibuffer is active, when the user cancels, and when no window can
 display the buffer; the remaining `display-buffer` rules then apply.
 
 ## The prefix commands

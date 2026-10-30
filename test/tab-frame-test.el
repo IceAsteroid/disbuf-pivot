@@ -125,7 +125,7 @@
                   (eq (cdr-safe result) 'tab)
                   (equal (nreverse tab-calls) '((new) (group "work")))))))
   (check "tab: the window question uses the tab frame and reads a key"
-         (equal ask-seen '("Display buffer in window" frame nil 0 nil))))
+         (equal ask-seen '("Display buffer in window (? for actions)" frame nil 0 nil))))
 (let ((noninteractive nil)
       (tab-calls nil))
   (cl-letf (((symbol-function 'tab-bar-tabs) #'tab-stub-tabs)
@@ -163,19 +163,32 @@
 
 ;;; ---- a chosen window that cannot display asks again
 (let ((noninteractive nil)
-      (calls 0))
+      (calls 0)
+      (mode-lines nil)
+      (messages nil))
   (set-window-dedicated-p w1 t)
   (cl-letf (((symbol-function 'tab-bar-tabs) #'tab-stub-tabs)
             ((symbol-function 'tab-bar-select-tab) #'ignore)
             ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
             ((symbol-function 'aw-select)
-             (lambda (&rest _)
+             (lambda (mode-line)
+               (push mode-line mode-lines)
                (setq calls (1+ calls))
-               (if (= calls 1) w1 w2))))
+               (if (= calls 1) w1 w2)))
+            ((symbol-function 'message)
+             (lambda (format-string &rest args)
+               (push (apply #'format format-string args) messages))))
     (let ((result (dp-action-tab
                    (get-buffer-create "*tab-ask*") '((tab-name . "two")))))
       (check "tab: a dedicated choice asks again"
-             (and (eq (car-safe result) w2) (= calls 2)))))
+             (and (eq (car-safe result) w2) (= calls 2)))
+      (check "tab: the repeat uses a separate mode line"
+             (equal (nreverse mode-lines)
+                    '("Display buffer in window (? for actions)"
+                      "Choose another window (? for actions)")))
+      (check "tab: the repeat explains in the echo area"
+             (equal (nreverse messages)
+                    '("disbuf-pivot: the chosen window cannot display the buffer; choose another")))))
   (set-window-dedicated-p w1 nil))
 
 ;;; ---- the tab package's reader supplies the name
@@ -316,6 +329,7 @@
                      (get-buffer-create "*frame1*") nil)
                     w2)
                 (eq (cadr calls) (selected-frame))))))
+
 (let ((noninteractive nil)
       (calls nil)
       (named nil))

@@ -106,7 +106,7 @@ selected again, the way `display-buffer' treats a `nil'
                                  (display-buffer-pop-up-window buffer alist)))
                       (setq type 'window)
                     (setq choice (dp-window-utility-choose-display-window
-                                  aw-scope aw-ignore-current "Ace Window"))
+                                  aw-scope aw-ignore-current))
                     (if choice
                         (progn
                           (setq window choice
