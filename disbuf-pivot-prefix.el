@@ -122,7 +122,8 @@ selected again, the way `display-buffer' treats a `nil'
            ('nil (dp-window-utility-select-window-post-command answering))))
        result))
    nil "[disbuf-pivot-other-window-prefix]")
-  (message "Display next command buffer in a window via ace-window..."))
+  (message
+   "disbuf-pivot: Display next command buffer in a window via ace-window..."))
 
 (defun dp-same-window-prefix ()
   "Display the buffer of the next command in the same window.
@@ -140,7 +141,8 @@ frame is selected.  `disbuf-pivot-prefix-mode' remaps
                     (display-buffer-use-some-window buffer alist))
                 'reuse)))))
    nil "[same-window]")
-  (message "Display next command buffer in the same window..."))
+  (message
+   "disbuf-pivot: Display next command buffer in the same window..."))
 
 (defvar dp-other-tab-prefix--in-progress nil
   "Non-nil while `disbuf-pivot-other-tab-prefix' chooses the tab and its window.")
@@ -168,7 +170,8 @@ does not show the tab prompt again."
             (let ((result (dp-action-tab buffer alist)))
               (cons (car-safe result) (or (cdr-safe result) 'reuse))))))))
    nil "[other-tab]")
-  (message "Display next command buffer in a tab..."))
+  (message
+   "disbuf-pivot: Display next command buffer in a tab..."))
 
 (defvar dp-other-frame-prefix--in-progress nil
   "Non-nil while `disbuf-pivot-other-frame-prefix' chooses its display.")
@@ -196,7 +199,8 @@ rules, so it does not show the frame prompt again."
           (let ((dp-other-frame-prefix--in-progress t))
             (cons (dp-action--frame buffer alist) 'reuse))))))
    nil "[other-frame]")
-  (message "Display next command buffer in a frame..."))
+  (message
+   "disbuf-pivot: Display next command buffer in a frame..."))
 
 (defvar-keymap dp-prefix-mode-map
   :doc "Keymap for `disbuf-pivot-prefix-mode'."

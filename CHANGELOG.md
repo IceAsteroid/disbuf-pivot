@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add: the four prefix commands identify the package as `disbuf-pivot`
+  in the echo area.
 - Add: the frame prompt asks for a tab in an existing frame when
   `tab-bar-mode` is active, even when the frame has one tab, so a new tab
   can be made.
