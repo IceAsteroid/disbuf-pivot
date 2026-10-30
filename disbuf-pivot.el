@@ -2,7 +2,7 @@
 
 ;; Author: IceAsteroid
 ;; URL: https://github.com/IceAsteroid/disbuf-pivot
-;; Version: 0.0.0
+;; Version: 0.1.0
 ;; Package-Requires: ((emacs "31.1") (ace-window "0"))
 ;; Keywords: convenience, windows
 ;; SPDX-License-Identifier: GPL-3.0-or-later
