@@ -21,10 +21,10 @@ For every buffer an earlier entry does not take, the entry:
   tab; a frame name selects its frame; an empty name makes a new tab or
   frame; any other name makes a new tab or a new frame with that name.
   A tab asks for its window when no window in it displays the buffer;
-  an existing frame asks for its tab when it has more than one, then for
-  its window, while a new frame uses its selected window.  The tab and
-  frame window prompts honor `inhibit-same-window` and can split a
-  window;
+  an existing frame asks for its tab when `tab-bar-mode` is active or it
+  has more than one, then for its window, while a new frame uses its
+  selected window.  The tab and frame window prompts honor
+  `inhibit-same-window` and can split a window;
 - otherwise tries `disbuf-pivot-action-functions`: reuse a window that
   displays the buffer, the selected window, then split when the split
   rule allows it or ask with `ace-window`.
@@ -65,9 +65,10 @@ frame is selected, when the selected window cannot display a buffer.
   buffer, and otherwise reads a tab name and asks for its window.  A
   display made while the tab is made is left to the other display rules,
   so the tab prompt does not run again.
-- `disbuf-pivot-other-frame-prefix` asks for a frame, its tab when it has
-  more than one, and its window.  A new frame name makes a new frame with
-  that name; an empty name makes a new frame with the default name.
+- `disbuf-pivot-other-frame-prefix` asks for a frame, then for its tab
+  when `tab-bar-mode` is active or the frame has more than one, and then
+  for its window.  A new frame name makes a new frame with that name; an
+  empty name makes a new frame with the default name.
 
 ## The tab reader
 

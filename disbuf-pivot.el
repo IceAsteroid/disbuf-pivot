@@ -238,17 +238,25 @@ as the tab reader does for repeated tab names."
         (push (cons name frame) result)))
     (nreverse result)))
 
+(defun dp-action--ask-tab-p ()
+  "Return non-nil when the frame prompt should read a tab name.
+Ask when `tab-bar-mode' is active, so the prompt can make a new tab even
+when the frame has one tab.  Also ask when the frame already has more
+than one tab."
+  (or (bound-and-true-p tab-bar-mode)
+      (> (length (tab-bar-tabs)) 1)))
+
 (defun dp-action--frame (buffer alist)
   "Display BUFFER in a frame, asking which frame and which window.
 Read a frame name; an existing name selects that frame, a new name makes
 a new frame with that name, and an empty name makes a new frame with
 the default name.  Selecting a frame gives it focus unless
-`inhibit-switch-frame'.  When that frame has more than one tab, read a
-tab name and select or make that tab.  Then reuse a window of the tab
-that already displays BUFFER, or ask with `aw-select', where the split
-dispatch keys split the chosen window.  ALIST is passed to the display
-functions.  Return the window, or nil in batch or while the minibuffer
-is active."
+`inhibit-switch-frame'.  Read a tab name when `tab-bar-mode' is active or
+the frame has more than one tab, and select or make that tab.  Then reuse
+a window of the tab that already displays BUFFER, or ask with `aw-select',
+where the split dispatch keys split the chosen window.  ALIST is passed
+to the display functions.  Return the window, or nil in batch or while
+the minibuffer is active."
   (when (and (not noninteractive)
              (not (active-minibuffer-window)))
     (let* ((frames (dp-action--frames alist))
@@ -263,7 +271,7 @@ is active."
             (if (alist-get 'inhibit-switch-frame alist)
                 (select-frame frame)
               (select-frame-set-input-focus frame))
-            (when (> (length (tab-bar-tabs)) 1)
+            (when (dp-action--ask-tab-p)
               (let ((tab-name (dp-action--read-tab-name
                                buffer alist)))
                 (dp-tab-bar-select-tab buffer alist tab-name)))

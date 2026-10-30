@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add: the frame prompt asks for a tab in an existing frame when
+  `tab-bar-mode` is active, even when the frame has one tab, so a new tab
+  can be made.
 - Add: the repeated window prompt says in the echo area that the chosen
   window cannot display the buffer, and shows `? for actions` in the
   mode line when `aw-dispatch-alist` binds `?`.

@@ -13,8 +13,9 @@
 ;; `disbuf-pivot-other-window-prefix' asks with `ace-window' and can split
 ;; a window; `disbuf-pivot-other-tab-prefix' asks for a tab and then for a
 ;; window of that tab; `disbuf-pivot-other-frame-prefix' asks for a frame,
-;; its tab when it has more than one, and its window; a new frame name
-;; makes a new frame with that name.  `disbuf-pivot-prefix-mode' remaps
+;; its tab when `tab-bar-mode' is active or the frame has more than one,
+;; and its window; a new frame name makes a new frame with that name.
+;; `disbuf-pivot-prefix-mode' remaps
 ;; `same-window-prefix', `other-window-prefix', `other-tab-prefix', and
 ;; `other-frame-prefix' to these commands; it does not advise
 ;; `display-buffer'.
