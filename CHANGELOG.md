@@ -2,12 +2,20 @@
 
 ## Unreleased
 
+- Doc: describe the consult reader's child-frame cleanup and
+  minibuffer-height preservation separately; state the existing-frame
+  condition in the frame prefix; qualify the `aw-select` prompt feedback;
+  define the window prompt without limiting it to a tab or frame; tighten
+  the display action and naming descriptions; and correct the 0.1.0
+  release note.
+
 ## 0.1.0 - 2026-10-30
 
 - Add: `disbuf-pivot-action-mode`, the display action in
   `display-buffer-alist`.  It reuses a window that displays the buffer,
   uses the selected window, splits, or asks with `ace-window`; a request
-  for a tab or frame asks for the target and the window inside it.
+  for a tab or frame asks for the target, then for a window when one is
+  needed.
 - Add: `disbuf-pivot-same-window-prefix`,
   `disbuf-pivot-other-window-prefix`,
   `disbuf-pivot-other-tab-prefix`, and

@@ -15,8 +15,7 @@ entries below are this package's terms.
 - **display action** — the entry `disbuf-pivot-action-mode` installs in
   `display-buffer-alist`; `display-buffer` calls its function for a
   buffer no earlier entry takes.
-- **window prompt** — the prompt that reads a window for a tab or
-  frame, implemented by
+- **window prompt** — the prompt that reads a window, implemented by
   `disbuf-pivot-window-utility-choose-tab-window` and
   `disbuf-pivot-window-utility-choose-display-window`.
 - **split rule** — `disbuf-pivot-window-utility-split-p`, which
