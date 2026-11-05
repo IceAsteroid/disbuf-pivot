@@ -1,7 +1,8 @@
 # Instructions for coding agents
 
 This repository follows `TERM_AND_CONVENTION.md`.  Read it before
-writing a change or the reply that describes it.
+writing a change or the reply that describes it.  The target behavior
+is in `DESIGN_RULESET.md`; read it before changing behavior.
 
 Check prose against the codification: is the word a Core term, is it in
 Terms not used, and does Emacs have the word?  Code, identifiers and

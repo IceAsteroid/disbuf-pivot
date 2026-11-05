@@ -25,6 +25,17 @@ entries below are this package's terms.
 - **tab reader** — `disbuf-pivot-tab-bar-read-tab-name`, the function
   that reads a tab name; the optional consult library supplies another
   reader.
+- **chosen window** — the window the user chooses through the package's
+  prompt or dispatch action.  A window used silently by the default
+  policy is not a chosen window.
+- **caller intent info** — the message that states what the caller
+  asked for and, when relevant, which caller constraint applies.  The
+  package shows it in the echo area.
+- **referential** — shown as caller intent info; it does not by itself
+  decide the window.  The design rules say which caller constraints
+  limit the candidates.
+- **cannot display** — a window does not accept another buffer's
+  display.  The design rules list the conditions.
 
 ## Terms not used
 
@@ -36,6 +47,8 @@ prose.
 - utility popup — use **dedicated window**, **side window**, **child
   frame**, or **window that cannot display a buffer**, whichever is
   meant.
+- physical / physically, for a window that cannot display — say
+  **cannot display** and name the condition.
 - workspace — use **editing window**, or name the function that returns
   it.
 - frame title, when the frame's `name` parameter is meant — use **frame
