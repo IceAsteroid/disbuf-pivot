@@ -19,7 +19,7 @@ Full coverage means:
 
 - every `display-buffer` call that reaches the package's
   `display-buffer-alist` entry;
-- the four prefix commands;
+- the package prefix commands;
 - the tab and frame readers used by those commands.
 
 Full coverage does not mean every buffer-switching command.  It does not
@@ -66,8 +66,12 @@ The package distinguishes five classes:
   from the candidates.
 - **no preference** -- use the selected window when it can display.
 
-A prefix command is user intent, not caller intent.  A prefix may prompt
-for its target even when the caller named a place.
+A package prefix command is user intent, not caller intent.
+`disbuf-pivot-prefix-mode` remaps the built-in prefix commands to the
+package prefix commands.  The package prefix commands keep the same
+override for the next command, so they take precedence over the
+caller's ACTION; they make the target explicit and predictable.
+Section 6 gives the target flow.
 
 The selected window cannot display a buffer when it is a minibuffer
 window, is dedicated to another buffer, is a side window, or is not
@@ -153,8 +157,8 @@ Choosing one repeats the prompt.
   conflict, then applies `disbuf-pivot-same-window-conflict`.
 - Direction uses `display-buffer-in-direction` for the "use caller
   intent" dispatch action.  Side windows are left as-is.
-- The four prefix commands are remapped: same-window, other-window,
-  other-tab, and other-frame.
+- The four package prefix commands are remapped: same-window,
+  other-window, other-tab, and other-frame.
 
 ## 7. Action function checklist
 
@@ -168,8 +172,8 @@ primitive, not a delegation of the regulation.
 caller's action runs.
 
 The table describes a caller's ACTION that names the function.  A
-prefix command or a user choice in a prompt is separate; the package
-may call the same function after that choice.
+package prefix command or a user choice in a prompt is separate; the
+package may call the same function after that choice.
 
 | Action function | Treatment |
 |---|---|
@@ -244,9 +248,9 @@ it.  Entries used during the prompt are interpreted as follows.
    classes in section 3; return nil for anything the package does not
    regulate.
 4. Regulate same-window, reuse, other-window, new-window, and
-   direction.  Keep the prefix tab and frame flows; respect a caller's
-   explicit tab or frame action.  Use the action functions in section 7
-   as the display primitives.
+   direction.  Keep the tab and frame flows of the package prefix
+   commands; respect a caller's explicit tab or frame action.  Use the
+   action functions in section 7 as the display primitives.
 5. Implement referential `inhibit-same-window`: show caller intent
    info, keep the selected window, and bind the entry to nil when the
    user chooses it.

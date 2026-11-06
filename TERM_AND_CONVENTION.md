@@ -36,6 +36,16 @@ entries below are this package's terms.
   limit the candidates.
 - **cannot display** — a window does not accept another buffer's
   display.  The design rules list the conditions.
+- **built-in prefix command** — one of Emacs's `same-window-prefix`,
+  `other-window-prefix`, `other-tab-prefix`, and
+  `other-frame-prefix`; a command that sets
+  `display-buffer-overriding-action` for the next command.
+- **package prefix command** — one of the package's
+  `disbuf-pivot-same-window-prefix`,
+  `disbuf-pivot-other-window-prefix`,
+  `disbuf-pivot-other-tab-prefix`, and
+  `disbuf-pivot-other-frame-prefix`; `disbuf-pivot-prefix-mode`
+  remaps the built-in prefix commands to these commands.
 
 ## Terms not used
 
