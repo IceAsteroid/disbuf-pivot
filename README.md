@@ -161,9 +161,10 @@ Commentary.  The source files use `dp-` as a shorthand for
 `make check` byte-compiles the package and runs the buttercup tests under
 `test/`.  `make check-consult` compiles and checks the optional consult
 library.  `make checkdoc` reports the docstring findings.  The test files
-keep the `check` harness they had in `emacs-utils`.  The repository
-guidance is in `AGENTS.md`; the terms and commit rules are in
-`TERM_AND_CONVENTION.md`.
+keep the `check` harness they had in `emacs-utils`.  The developer
+guide is in `CONTRIBUTING.md`; coding agents start at `AGENTS.md`.  The
+term, documentation, git, and changelog conventions and the design
+rules are under `docs/`.
 
 ## Naming and license
 

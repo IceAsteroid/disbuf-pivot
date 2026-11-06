@@ -13,10 +13,15 @@
 
 ### Internal Changes
 
-- Docs: add `DESIGN_RULESET.md` as the design authority, define the
+- Docs: add `docs/DESIGN_RULESET.md` as the design authority, define the
   chosen window, caller intent info, referential, cannot display,
-  built-in prefix command, and package prefix command terms, and record
-  the settled display rules.
+  built-in prefix command, and package prefix command terms in
+  `docs/DOCUMENTATION_CONVENTION.md`, and record the settled display
+  rules.
+- Docs: move the maintainer docs under `docs/` and split the git and
+  changelog conventions from the terms file.
+- Docs: add `CONTRIBUTING.md` for the developer commands, verification,
+  and dependency rules, and reduce `AGENTS.md` to the agent index.
 
 ## 0.1.0 - 2026-10-30
 

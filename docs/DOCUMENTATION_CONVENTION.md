@@ -1,9 +1,12 @@
-# disbuf-pivot — Terms and conventions
+# disbuf-pivot — Terms and documentation convention
 
-This file is the authority for this repository.  It binds code,
-Commentary, docstrings, `README.md`, `CHANGELOG.md`, and commit
-messages.  The emacs-utils and column-popup files are models; they do
-not govern this repository.
+This file is the authority for terms, prose, and documentation
+conventions.  It applies to code, Commentary, docstrings, `README.md`,
+`CHANGELOG.md`, and commit messages.  `docs/GIT_CONVENTION.md` is the
+authority for commit structure; `docs/CHANGELOG_CONVENTION.md` for
+changelog structure; `docs/DESIGN_RULESET.md` for target behavior.  The
+emacs-utils and column-popup files are models; they do not govern this
+repository.
 
 ## Core terms
 
@@ -100,52 +103,20 @@ prose.
   technical terms.
 - Do not use footnotes for term definitions.  They separate the term
   from its use, and they render differently across viewers.
-- Present tense for verbs.  A title describes the current behavior; a
-  body paragraph uses the labels `Symptom:`, `Root cause:`, `Fix:`,
-  `Add:`, or `Doc:` as its change needs.
-- One atomic commit per logical change: the code and the documentation
-  of that change in the same commit, so a checkout of any commit shows
-  the code and the documentation that describe it.  A change that
-  touches only documentation is its own commit; unrelated changes are
-  separate commits even when they touch one file.
-- Subject type prefixes:
-  - `feat:` for a new behavior or option.
-  - `fix:` for a correction.
-  - `refactor:` for a change that keeps behavior.
-  - `docs:` for documentation only.
-  - `test:` for a change that only adds or changes tests.
-  - `build:` for the build system or dependencies.
-  - `ci:` for continuous integration.
-  - `perf:` for a performance change that keeps behavior.
-  - `style:` for formatting or whitespace only.
-  - `chore:` for routine maintenance.
-  - `revert:` for a revert of an earlier commit.
-- Wrap commit-message lines at about 72 columns.  Wrap docstrings at 80
-  columns.  A `defvar` or `defcustom` docstring longer than 80 columns
-  makes the byte-compiler warn; checkdoc reports the rest.
-- Do not rewrite an existing commit.  A message that violates a rule
-  written after it keeps its form.
-- Update `CHANGELOG.md` at the top of `## Unreleased` for a
-  user-visible or internal change.  Put user-visible entries first under
-  `### User-visible Changes`, internal entries last under
-  `### Internal Changes`, and omit an empty section.  The entry names
-  the change, not a commit hash.  An internal entry may use the subject
-  type name as its label (`Refactor:`, `Build:`, `CI:`, `Test:`,
-  `Docs:`); use `Internal:` when one type does not fit.  A pure
-  refactor with no observable effect may be omitted or summarized under
-  `Internal Changes`.
+- Present tense for verbs.
+- Commit messages follow `docs/GIT_CONVENTION.md`; changelog entries
+  follow `docs/CHANGELOG_CONVENTION.md`.  Both use the terms in this
+  file.
+- Wrap docstrings at 80 columns.  A `defvar` or `defcustom` docstring
+  longer than 80 columns makes the byte-compiler warn; checkdoc reports
+  the rest.
 - A term must be added to Core terms with the maintainer's agreement
   before it is used.  A term that is dropped moves to Terms not used
   with its replacement.
-- The display package does not require `emacs-utils` or `column-popup`;
-  `emacs-utils` consumes the optional consult library.
 - Only the package main file carries `Package-Requires`.  A library
   that is not the main file names an optional dependency in its
   Commentary and `README.md`.
 - Quote a symbol or a code fragment with a grave accent on both sides
   in Markdown and commit messages; in Emacs Lisp source use a grave
   accent before and an apostrophe after.
-- Verify with `make check`, `make check-consult`, and `make checkdoc`.
-  Interactive prompts need a pty; cite the file and line for a
-  mechanism you read, and mark a statement you have not checked as
-  unverified.
+- Verification and dependency rules are in `CONTRIBUTING.md`.

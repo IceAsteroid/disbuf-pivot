@@ -2,8 +2,10 @@
 
 This file is the design authority for `disbuf-pivot`.  It describes the
 target behavior; the source does not yet implement all of it.
-`TERM_AND_CONVENTION.md` is the authority for terms, prose, and commit
-messages.  Define a term there, not here.
+`docs/DOCUMENTATION_CONVENTION.md` is the authority for terms and
+documentation; `docs/GIT_CONVENTION.md` for commits;
+`docs/CHANGELOG_CONVENTION.md` for changelog entries.  Define a term
+there, not here.
 
 ## 1. Goal and scope
 
@@ -44,8 +46,9 @@ hidden cache.
 
 ## 2. Terms
 
-Package-specific terms are defined in `TERM_AND_CONVENTION.md`.
-Emacs's terms are used as they are.
+Package-specific terms are defined in
+`docs/DOCUMENTATION_CONVENTION.md`.  Emacs's terms are used as they
+are.
 
 ## 3. Intent classes and eligibility
 
