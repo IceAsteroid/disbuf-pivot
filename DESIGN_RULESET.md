@@ -44,10 +44,8 @@ hidden cache.
 
 ## 2. Terms
 
-The terms are defined in `TERM_AND_CONVENTION.md`; this file does not
-define them again.  The package terms are **chosen window**, **caller
-intent info**, **referential**, and **cannot display**.  Emacs's terms,
-such as the selected window, are used as they are.
+Package-specific terms are defined in `TERM_AND_CONVENTION.md`.
+Emacs's terms are used as they are.
 
 ## 3. Intent classes and eligibility
 
