@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+### User-visible Changes
+
 - Doc: describe the consult reader's child-frame cleanup and
   minibuffer-height preservation separately; state the existing-frame
   condition in the frame prefix; qualify the `aw-select` prompt feedback;
@@ -9,7 +11,16 @@
   the display action and naming descriptions; and correct the 0.1.0
   release note.
 
+### Internal Changes
+
+- Docs: add `DESIGN_RULESET.md` as the design authority, define the
+  chosen window, caller intent info, referential, cannot display,
+  built-in prefix command, and package prefix command terms, and record
+  the settled display rules.
+
 ## 0.1.0 - 2026-10-30
+
+### User-visible Changes
 
 - Add: `disbuf-pivot-action-mode`, the display action in
   `display-buffer-alist`.  It reuses a window that displays the buffer,

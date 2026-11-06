@@ -87,10 +87,11 @@ atomic-commit rule.  Do not rewrite an existing commit.  The display
 repository is separate from `emacs-utils`; do not make one require the
 other.
 
-- Subject type prefixes: `feat:`, `fix:`, `refactor:`, `docs:`, `test:`.
+- Subject type prefixes are listed in `TERM_AND_CONVENTION.md`.
 - Wrap commit-message lines at about 72 columns.
 - A fix labels `Symptom:`, `Root cause:` and `Fix:`; a feature labels
   `Add:`; a documentation-only change is `docs:` and can label `Doc:`.
-- Update `CHANGELOG.md` for a change a user of the package should know.
+- Update `CHANGELOG.md` as `TERM_AND_CONVENTION.md` describes:
+  user-visible entries first, internal entries last.
 - The user's uncommitted files are not yours.  Stage explicit paths and
   leave a file you were not asked to change alone.

@@ -12,8 +12,8 @@ used, and do not introduce a term or preferred wording without asking
 the maintainer first.
 
 Wrap docstrings at 80 columns and commit-message lines at about 72.
-Commits use one atomic change each, with a `feat:`, `fix:`, `refactor:`,
-`docs:`, or `test:` subject, and stage explicit paths. Do not rewrite an
+Commits use one atomic change each, with a subject type from
+`TERM_AND_CONVENTION.md`, and stage explicit paths. Do not rewrite an
 existing commit.
 
 ## Commands
@@ -144,5 +144,5 @@ Buttercup tests are under `test/`:
 
 The test files keep the `check` harness they had in `emacs-utils`. The
 consult preview has no full preview test; compilation and checkdoc check
-it. Update `CHANGELOG.md` under `## Unreleased` for a change a user of
-the package should know.
+it. Update `CHANGELOG.md` under `## Unreleased` as
+`TERM_AND_CONVENTION.md` describes.

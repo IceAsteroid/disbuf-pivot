@@ -108,18 +108,32 @@ prose.
   the code and the documentation that describe it.  A change that
   touches only documentation is its own commit; unrelated changes are
   separate commits even when they touch one file.
-- Subject type prefixes: `feat:` for a new behavior or option, `fix:`
-  for a correction, `refactor:` for a change that keeps behavior,
-  `docs:` for documentation only, and `test:` for a change that only
-  adds or changes tests.
+- Subject type prefixes:
+  - `feat:` for a new behavior or option.
+  - `fix:` for a correction.
+  - `refactor:` for a change that keeps behavior.
+  - `docs:` for documentation only.
+  - `test:` for a change that only adds or changes tests.
+  - `build:` for the build system or dependencies.
+  - `ci:` for continuous integration.
+  - `perf:` for a performance change that keeps behavior.
+  - `style:` for formatting or whitespace only.
+  - `chore:` for routine maintenance.
+  - `revert:` for a revert of an earlier commit.
 - Wrap commit-message lines at about 72 columns.  Wrap docstrings at 80
   columns.  A `defvar` or `defcustom` docstring longer than 80 columns
   makes the byte-compiler warn; checkdoc reports the rest.
 - Do not rewrite an existing commit.  A message that violates a rule
   written after it keeps its form.
-- Update `CHANGELOG.md` at the top of `## Unreleased` for a change a
-  user of the package should know.  The entry names the change, not a
-  commit hash.
+- Update `CHANGELOG.md` at the top of `## Unreleased` for a
+  user-visible or internal change.  Put user-visible entries first under
+  `### User-visible Changes`, internal entries last under
+  `### Internal Changes`, and omit an empty section.  The entry names
+  the change, not a commit hash.  An internal entry may use the subject
+  type name as its label (`Refactor:`, `Build:`, `CI:`, `Test:`,
+  `Docs:`); use `Internal:` when one type does not fit.  A pure
+  refactor with no observable effect may be omitted or summarized under
+  `Internal Changes`.
 - A term must be added to Core terms with the maintainer's agreement
   before it is used.  A term that is dropped moves to Terms not used
   with its replacement.
