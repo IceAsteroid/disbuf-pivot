@@ -139,6 +139,11 @@ Commentary.  The source files use `dp-` as a shorthand for
 
 - The package displays a buffer the caller supplies; it does not make a
   buffer and does not manage pop-up windows.
+- For pop-up windows, pair the package with a package such as
+  `column-popup` or `popper`.  Enable `disbuf-pivot` first and that
+  package second, so its `display-buffer-alist` entry comes before the
+  `disbuf-pivot` entry.  That package handles its pop-up buffers;
+  `disbuf-pivot` handles the other buffers.
 - It installs one `display-buffer-alist` entry; a caller's
   `display-buffer-overriding-action` is consulted before it.  A caller
   that needs its own action should name a place or use an overriding

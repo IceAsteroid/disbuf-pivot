@@ -8,8 +8,9 @@
   minibuffer-height preservation separately; state the existing-frame
   condition in the frame prefix; qualify the `aw-select` prompt feedback;
   define the window prompt without limiting it to a tab or frame; tighten
-  the display action and naming descriptions; and correct the 0.1.0
-  release note.
+  the display action and naming descriptions; correct the 0.1.0 release
+  note; and state the pop-up window pairing and enabling order in the
+  scope.
 
 ### Internal Changes
 
