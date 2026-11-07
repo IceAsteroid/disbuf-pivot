@@ -6,9 +6,9 @@
 
 ;;; Commentary:
 ;; The window test and the split options; the window prompt and the
-;; dispatch prompt that the display action and the prefix commands use;
-;; and the post-command selection that `display-buffer' uses for a `nil'
-;; `post-command-select-window' entry.
+;; dispatch prompt that the package's `display-buffer-alist` entry and
+;; the prefix commands use; and the post-command selection that
+;; `display-buffer' uses for a `nil' `post-command-select-window' entry.
 
 ;;; Code:
 

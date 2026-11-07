@@ -6,8 +6,9 @@
 
 ;;; Commentary:
 ;; The tab bar's candidates, history, sort and annotations; the tab
-;; selection the display action uses; and a plain `completing-read'
-;; reader for a tab name.  A call that asks for a tab -- the action's tab
+;; selection the package's `display-buffer-alist` entry uses; and a
+;; plain `completing-read' reader for a tab name.  A call that asks for
+;; a tab -- the action's tab
 ;; target, the frame target when the chosen frame has more than one tab,
 ;; and `disbuf-pivot-other-tab-prefix' -- reads the name here, selects an
 ;; existing tab or makes a new one, and shows the buffer in its window.

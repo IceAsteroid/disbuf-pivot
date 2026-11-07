@@ -7,5 +7,7 @@
 - Commits and history: `docs/GIT_CONVENTION.md`
 - Changelog entries: `docs/CHANGELOG_CONVENTION.md`
 - Target behavior: `docs/DESIGN_RULESET.md`
+- Emacs action matrix (reference, not normative):
+  `docs/DISPLAY_BUFFER_MATRIX.md`
 
 A bare path is a pointer.  Read the matching file before the task.

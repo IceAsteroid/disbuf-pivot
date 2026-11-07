@@ -130,7 +130,7 @@
          (format "\n%d CHECK(S) FAILED\n" nfail)))
 (expect nfail :to-be 0))
 
-(describe "ia display action ordering"
+(describe "ia display-buffer-alist entry ordering"
   (it "runs the ordering checks"
     (order-checks)))
 ;; Local Variables:

@@ -466,20 +466,20 @@
 (check "prefix mode off: C-x 4 1 runs the built-in command"
        (eq (key-binding (kbd "C-x 4 1")) #'same-window-prefix))
 
-;;; ---- the same-window prefix chooses the editing window itself
+;;; ---- the same-window prefix uses the most recently used displayable window
 (let ((noninteractive nil)
       (pop-up-windows nil))
   (delete-other-windows)
-  (let* ((editing (selected-window))
-         (dedicated (split-window editing nil 'below))
+  (let* ((displayable (selected-window))
+         (dedicated (split-window displayable nil 'below))
          (probe (get-buffer-create "*same-window-prefix*")))
     (select-window dedicated)
     (set-window-dedicated-p dedicated t)
     (dp-same-window-prefix)
     (let ((window (display-buffer probe)))
-      (check "same-window prefix: the editing window gets the buffer"
-             (and (eq window editing)
-                  (eq (window-buffer editing) probe)))
+      (check "same-window prefix: the displayable window gets the buffer"
+             (and (eq window displayable)
+                  (eq (window-buffer displayable) probe)))
       (check "same-window prefix: the dedicated window keeps its buffer"
              (not (eq (window-buffer dedicated) probe))))
     (set-window-dedicated-p dedicated nil)
@@ -495,7 +495,7 @@
          (format "\n%d CHECK(S) FAILED\n" nfail)))
 (expect nfail :to-be 0))
 
-(describe "ia display action"
+(describe "ia display-buffer-alist entry"
   (it "runs the display checks"
     (display-ask-checks)))
 ;; Local Variables:

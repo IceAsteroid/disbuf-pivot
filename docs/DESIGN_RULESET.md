@@ -7,6 +7,9 @@ documentation; `docs/GIT_CONVENTION.md` for commits;
 `docs/CHANGELOG_CONVENTION.md` for changelog entries.  Define a term
 there, not here.
 
+The Emacs 31.1 action matrix used to check sections 7 and 8 is
+`docs/DISPLAY_BUFFER_MATRIX.md`; it is a reference, not normative.
+
 ## 1. Goal and scope
 
 `disbuf-pivot` replaces an implicit `display-buffer` choice with an

@@ -9,7 +9,7 @@ in a place the user did not choose.  disbuf-pivot replaces that implicit
 pick with an explicit one.  It calls the window, tab, or frame where the
 buffer is displayed the *pivot*.
 
-## The display action
+## The package's `display-buffer-alist` entry
 
 `disbuf-pivot-action-mode` adds one entry to `display-buffer-alist`.
 For every buffer an earlier entry does not take, the entry:
@@ -56,7 +56,7 @@ built-in bindings return.  The mode changes key bindings; a built-in
 command invoked by name or from a menu is unchanged.
 
 The package provides four prefix commands.  Each uses the most recently
-used editing window of the frame, or of the parent frame when a child
+used displayable window of the frame, or of the parent frame when a child
 frame is selected, when the selected window cannot display a buffer.
 
 - `disbuf-pivot-same-window-prefix` displays the buffer in the same
@@ -121,8 +121,8 @@ separate library:
 
 ## The libraries
 
-- `disbuf-pivot` holds the display action, its options, and the tab and
-  frame prompts.
+- `disbuf-pivot` holds the package's `display-buffer-alist` entry, its
+  options, and the tab and frame prompts.
 - `disbuf-pivot-window-utility` holds the window test, the split
   options, and the window prompt.
 - `disbuf-pivot-prefix` holds the prefix commands and the pivot mode.

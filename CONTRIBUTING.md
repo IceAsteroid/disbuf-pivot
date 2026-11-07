@@ -7,8 +7,8 @@ boundaries.  The conventions are under `docs/`.
 ## The repository
 
 `disbuf-pivot.el` is the package main file and carries the only
-`Package-Requires`.  It holds the display action, its options, the tab
-and frame prompts, and the mode.
+`Package-Requires`.  It holds the package's `display-buffer-alist`
+entry, its options, the tab and frame prompts, and the mode.
 
 `disbuf-pivot-window-utility.el` holds the window test, the split
 options, the window prompt, the dispatch prompt, and the post-command
@@ -28,6 +28,23 @@ the mode that installs it.
 `CHANGELOG.md` records the incremental changes.  `Makefile`, `Eldev`,
 and `.github/workflows/test.yml` hold the checks.
 
+The internal dependency directions are:
+
+```text
+disbuf-pivot.el (feature disbuf-pivot)
+├── disbuf-pivot-window-utility.el (dp-window-utility)
+├── disbuf-pivot-tab-bar.el (dp-tab-bar)
+└── ace-window, tab-bar
+
+disbuf-pivot-prefix.el (dp-prefix)
+├── disbuf-pivot.el
+└── disbuf-pivot-window-utility.el
+
+disbuf-pivot-tab-bar-consult.el (dp-tab-bar-consult, optional)
+├── disbuf-pivot-tab-bar.el
+└── consult
+```
+
 ## Commands
 
 ```sh
@@ -40,8 +57,11 @@ make check-consult   # compile and checkdoc the optional consult library
 - Dependencies are found under `ELPA`; `make check` needs `ace-window`
   and `avy`; `make check-consult` needs `consult` too.
 - `make check-consult` does not run tests.
+- The test files are `order-test.el`, `display-ask-test.el`, and
+  `tab-frame-test.el`.
 - One test file: `eldev test -f order-test.el`.
-- One spec: `eldev test -f order-test.el "ia display action ordering"`.
+- One spec:
+  `eldev test -f order-test.el "ia display-buffer-alist entry ordering"`.
 - CI runs `make check`, `make checkdoc`, and `make check-consult` on
   Emacs 31.1.
 
@@ -62,8 +82,8 @@ change.  Report what was verified and what was not.
 
 The display package does not require `emacs-utils` or `column-popup`;
 `emacs-utils` consumes the optional consult library.  `consult` is
-optional and only the consult library requires it.  The display action
-needs `ace-window`; `avy` is required by `ace-window`.  `tab-bar-mode`
+optional and only the consult library requires it.  The entry needs
+`ace-window`; `avy` is required by `ace-window`.  `tab-bar-mode`
 is needed for tab targets.
 
 Keep that direction.  The display repository is separate from
@@ -77,4 +97,6 @@ Keep that direction.  The display repository is separate from
 - `docs/GIT_CONVENTION.md` -- commits and history.
 - `docs/CHANGELOG_CONVENTION.md` -- changelog entries.
 - `docs/DESIGN_RULESET.md` -- target behavior.
+- `docs/DISPLAY_BUFFER_MATRIX.md` -- Emacs 31.1 action matrix
+  (reference, not normative).
 - `AGENTS.md` -- the coding-agent index.

@@ -218,7 +218,7 @@
                        (and (eq (car-safe result) w2)
                             (equal (nreverse tab-calls) '((select 2)))
                             (zerop reader-calls)))
-                (check "tab: the display action asks the reader with its prompt"
+                (check "tab: the package's entry asks the reader with its prompt"
                        (equal reader-args
                               '("Display buffer in tab (empty for a new tab): "
                                 ""))))))))

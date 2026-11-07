@@ -6,9 +6,10 @@
 
 ;;; Commentary:
 ;; The prefix commands set `display-buffer-overriding-action' for the next
-;; command, as `other-window-prefix' does.  They choose the last editing
-;; window of the frame, or of the parent frame when a child frame is
-;; selected, when the selected window cannot display a buffer.
+;; command, as `other-window-prefix' does.  They choose the most recently
+;; used displayable window of the frame, or of the parent frame when a
+;; child frame is selected, when the selected window cannot display a
+;; buffer.
 ;; `disbuf-pivot-same-window-prefix' displays in that window;
 ;; `disbuf-pivot-other-window-prefix' asks with the window prompt and can split
 ;; a window; `disbuf-pivot-other-tab-prefix' asks for a tab and then for a
@@ -31,7 +32,7 @@
   :group 'windows)
 
 (defun dp-prefix--find-last-active-window ()
-  "Return the most recently used editing window of the selected frame.
+  "Return the most recently used displayable window of the selected frame.
 Use the parent frame when the selected frame is a child frame.  Leave out
 minibuffer windows and windows that cannot display a buffer."
   (let* ((frame (selected-frame))
@@ -41,18 +42,18 @@ minibuffer windows and windows that cannot display a buffer."
     (setq frame-windows (sort frame-windows
                               (lambda (w1 w2)
                                 (> (window-use-time w1) (window-use-time w2)))))
-    ;; Scan for the first editing window
+    ;; Scan for the first displayable window
     (cl-find-if (lambda (w)
                   (not (or (window-minibuffer-p w)
                            (dp-window-utility-cannot-display-p w))))
                 frame-windows)))
 
-(defun dp-prefix--with-editing-window (function)
-  "Call FUNCTION with the editing window selected when one is needed.
+(defun dp-prefix--with-displayable-window (function)
+  "Call FUNCTION with the displayable window selected when one is needed.
 When the selected window cannot display a buffer, select the most
-recently used editing window of the frame, or of the parent frame when a
-child frame is selected.  FUNCTION runs with that window selected, and
-the previous selection is restored when it returns."
+recently used displayable window of the frame, or of the parent frame
+when a child frame is selected.  FUNCTION runs with that window
+selected, and the previous selection is restored when it returns."
   (let ((window (if (dp-window-utility-cannot-display-p (selected-window))
                     (dp-prefix--find-last-active-window)
                   (selected-window))))
@@ -87,7 +88,7 @@ selected again, the way `display-buffer' treats a `nil'
    (lambda (buffer alist)
      (let (choice answering result)
        (setq result
-             (dp-prefix--with-editing-window
+             (dp-prefix--with-displayable-window
               (lambda ()
                 (let ((aw-scope (cl-case (cdr (assq 'reusable-frames alist))
                                   ((nil) 'frame)
@@ -128,13 +129,13 @@ selected again, the way `display-buffer' treats a `nil'
 (defun dp-same-window-prefix ()
   "Display the buffer of the next command in the same window.
 When the selected window cannot display a buffer, use the most recently
-used editing window of the frame, or of the parent frame when a child
+used displayable window of the frame, or of the parent frame when a child
 frame is selected.  `disbuf-pivot-prefix-mode' remaps
 `same-window-prefix' to this command."
   (interactive)
   (display-buffer-override-next-command
    (lambda (buffer alist)
-     (dp-prefix--with-editing-window
+     (dp-prefix--with-displayable-window
       (lambda ()
         (let ((alist (cons '(inhibit-same-window . nil) alist)))
           (cons (or (display-buffer-same-window buffer alist)
@@ -162,7 +163,7 @@ does not show the tab prompt again."
   (interactive)
   (display-buffer-override-next-command
    (lambda (buffer alist)
-     (dp-prefix--with-editing-window
+     (dp-prefix--with-displayable-window
       (lambda ()
         (if dp-other-tab-prefix--in-progress
             (cons nil 'reuse)
@@ -192,7 +193,7 @@ rules, so it does not show the frame prompt again."
   (interactive)
   (display-buffer-override-next-command
    (lambda (buffer alist)
-     (dp-prefix--with-editing-window
+     (dp-prefix--with-displayable-window
       (lambda ()
         (if dp-other-frame-prefix--in-progress
             (cons nil 'reuse)

@@ -36,3 +36,5 @@ Read it before committing.  Commit messages use the terms in
   - `revert:` for a revert of an earlier commit.
 - Do not rewrite an existing commit.  A message that violates a rule
   written after it keeps its form.
+- An assistant-authored commit ends with a `Co-Authored-By:` trailer
+  naming the assistant.

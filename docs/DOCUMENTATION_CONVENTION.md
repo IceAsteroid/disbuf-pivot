@@ -15,9 +15,6 @@ entries below are this package's terms.
 
 - **pivot** — the window, tab, or frame where a buffer is displayed;
   the package's name for it.  The package name uses the word.
-- **display action** — the entry `disbuf-pivot-action-mode` installs in
-  `display-buffer-alist`; `display-buffer` calls its function for a
-  buffer no earlier entry takes.
 - **window prompt** — the prompt that calls `aw-select` to label the
   eligible windows and reads a label.  The mode-line help string is
   optional; `?` shows the dispatch help in the echo area.
@@ -25,21 +22,35 @@ entries below are this package's terms.
   `disbuf-pivot-window-utility-choose-sole-window` that lists the split
   actions from `aw-dispatch-alist` and reads one key; it labels no
   windows.
+- **dispatch action** — a key in `aw-dispatch-alist` that a prompt runs
+  instead of reading a window label.
 - **split rule** — `disbuf-pivot-window-utility-split-p`, which
   compares the number of windows with
   `disbuf-pivot-window-utility-split-maximum` and its exclusion
   options.
+- **split action** — a dispatch action that splits a window and displays
+  the buffer in the new window.
 - **tab reader** — `disbuf-pivot-tab-bar-read-tab-name`, the function
   that reads a tab name; the optional consult library supplies another
   reader.
 - **chosen window** — the window the user chooses through the package's
   prompt or dispatch action.  A window used silently by the default
   policy is not a chosen window.
+- **caller intent** — what the caller's ACTION asks for; the design
+  rules classify it by what it names: a place, a strategy, a
+  constraint, or no preference.
 - **caller intent info** — the message that states what the caller
   asked for and, when relevant, which caller constraint applies.  The
   package shows it in the echo area.
+- **caller constraint** — an action-alist entry from the caller that
+  limits the candidate windows; the design rules name the entries.
 - **cannot display** — a window does not accept another buffer's
   display.  The design rules list the conditions.
+- **displayable window** — a window that can display a buffer: it is
+  live, is not a minibuffer window, is not dedicated to another buffer,
+  and is not a side window.
+- **eligible window** — a window the current prompt offers: it is a
+  displayable window, and the current intent does not exclude it.
 - **built-in prefix command** — one of Emacs's `same-window-prefix`,
   `other-window-prefix`, `other-tab-prefix`, and
   `other-frame-prefix`; a command that sets
@@ -63,8 +74,12 @@ prose.
   meant.
 - physical / physically, for a window that cannot display — say
   **cannot display** and name the condition.
-- workspace — use **editing window**, or name the function that returns
-  it.
+- display action, for the package's entry — say **the package's
+  `display-buffer-alist` entry**, or name the condition and action
+  function.
+- workspace — use **window**, or name the function that returns it.
+- editing window — say **displayable window**, or "the most recently
+  used displayable window."
 - frame title, when the frame's `name` parameter is meant — use **frame
   name**.
 - popup as a noun — use **pop-up window** for a window made by

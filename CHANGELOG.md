@@ -11,12 +11,23 @@
   minibuffer-height preservation separately; state the existing-frame
   condition in the frame prefix; qualify the `aw-select` prompt feedback;
   define the window prompt without limiting it to a tab or frame; tighten
-  the display action and naming descriptions; correct the 0.1.0 release
-  note; and state the pop-up window pairing and enabling order in the
-  scope.
+  the `display-buffer-alist` entry and naming descriptions; correct the
+  0.1.0 release note; and state the pop-up window pairing and enabling
+  order in the scope.
 
 ### Internal Changes
 
+- Docs: import `CONTRIBUTING.md` into `CLAUDE.md`, scope the term file
+  to artifacts, add the dependency tree and test file names to
+  `CONTRIBUTING.md`, route `docs/DISPLAY_BUFFER_MATRIX.md` from the
+  agent and design docs, state the `Co-Authored-By:` trailer rule in
+  `docs/GIT_CONVENTION.md`, and remove the duplicated changelog rule.
+- Docs: define the caller intent, caller constraint, eligible window,
+  dispatch action, split action, and displayable window terms; use the
+  package's `display-buffer-alist` entry and the displayable window in
+  the README, Commentary, changelog, and test names; rename
+  `dp-prefix--with-editing-window` to
+  `dp-prefix--with-displayable-window`.
 - Docs: add `docs/DESIGN_RULESET.md` as the design authority, define the
   chosen window, caller intent info, cannot display, built-in prefix
   command, and package prefix command terms in
@@ -36,18 +47,18 @@
 
 ### User-visible Changes
 
-- Add: `disbuf-pivot-action-mode`, the display action in
-  `display-buffer-alist`.  It reuses a window that displays the buffer,
-  uses the selected window, splits, or asks with `ace-window`; a request
-  for a tab or frame asks for the target, then for a window when one is
-  needed.
+- Add: `disbuf-pivot-action-mode`, which installs the package's entry
+  in `display-buffer-alist`.  It reuses a window that displays the
+  buffer, uses the selected window, splits, or asks with `ace-window`; a
+  request for a tab or frame asks for the target, then for a window when
+  one is needed.
 - Add: `disbuf-pivot-same-window-prefix`,
   `disbuf-pivot-other-window-prefix`,
   `disbuf-pivot-other-tab-prefix`, and
   `disbuf-pivot-other-frame-prefix`.
   `disbuf-pivot-prefix-mode` remaps the four built-in prefix commands to
   these commands; it does not advise `display-buffer`.
-- Add: the prefix commands choose the most recently used editing window
+- Add: the prefix commands choose the most recently used displayable window
   when the selected window cannot display a buffer.  The window prompt
   says in the echo area when a chosen window cannot display the buffer,
   and shows `? for actions` when `aw-dispatch-alist` binds `?`.
