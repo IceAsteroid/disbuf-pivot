@@ -23,6 +23,8 @@
   changelog conventions from the terms file.
 - Docs: add `CONTRIBUTING.md` for the developer commands, verification,
   and dependency rules, and reduce `AGENTS.md` to the agent index.
+- Docs: add `docs/DISPLAY_BUFFER_MATRIX.md`, the Emacs 31.1
+  action-function and action-alist matrix used to check the design.
 
 ## 0.1.0 - 2026-10-30
 
