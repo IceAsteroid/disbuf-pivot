@@ -129,8 +129,10 @@ prose.
 - A term must be added to Core terms with the maintainer's agreement
   before it is used.  A term that is dropped moves to Terms not used
   with its replacement.
-- A library that is not the main file names an optional dependency in
-  its Commentary and `README.md`.
+- Only the package main file carries `Package-Requires`.  A library
+  that is not the main file names an optional dependency in its
+  Commentary and `README.md`.
 - Quote a symbol or a code fragment with a grave accent on both sides
   in Markdown and commit messages; in Emacs Lisp source use a grave
   accent before and an apostrophe after.
+- Verification and dependency rules are in `CONTRIBUTING.md`.

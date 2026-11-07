@@ -17,9 +17,6 @@
 
 ### Internal Changes
 
-- Docs: remove the duplicated document list from `CONTRIBUTING.md`,
-  compress the dependency boundaries, and drop the term-file pointers
-  that repeat `CONTRIBUTING.md`.
 - Docs: state the `eldev` PATH requirement in `CONTRIBUTING.md`.
 - Test: rename the test suite names to the `disbuf-pivot` prefix.
 - Docs: import `CONTRIBUTING.md` into `CLAUDE.md`, scope the term file
