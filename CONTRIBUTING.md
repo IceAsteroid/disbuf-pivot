@@ -11,7 +11,8 @@ boundaries.  The conventions are under `docs/`.
 and frame prompts, and the mode.
 
 `disbuf-pivot-window-utility.el` holds the window test, the split
-options, the window prompt, and the post-command selection.
+options, the window prompt, the dispatch prompt, and the post-command
+selection.
 
 `disbuf-pivot-prefix.el` holds the prefix commands and the global minor
 mode that remaps the built-in prefix commands.  The mode uses a keymap;

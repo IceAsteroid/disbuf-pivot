@@ -25,6 +25,9 @@
   and dependency rules, and reduce `AGENTS.md` to the agent index.
 - Docs: add `docs/DISPLAY_BUFFER_MATRIX.md`, the Emacs 31.1
   action-function and action-alist matrix used to check the design.
+- Docs: define the window prompt and the dispatch prompt in
+  `docs/DOCUMENTATION_CONVENTION.md` and use them in the design, README,
+  matrix, CONTRIBUTING, and Commentary.
 
 ## 0.1.0 - 2026-10-30
 

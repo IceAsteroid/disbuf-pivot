@@ -102,9 +102,9 @@ function's own logic:
 
 ## 5. Package treatment of `inhibit-same-window`
 
-Show caller intent info, call `ace-window`, keep the selected window a
-candidate, and bind the entry to nil for the display call if the user
-chooses it.  `display-buffer-use-least-recent-window` forces it
+Show caller intent info, call the window prompt, keep the selected
+window a candidate, and bind the entry to nil for the display call if
+the user chooses it.  `display-buffer-use-least-recent-window` forces it
 internally; the selected window is not a candidate for that function.
 
 ## 6. Verification notes

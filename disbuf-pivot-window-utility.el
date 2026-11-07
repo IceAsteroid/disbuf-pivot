@@ -5,9 +5,9 @@
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;;; Commentary:
-;; The window test and the split options; the window prompt that the
-;; display action and the prefix commands use; and the post-command
-;; selection that `display-buffer' uses for a `nil'
+;; The window test and the split options; the window prompt and the
+;; dispatch prompt that the display action and the prefix commands use;
+;; and the post-command selection that `display-buffer' uses for a `nil'
 ;; `post-command-select-window' entry.
 
 ;;; Code:

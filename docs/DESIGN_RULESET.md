@@ -86,17 +86,17 @@ non-selected window.
 | Case | Behavior | Caller intent info |
 |---|---|---|
 | Same-window, selected window can display | Use the selected window; no prompt | None |
-| Same-window, selected window cannot display | Prompt with `ace-window`; offer split actions | "Caller asks for same window; selected window cannot display" |
-| Same-window plus `inhibit-same-window` | Report the conflict; `disbuf-pivot-same-window-conflict` chooses same window or `ace-window` | Conflict message |
+| Same-window, selected window cannot display | Prompt with the window prompt; offer split actions | "Caller asks for same window; selected window cannot display" |
+| Same-window plus `inhibit-same-window` | Report the conflict; `disbuf-pivot-same-window-conflict` chooses same window or the window prompt | Conflict message |
 | No preference, selected window can display | Use the selected window; no prompt | None |
-| No preference, selected window cannot display | Prompt with `ace-window`; offer split actions | "Selected window cannot display the buffer" |
+| No preference, selected window cannot display | Prompt with the window prompt; offer split actions | "Selected window cannot display the buffer" |
 | A window displays the buffer | Reuse the preferred window; `disbuf-pivot-reuse` can ask instead | "Reuse; window(s) X display the buffer" |
-| Reuse intent, no window displays the buffer | Prompt with `ace-window`; offer split actions | "Reuse; no window displays the buffer" |
+| Reuse intent, no window displays the buffer | Prompt with the window prompt; offer split actions | "Reuse; no window displays the buffer" |
 | Reuse intent, several windows display the buffer | `disbuf-pivot-reuse` chooses auto or ask; ask marks the reuse windows | "Reuse; windows X, Y display the buffer" |
 | Caller sets `inhibit-same-window` | Show caller intent info; prompt with `ace-window`; the user may choose an existing window or a dispatch action, including the selected window | "Caller asks for a non-selected window" |
-| Other-window | Prompt with `ace-window`; exclude the selected window; offer split actions | "Caller asks for other window" |
+| Other-window | Prompt with the window prompt; exclude the selected window; offer split actions | "Caller asks for other window" |
 | New-window | Prompt; offer split and new-frame actions; do not offer existing windows | "Caller asks for new window" |
-| Direction | Prompt with `ace-window`; show caller intent info; offer a dispatch action that applies the direction; leave side windows as-is | "Caller asks for direction X" |
+| Direction | Prompt with the window prompt; show caller intent info; offer a dispatch action that applies the direction; leave side windows as-is | "Caller asks for direction X" |
 | Tab or frame | A prefix prompts frame, then tab when needed, then window.  A caller's explicit tab or frame action is left to the caller with caller intent info | "Caller asks for other tab/frame" |
 | Placed `window`, `slot`, `parent-frame`, `child-frame-parameters` | Respect the caller's placement; no prompt | Optional |
 | Side window | Leave the caller's side placement as-is; no prompt | Optional |
@@ -136,6 +136,8 @@ Choosing one repeats the prompt.
 
 - The mode line holds the ace prompt.  The echo area holds caller
   intent info.
+- The dispatch prompt is the one-window prompt; it reads one key and
+  labels no windows.
 - Caller intent info is one line.  Detailed information goes in the
   dispatch help.
 - C-g aborts the prompt.
@@ -181,7 +183,7 @@ package may call the same function after that choice.
 | `display-buffer-reuse-mode-window` | Regulate as reuse with `mode`. |
 | `display-buffer-pop-up-window` | Regulate for a split action. |
 | `display-buffer-in-previous-window` | Respect.  The `previous-window` entry is shown as a preference when the package prompts. |
-| `display-buffer-use-some-window` | Regulate: show caller intent info, prompt with `ace-window`, and let the user choose.  Do not let the function choose silently. |
+| `display-buffer-use-some-window` | Regulate: show caller intent info, prompt with the window prompt, and let the user choose.  Do not let the function choose silently. |
 | `display-buffer-use-least-recent-window` | Regulate like `display-buffer-use-some-window`. |
 | `display-buffer-in-direction` | Regulate for the "use caller intent" direction action. |
 | `display-buffer-below-selected` | Respect. |
@@ -204,7 +206,7 @@ it.  Entries used during the prompt are interpreted as follows.
 
 | Entry | Treatment |
 |---|---|
-| `inhibit-same-window` | Show caller intent info; call `ace-window`; the user may choose an existing window or a dispatch action.  Keep the selected window a candidate; bind this entry to nil for the display call if the user chooses it. |
+| `inhibit-same-window` | Show caller intent info; call the window prompt; the user may choose an existing window or a dispatch action.  Keep the selected window a candidate; bind this entry to nil for the display call if the user chooses it. |
 | `previous-window` | Honor as a preference.  When the caller's action runs, it receives the entry.  When the package prompts for another intent, show the named window as preferred; do not force it. |
 | `mode` | Pass to `display-buffer-reuse-mode-window` when reuse is regulated with a mode. |
 | `frame-predicate` | Frame candidates; honor. |
@@ -229,8 +231,8 @@ it.  Entries used during the prompt are interpreted as follows.
 - Batch: return nil.  Do not prompt.
 - Active minibuffer: return nil.  Do not prompt.
 - Timer, process filter, or keyboard macro: return nil.  Do not prompt.
-- Daemon or text terminal: the same prompt rules apply; `ace-window`
-  may still work.
+- Daemon or text terminal: the same prompt rules apply; the window
+  prompt may still work.
 - Recursive display during tab or frame creation, or during a preview:
   return nil for the nested call.
 - Multiple `display-buffer` calls in one command: no cache.

@@ -30,11 +30,11 @@ For every buffer an earlier entry does not take, the entry:
   window;
 - otherwise tries `disbuf-pivot-action-functions`: reuse a window that
   displays the buffer, the selected window, then split when the split
-  rule allows it or ask with `ace-window`.
+  rule allows it or ask with the window prompt.
 
 `disbuf-pivot-action-functions` changes the functions and their order.
-`disbuf-pivot-action-select` says whether the window chosen with
-`ace-window` is selected.  When the window prompt uses `aw-select`, it
+`disbuf-pivot-action-select` says whether the window chosen with the
+window prompt is selected.  When the window prompt uses `aw-select`, it
 shows `? for actions` if `aw-dispatch-alist` binds `?`, and it says in
 the echo area when a chosen window cannot display the buffer.  The
 action declines in batch, while the minibuffer is active, when the user
@@ -61,7 +61,7 @@ frame is selected, when the selected window cannot display a buffer.
 - `disbuf-pivot-same-window-prefix` displays the buffer in the same
   window.
 - `disbuf-pivot-other-window-prefix` splits when the split rule allows
-  it, and otherwise asks with `ace-window`.  It follows
+  it, and otherwise asks with the window prompt.  It follows
   `reusable-frames`, passes `inhibit-same-window` as the ignored window,
   and its `disbuf-pivot-other-window-prefix-select` option controls the
   selected window after the choice.

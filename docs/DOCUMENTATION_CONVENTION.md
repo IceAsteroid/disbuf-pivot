@@ -18,9 +18,13 @@ entries below are this package's terms.
 - **display action** — the entry `disbuf-pivot-action-mode` installs in
   `display-buffer-alist`; `display-buffer` calls its function for a
   buffer no earlier entry takes.
-- **window prompt** — the prompt that reads a window, implemented by
-  `disbuf-pivot-window-utility-choose-tab-window` and
-  `disbuf-pivot-window-utility-choose-display-window`.
+- **window prompt** — the prompt that calls `aw-select` to label the
+  eligible windows and reads a label.  The mode-line help string is
+  optional; `?` shows the dispatch help in the echo area.
+- **dispatch prompt** — the echo-area prompt in
+  `disbuf-pivot-window-utility-choose-sole-window` that lists the split
+  actions from `aw-dispatch-alist` and reads one key; it labels no
+  windows.
 - **split rule** — `disbuf-pivot-window-utility-split-p`, which
   compares the number of windows with
   `disbuf-pivot-window-utility-split-maximum` and its exclusion

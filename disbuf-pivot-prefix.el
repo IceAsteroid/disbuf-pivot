@@ -10,7 +10,7 @@
 ;; window of the frame, or of the parent frame when a child frame is
 ;; selected, when the selected window cannot display a buffer.
 ;; `disbuf-pivot-same-window-prefix' displays in that window;
-;; `disbuf-pivot-other-window-prefix' asks with `ace-window' and can split
+;; `disbuf-pivot-other-window-prefix' asks with the window prompt and can split
 ;; a window; `disbuf-pivot-other-tab-prefix' asks for a tab and then for a
 ;; window of that tab; `disbuf-pivot-other-frame-prefix' asks for a frame,
 ;; its tab when `tab-bar-mode' is active or the frame has more than one,
