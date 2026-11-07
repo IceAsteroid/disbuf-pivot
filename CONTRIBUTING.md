@@ -81,23 +81,7 @@ change.  Report what was verified and what was not.
 
 ## Dependency boundaries
 
-The display package does not require `emacs-utils` or `column-popup`;
-`emacs-utils` consumes the optional consult library.  `consult` is
-optional and only the consult library requires it.  The entry needs
-`ace-window`; `avy` is required by `ace-window`.  `tab-bar-mode`
-is needed for tab targets.
-
-Keep that direction.  The display repository is separate from
-`emacs-utils`; do not make one require the other.
-
-## Documents
-
-- `README.md` -- the user guide.
-- `CHANGELOG.md` -- user-visible and internal changes.
-- `docs/DOCUMENTATION_CONVENTION.md` -- terms, prose, and documentation.
-- `docs/GIT_CONVENTION.md` -- commits and history.
-- `docs/CHANGELOG_CONVENTION.md` -- changelog entries.
-- `docs/DESIGN_RULESET.md` -- target behavior.
-- `docs/DISPLAY_BUFFER_MATRIX.md` -- Emacs 31.1 action matrix
-  (reference, not normative).
-- `AGENTS.md` -- the coding-agent index.
+The display repository is separate from `emacs-utils` and
+`column-popup`; do not make one require the other.  `emacs-utils`
+consumes the optional consult library.  `avy` is required by
+`ace-window`; `tab-bar-mode` is needed for tab targets.
