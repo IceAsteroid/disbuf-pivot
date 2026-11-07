@@ -547,7 +547,7 @@
          (format "\n%d CHECK(S) FAILED\n" nfail)))
 (expect nfail :to-be 0))
 
-(describe "ia tab and frame target"
+(describe "disbuf-pivot tab and frame target"
   (it "runs the tab and frame checks"
     (tab-frame-checks)))
 ;; Local Variables:

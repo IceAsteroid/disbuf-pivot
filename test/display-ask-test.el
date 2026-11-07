@@ -495,7 +495,7 @@
          (format "\n%d CHECK(S) FAILED\n" nfail)))
 (expect nfail :to-be 0))
 
-(describe "ia display-buffer-alist entry"
+(describe "disbuf-pivot display-buffer-alist entry"
   (it "runs the display checks"
     (display-ask-checks)))
 ;; Local Variables:

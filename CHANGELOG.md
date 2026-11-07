@@ -17,6 +17,8 @@
 
 ### Internal Changes
 
+- Docs: state the `eldev` PATH requirement in `CONTRIBUTING.md`.
+- Test: rename the test suite names to the `disbuf-pivot` prefix.
 - Docs: import `CONTRIBUTING.md` into `CLAUDE.md`, scope the term file
   to artifacts, add the dependency tree and test file names to
   `CONTRIBUTING.md`, route `docs/DISPLAY_BUFFER_MATRIX.md` from the

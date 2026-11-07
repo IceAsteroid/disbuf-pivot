@@ -56,12 +56,13 @@ make check-consult   # compile and checkdoc the optional consult library
 
 - Dependencies are found under `ELPA`; `make check` needs `ace-window`
   and `avy`; `make check-consult` needs `consult` too.
+- `eldev` must be on `PATH`; the checks call it directly.
 - `make check-consult` does not run tests.
 - The test files are `order-test.el`, `display-ask-test.el`, and
   `tab-frame-test.el`.
 - One test file: `eldev test -f order-test.el`.
 - One spec:
-  `eldev test -f order-test.el "ia display-buffer-alist entry ordering"`.
+  `eldev test -f order-test.el "disbuf-pivot display-buffer-alist entry ordering"`.
 - CI runs `make check`, `make checkdoc`, and `make check-consult` on
   Emacs 31.1.
 
