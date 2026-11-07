@@ -52,7 +52,7 @@ are.
 
 ## 3. Intent classes and eligibility
 
-The package distinguishes five classes:
+The package distinguishes four classes:
 
 - **names a place** -- `window`, `slot`, `side`, `parent-frame`,
   `child-frame-parameters`, `tab-name`, `tab-group`, and the tab and
@@ -62,9 +62,6 @@ The package distinguishes five classes:
   Regulate the display by the rules below.
 - **names a constraint** -- `reusable-frames`, `previous-window`,
   `frame-predicate`, `allow-no-window`.  Honor the constraint.
-- **referential** -- `inhibit-same-window`.  Show it as caller intent
-  info; it does not decide the window or remove the selected window
-  from the candidates.
 - **no preference** -- use the selected window when it can display.
 
 A package prefix command is user intent, not caller intent.
@@ -76,12 +73,13 @@ Section 6 gives the target flow.
 
 The selected window cannot display a buffer when it is a minibuffer
 window, is dedicated to another buffer, is a side window, or is not
-live.  `inhibit-same-window` is referential and is not one of these
-conditions.
+live.  `inhibit-same-window` is a caller intent shown in caller intent
+info; it is not one of these conditions.
 
-When the user chooses a window that a referential caller intent
-excluded, the user's choice wins.  Bind the relevant alist entry to nil
-for the display call; caller intent info says what was excluded.
+When the user chooses a window that the caller excluded with
+`inhibit-same-window`, the user's choice wins.  Bind that entry to nil
+for the display call; caller intent info says the caller asked for a
+non-selected window.
 
 ## 4. Rules
 
@@ -95,7 +93,7 @@ for the display call; caller intent info says what was excluded.
 | A window displays the buffer | Reuse the preferred window; `disbuf-pivot-reuse` can ask instead | "Reuse; window(s) X display the buffer" |
 | Reuse intent, no window displays the buffer | Prompt with `ace-window`; offer split actions | "Reuse; no window displays the buffer" |
 | Reuse intent, several windows display the buffer | `disbuf-pivot-reuse` chooses auto or ask; ask marks the reuse windows | "Reuse; windows X, Y display the buffer" |
-| Caller sets `inhibit-same-window` | Show caller intent info; prompt with `ace-window`; the selected window remains a candidate | "Caller asks for a non-selected window" |
+| Caller sets `inhibit-same-window` | Show caller intent info; prompt with `ace-window`; the user may choose an existing window or a dispatch action, including the selected window | "Caller asks for a non-selected window" |
 | Other-window | Prompt with `ace-window`; exclude the selected window; offer split actions | "Caller asks for other window" |
 | New-window | Prompt; offer split and new-frame actions; do not offer existing windows | "Caller asks for new window" |
 | Direction | Prompt with `ace-window`; show caller intent info; offer a dispatch action that applies the direction; leave side windows as-is | "Caller asks for direction X" |
@@ -206,7 +204,7 @@ it.  Entries used during the prompt are interpreted as follows.
 
 | Entry | Treatment |
 |---|---|
-| `inhibit-same-window` | Referential.  Show caller intent info; keep the selected window a candidate; bind this entry to nil for the display call if the user chooses it. |
+| `inhibit-same-window` | Show caller intent info; call `ace-window`; the user may choose an existing window or a dispatch action.  Keep the selected window a candidate; bind this entry to nil for the display call if the user chooses it. |
 | `previous-window` | Honor as a preference.  When the caller's action runs, it receives the entry.  When the package prompts for another intent, show the named window as preferred; do not force it. |
 | `mode` | Pass to `display-buffer-reuse-mode-window` when reuse is regulated with a mode. |
 | `frame-predicate` | Frame candidates; honor. |
@@ -252,9 +250,9 @@ it.  Entries used during the prompt are interpreted as follows.
    direction.  Keep the tab and frame flows of the package prefix
    commands; respect a caller's explicit tab or frame action.  Use the
    action functions in section 7 as the display primitives.
-5. Implement referential `inhibit-same-window`: show caller intent
-   info, keep the selected window, and bind the entry to nil when the
-   user chooses it.
+5. Handle `inhibit-same-window`: show caller intent info, call
+   `ace-window`, keep the selected window, and bind the entry to nil
+   when the user chooses it.
 6. Put caller intent info in the echo area.  Keep the mode line as the
    ace prompt.  Show one brief line for prompted placements.
 7. Make C-g abort.  Remove any option that changes C-g behavior.

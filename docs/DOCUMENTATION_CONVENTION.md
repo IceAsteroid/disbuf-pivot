@@ -34,9 +34,6 @@ entries below are this package's terms.
 - **caller intent info** — the message that states what the caller
   asked for and, when relevant, which caller constraint applies.  The
   package shows it in the echo area.
-- **referential** — shown as caller intent info; it does not by itself
-  decide the window.  The design rules say which caller constraints
-  limit the candidates.
 - **cannot display** — a window does not accept another buffer's
   display.  The design rules list the conditions.
 - **built-in prefix command** — one of Emacs's `same-window-prefix`,

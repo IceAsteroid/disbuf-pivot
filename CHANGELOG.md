@@ -15,8 +15,8 @@
 ### Internal Changes
 
 - Docs: add `docs/DESIGN_RULESET.md` as the design authority, define the
-  chosen window, caller intent info, referential, cannot display,
-  built-in prefix command, and package prefix command terms in
+  chosen window, caller intent info, cannot display, built-in prefix
+  command, and package prefix command terms in
   `docs/DOCUMENTATION_CONVENTION.md`, and record the settled display
   rules.
 - Docs: move the maintainer docs under `docs/` and split the git and
