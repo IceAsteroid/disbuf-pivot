@@ -115,6 +115,9 @@ non-selected window.
 - `disbuf-pivot-caller-intent-info` -- non-nil (default) shows one
   brief line for prompted placements.  Silent selected-window defaults
   show no info.  Nil hides the line for prompts.
+- `disbuf-pivot-mode-line-help` -- nil (default) hides the `aw-select`
+  help string in the mode line; non-nil shows it.  It does not affect
+  `ace-window-display-mode` labels.
 - `disbuf-pivot-action-select` -- `auto` (default), `t`, or `nil`.
   It controls selection after an action-mode prompt.
 - `disbuf-pivot-other-window-prefix-select` -- `auto` (default), `t`,
@@ -134,8 +137,10 @@ Choosing one repeats the prompt.
 
 ## 6. Interaction rules
 
-- The mode line holds the ace prompt.  The echo area holds caller
-  intent info.
+- The window prompt calls `aw-select` to label and read a window.
+  `disbuf-pivot-mode-line-help` controls the help string in the mode
+  line; nil by default.  The echo area holds the dispatch help, the
+  repeat message, and caller intent info.
 - The dispatch prompt is the one-window prompt; it reads one key and
   labels no windows.
 - Caller intent info is one line.  Detailed information goes in the

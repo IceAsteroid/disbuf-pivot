@@ -273,7 +273,8 @@
       (pop-up-windows nil)
       (calls 0)
       (mode-lines nil)
-      (messages nil))
+      (messages nil)
+      (dp-mode-line-help t))
   (set-window-dedicated-p w2 t)
   (dp-other-window-prefix)
   (let ((choices (list w2 w1)))
@@ -300,6 +301,12 @@
                (eq (window-buffer w1) (get-buffer "*t9*")))
         (check "prefix: the display returns that window" (eq result w1)))))
   (set-window-dedicated-p w2 nil))
+
+;;; ---- the mode-line help is off by default
+(let ((disbuf-pivot-mode-line-help nil))
+  (check "mode line: the help string is off by default"
+         (null (disbuf-pivot-window-utility--aw-mode-line
+                t "Display buffer in window"))))
 
 ;;; ---- the prefix splits under the maximum
 (let ((noninteractive nil)

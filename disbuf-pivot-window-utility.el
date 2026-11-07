@@ -59,12 +59,23 @@ and compare the count with
                 (aw-window-list))))
     (< count dp-window-utility-split-maximum)))
 
+(defcustom dp-mode-line-help nil
+  "Non-nil to show the `aw-select' help string in the mode line.
+The string is `Display buffer in window (? for actions)' or
+`Choose another window (? for actions)'.  Nil passes nil to
+`aw-select', so the mode line shows no help string.  This does not
+affect `ace-window-display-mode' labels."
+  :group 'windows
+  :type 'boolean)
+
 (defun dp-window-utility--aw-mode-line (first mode-line)
-  "Return the mode line for `aw-select'.
-On the first choice use MODE-LINE; on a repeat use `Choose another
-window`.  Append ` (? for actions)` when `aw-dispatch-alist' binds `?`."
-  (concat (if first mode-line "Choose another window")
-          (if (assq ?? aw-dispatch-alist) " (? for actions)" "")))
+  "Return the `aw-select' help string, or nil when the option is nil.
+When FIRST is non-nil, use MODE-LINE; otherwise use `Choose another
+window`.  Append ` (? for actions)` when `aw-dispatch-alist' binds `?`.
+`disbuf-pivot-mode-line-help' controls whether a string is returned."
+  (when dp-mode-line-help
+    (concat (if first mode-line "Choose another window")
+            (if (assq ?? aw-dispatch-alist) " (? for actions)" ""))))
 
 (defun dp-window-utility--aw-repeat-message ()
   "Say that the chosen window cannot display the buffer."

@@ -4,6 +4,9 @@
 
 ### User-visible Changes
 
+- Add: `disbuf-pivot-mode-line-help`; nil by default hides the
+  `aw-select` help string in the mode line, non-nil shows it.  It does
+  not affect `ace-window-display-mode` labels.
 - Doc: describe the consult reader's child-frame cleanup and
   minibuffer-height preservation separately; state the existing-frame
   condition in the frame prefix; qualify the `aw-select` prompt feedback;
