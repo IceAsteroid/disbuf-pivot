@@ -30,6 +30,10 @@ entries below are this package's terms.
   options.
 - **split action** — a dispatch action that splits a window and displays
   the buffer in the new window.
+- **tab or frame action** — `display-buffer-in-tab`,
+  `display-buffer-in-new-tab`, `display-buffer-pop-up-frame`, or
+  `display-buffer-use-some-frame`.
+- **child-frame action** — `display-buffer-in-child-frame`.
 - **tab reader** — `disbuf-pivot-tab-bar-read-tab-name`, the function
   that reads a tab name; the optional consult library supplies another
   reader.
@@ -61,6 +65,18 @@ entries below are this package's terms.
   `disbuf-pivot-other-tab-prefix`, and
   `disbuf-pivot-other-frame-prefix`; `disbuf-pivot-prefix-mode`
   remaps the built-in prefix commands to these commands.
+
+## Emacs terms used by the design
+
+- **top-level frame** — an Emacs frame whose `parent-frame` parameter
+  is nil.  On a graphical display it is a separate desktop window
+  managed by the graphical environment's window manager; on a text
+  terminal it occupies the terminal.  A frame created with `make-frame`
+  while another frame is selected is still top-level unless its
+  `parent-frame` parameter is non-nil.
+- **child frame** — an Emacs frame whose `parent-frame` parameter is
+  non-nil.  It is displayed within the parent frame's area and is not a
+  separate desktop window.
 
 ## Terms not used
 

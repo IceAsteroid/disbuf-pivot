@@ -37,11 +37,11 @@ Source: the Emacs 31.1 docstrings, the Elisp manual nodes
 | `display-buffer-below-selected` | Regulate | - | - | - | - | - | - |
 | `display-buffer-at-bottom` | Regulate | - | - | - | - | - | - |
 | `display-buffer-full-frame` | Respect | - | - | - | - | - | - |
-| `display-buffer-pop-up-frame` | Respect | - | - | Y | - | - | - |
-| `display-buffer-use-some-frame` | Respect | Y | - | Y | - | - | - |
+| `display-buffer-pop-up-frame` | Regulate | - | - | Y | - | - | - |
+| `display-buffer-use-some-frame` | Regulate | Y | - | Y | - | - | - |
 | `display-buffer-in-child-frame` | Respect | - | - | - | - | - | - |
-| `display-buffer-in-tab` | Respect | - | Y | - | - | - | - |
-| `display-buffer-in-new-tab` | Respect | - | - | - | - | - | - |
+| `display-buffer-in-tab` | Regulate | - | Y | - | - | - | - |
+| `display-buffer-in-new-tab` | Regulate | - | - | - | - | - | - |
 | `display-buffer-in-side-window` | Respect | - | - | - | - | - | - |
 | `display-buffer-in-atom-window` | Respect | - | - | - | - | - | - |
 | `display-buffer-no-window` | Regulate | - | - | - | - | - | - |
@@ -58,6 +58,11 @@ previous-buffer window is not visible to the user.
 `display-buffer-below-selected` and `display-buffer-at-bottom` are
 Regulate: they are relative placements; the prompt offers the caller's
 function as the "use caller intent" action.
+
+The tab or frame actions are Regulate: the tab reader or frame prompt
+preselects an existing tab or frame; a new one starts without an
+existing preselect.  The child-frame action,
+`display-buffer-in-child-frame`, remains Respect.
 
 ## 2. Window fit and strategy
 

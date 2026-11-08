@@ -17,6 +17,10 @@
 
 ### Internal Changes
 
+- Docs: define the tab or frame action and child-frame action terms,
+  record the top-level and child frame definitions, and regulate the tab
+  or frame actions; preselect an existing tab or frame and start a new
+  one without a preselect.
 - Docs: regulate `display-buffer-below-selected` and
   `display-buffer-at-bottom` in the design and matrix.
 - Docs: regulate `display-buffer-in-previous-window` in the design and
