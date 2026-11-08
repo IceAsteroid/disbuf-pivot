@@ -17,6 +17,8 @@
 
 ### Internal Changes
 
+- Docs: regulate `display-buffer-below-selected` and
+  `display-buffer-at-bottom` in the design and matrix.
 - Docs: regulate `display-buffer-in-previous-window` in the design and
   matrix: show the `previous-window` candidate; otherwise use the
   windows that previously showed the buffer.

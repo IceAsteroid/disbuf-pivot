@@ -34,8 +34,8 @@ Source: the Emacs 31.1 docstrings, the Elisp manual nodes
 | `display-buffer-use-some-window` | Regulate | Y | - | Y | - | - | - |
 | `display-buffer-use-least-recent-window` | Regulate | P* | Y | Y | - | - | - |
 | `display-buffer-in-direction` | Regulate | - | - | - | - | - | - |
-| `display-buffer-below-selected` | Respect | - | - | - | - | - | - |
-| `display-buffer-at-bottom` | Respect | - | - | - | - | - | - |
+| `display-buffer-below-selected` | Regulate | - | - | - | - | - | - |
+| `display-buffer-at-bottom` | Regulate | - | - | - | - | - | - |
 | `display-buffer-full-frame` | Respect | - | - | - | - | - | - |
 | `display-buffer-pop-up-frame` | Respect | - | - | Y | - | - | - |
 | `display-buffer-use-some-frame` | Respect | Y | - | Y | - | - | - |
@@ -54,6 +54,10 @@ search any frames.
 `display-buffer-in-previous-window` is Regulate: the `previous-window`
 entry is a preferred candidate, and without a usable entry, the first
 previous-buffer window is not visible to the user.
+
+`display-buffer-below-selected` and `display-buffer-at-bottom` are
+Regulate: they are relative placements; the prompt offers the caller's
+function as the "use caller intent" action.
 
 ## 2. Window fit and strategy
 
