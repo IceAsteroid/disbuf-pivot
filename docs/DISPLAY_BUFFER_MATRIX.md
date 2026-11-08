@@ -30,7 +30,7 @@ Source: the Emacs 31.1 docstrings, the Elisp manual nodes
 | `display-buffer-reuse-window` | Regulate | Y | Y | Y | - | Y | - |
 | `display-buffer-reuse-mode-window` | Regulate | Y | Y | Y | - | - | Y |
 | `display-buffer-pop-up-window` | Regulate | - | - | Y | - | - | - |
-| `display-buffer-in-previous-window` | Respect | Y | Y | - | Y | - | - |
+| `display-buffer-in-previous-window` | Regulate | Y | Y | - | Y | - | - |
 | `display-buffer-use-some-window` | Regulate | Y | - | Y | - | - | - |
 | `display-buffer-use-least-recent-window` | Regulate | P* | Y | Y | - | - | - |
 | `display-buffer-in-direction` | Regulate | - | - | - | - | - | - |
@@ -50,6 +50,10 @@ Source: the Emacs 31.1 docstrings, the Elisp manual nodes
 `(inhibit-same-window . t)` internally and never uses the selected
 window.  The tab meaning of `reusable-frames` differs: nil means do not
 search any frames.
+
+`display-buffer-in-previous-window` is Regulate: the `previous-window`
+entry is a preferred candidate, and without a usable entry, the first
+previous-buffer window is not visible to the user.
 
 ## 2. Window fit and strategy
 

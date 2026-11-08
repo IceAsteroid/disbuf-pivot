@@ -17,6 +17,9 @@
 
 ### Internal Changes
 
+- Docs: regulate `display-buffer-in-previous-window` in the design and
+  matrix: show the `previous-window` candidate; otherwise use the
+  windows that previously showed the buffer.
 - Docs: state the `eldev` PATH requirement in `CONTRIBUTING.md`.
 - Test: rename the test suite names to the `disbuf-pivot` prefix.
 - Docs: import `CONTRIBUTING.md` into `CLAUDE.md`, scope the term file

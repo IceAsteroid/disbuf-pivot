@@ -100,6 +100,7 @@ non-selected window.
 | Other-window | Prompt with the window prompt; exclude the selected window; offer split actions | "Caller asks for other window" |
 | New-window | Prompt; offer split and new-frame actions; do not offer existing windows | "Caller asks for new window" |
 | Direction | Prompt with the window prompt; show caller intent info; offer a dispatch action that applies the direction; leave side windows as-is | "Caller asks for direction X" |
+| Previous window | Prompt with the window prompt; show the named `previous-window` as the preferred candidate, or mark the windows that previously showed the buffer; use `disbuf-pivot-reuse` when no previous window is usable | "Caller asks for previous window X" or "Caller asks for a window that previously showed the buffer" |
 | Tab or frame | A prefix prompts frame, then tab when needed, then window.  A caller's explicit tab or frame action is left to the caller with caller intent info | "Caller asks for other tab/frame" |
 | Placed `window`, `slot`, `parent-frame`, `child-frame-parameters` | Respect the caller's placement; no prompt | Optional |
 | Side window | Leave the caller's side placement as-is; no prompt | Optional |
@@ -111,7 +112,8 @@ non-selected window.
 ## 5. Options and defaults
 
 - `disbuf-pivot-reuse` -- `auto` (default) or `ask`.  It applies when
-  a window already displays the buffer.
+  a window already displays the buffer, and to the previous-buffer
+  candidates of `display-buffer-in-previous-window`.
 - `disbuf-pivot-same-window-conflict` -- `ask` (default) or
   `same-window`.  It applies when the caller asks for the same window
   and sets `inhibit-same-window`.
@@ -190,7 +192,7 @@ package may call the same function after that choice.
 | `display-buffer-reuse-window` | Regulate.  If the user chooses a window the caller excluded, bind `inhibit-same-window` to nil for this call. |
 | `display-buffer-reuse-mode-window` | Regulate as reuse with `mode`. |
 | `display-buffer-pop-up-window` | Regulate for a split action. |
-| `display-buffer-in-previous-window` | Respect.  The `previous-window` entry is shown as a preference when the package prompts. |
+| `display-buffer-in-previous-window` | Regulate.  Show the `previous-window` entry as the preferred candidate; when it is not usable, mark the windows that previously showed the buffer. |
 | `display-buffer-use-some-window` | Regulate: show caller intent info, prompt with the window prompt, and let the user choose.  Do not let the function choose silently. |
 | `display-buffer-use-least-recent-window` | Regulate like `display-buffer-use-some-window`. |
 | `display-buffer-in-direction` | Regulate for the "use caller intent" direction action. |
@@ -215,7 +217,7 @@ it.  Entries used during the prompt are interpreted as follows.
 | Entry | Treatment |
 |---|---|
 | `inhibit-same-window` | Show caller intent info; call the window prompt; the user may choose an existing window or a dispatch action.  Keep the selected window a candidate; bind this entry to nil for the display call if the user chooses it. |
-| `previous-window` | Honor as a preference.  When the caller's action runs, it receives the entry.  When the package prompts for another intent, show the named window as preferred; do not force it. |
+| `previous-window` | Show the named window as the preferred candidate when it is displayable; do not force it.  Without a usable entry, mark the windows that previously showed the buffer. |
 | `mode` | Pass to `display-buffer-reuse-mode-window` when reuse is regulated with a mode. |
 | `frame-predicate` | Frame candidates; honor. |
 | `reusable-frames` | Reuse and tab scope; honor.  The tab meaning of nil differs. |
@@ -256,10 +258,10 @@ it.  Entries used during the prompt are interpreted as follows.
 3. Classify the caller's intent before displaying.  Respect the
    classes in section 3; return nil for anything the package does not
    regulate.
-4. Regulate same-window, reuse, other-window, new-window, and
-   direction.  Keep the tab and frame flows of the package prefix
-   commands; respect a caller's explicit tab or frame action.  Use the
-   action functions in section 7 as the display primitives.
+4. Regulate same-window, reuse, other-window, new-window, direction,
+   and previous window.  Keep the tab and frame flows of the package
+   prefix commands; respect a caller's explicit tab or frame action.
+   Use the action functions in section 7 as the display primitives.
 5. Handle `inhibit-same-window`: show caller intent info, call
    `ace-window`, keep the selected window, and bind the entry to nil
    when the user chooses it.
@@ -282,8 +284,9 @@ it.  Entries used during the prompt are interpreted as follows.
 Every rule needs a Buttercup test.  Combine:
 
 - caller intent: same-window, no preference, reuse with a target, reuse
-  without a target, other-window, new-window, direction, tab, frame,
-  placed, side, ACTION `t`, `allow-no-window`, `switch-to-buffer`;
+  without a target, other-window, new-window, direction, previous window,
+  tab, frame, placed, side, ACTION `t`, `allow-no-window`,
+  `switch-to-buffer`;
 - window state: selected window eligible, dedicated, side, minibuffer,
   and dead; window already displaying the buffer or not;
 - target state: existing, new, none;
