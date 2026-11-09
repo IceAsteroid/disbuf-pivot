@@ -50,6 +50,9 @@ entries below are this package's terms.
   limits the candidate windows; the design rules name the entries.
 - **cannot display** — a window does not accept another buffer's
   display.  The design rules list the conditions.
+- **cannot prompt** — the package must not call any prompt: the window
+  prompt, the dispatch prompt, the tab reader, or the frame prompt.
+  The design rules list the contexts.
 - **displayable window** — a window that can display a buffer: it is
   live, is not a minibuffer window, is not dedicated to another buffer,
   and is not a side window.
@@ -93,6 +96,7 @@ prose.
 - display action, for the package's entry — say **the package's
   `display-buffer-alist` entry**, or name the condition and action
   function.
+- no-prompt — say **cannot prompt**, or name the context.
 - workspace — use **window**, or name the function that returns it.
 - editing window — say **displayable window**, or "the most recently
   used displayable window."

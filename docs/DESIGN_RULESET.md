@@ -86,7 +86,7 @@ user choice; it runs the caller's whole function list in order with the
 merged alist, under a guard that prevents the package's entry from
 running again.  The package does not regulate a later function; it
 remains a caller fallback.  If the first function fails, or the package
-returns nil because no prompt can run (section 9) or the display fails,
+returns nil because it cannot prompt (section 9), or the display fails,
 the caller's ACTION functions run, with the later functions as
 fallbacks.  Do not reorder or deduplicate the list.  Use the first
 association of an alist key, as Emacs does.  An ACTION with no function
@@ -274,6 +274,11 @@ it.  Entries used during the prompt are interpreted as follows.
 | `reuse-indirect` | Pass to `display-buffer-reuse-window`. |
 
 ## 9. Contexts
+
+The package cannot prompt in the batch, active-minibuffer, timer,
+process-filter, keyboard-macro, and recursive-display contexts below.
+In them none of the window prompt, the dispatch prompt, the tab reader,
+or the frame prompt runs; the action returns nil.
 
 - Batch: return nil.  Do not prompt.
 - Active minibuffer: return nil.  Do not prompt.
