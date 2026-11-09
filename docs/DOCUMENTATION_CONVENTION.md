@@ -17,7 +17,7 @@ entries below are this package's terms.
   the package's name for it.  The package name uses the word.
 - **window prompt** — the prompt that calls `aw-select` to label the
   eligible windows and reads a label.  The mode-line help string is
-  optional; `?` shows the dispatch help in the echo area.
+  optional; `?` shows the dispatch actions in the echo area.
 - **dispatch prompt** — the echo-area prompt in
   `disbuf-pivot-window-utility-choose-sole-window` that lists the split
   actions from `aw-dispatch-alist` and reads one key; it labels no

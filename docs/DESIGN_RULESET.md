@@ -175,12 +175,14 @@ Choosing one repeats the prompt.
 
 - The window prompt calls `aw-select` to label and read a window.
   `disbuf-pivot-mode-line-help` controls the help string in the mode
-  line; nil by default.  The echo area holds the dispatch help, the
-  repeat message, and caller intent info.
+  line; nil by default.  The help string is a hint, not the dispatch
+  actions; `?` shows the dispatch actions in the echo area.  Show
+  caller intent info before the window prompt.  The echo area also
+  holds the repeat message.
 - The dispatch prompt is the one-window prompt; it reads one key and
   labels no windows.
 - Caller intent info is one line.  Detailed information goes in the
-  dispatch help.
+  list that `?` shows.
 - C-g aborts the display; it does not run the caller's fallbacks.  The
   "use caller intent" action is the explicit way to run the chain.
 - The prompt offers a leave-undisplayed dispatch action only when

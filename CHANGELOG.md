@@ -17,6 +17,9 @@
 
 ### Internal Changes
 
+- Docs: state that the mode-line help string is a hint, not the
+  dispatch actions, and that caller intent info is shown before the
+  window prompt.
 - Docs: port the remaining action-alist corrections.
 - Docs: define "cannot prompt" as a restriction and "no prompt" as the
   behavior.
