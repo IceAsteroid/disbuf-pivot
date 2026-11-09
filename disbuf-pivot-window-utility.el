@@ -60,27 +60,49 @@ and compare the count with
     (< count dp-window-utility-split-maximum)))
 
 (defcustom dp-mode-line-help nil
-  "Non-nil to show the `aw-select' help string in the mode line.
-The string is `Display buffer in window (? for actions)' or
-`Choose another window (? for actions)'.  Nil passes nil to
-`aw-select', so the mode line shows no help string.  This does not
+  "Non-nil to show the dispatch hint in the mode line.
+The dispatch hint is `Display buffer in window (? for actions)' or
+`Choose another window (? for actions)'.  Nil hides only the
+mode-line copy; the echo area still shows the hint.  This does not
 affect `ace-window-display-mode' labels."
   :group 'windows
   :type 'boolean)
 
-(defun dp-window-utility--aw-mode-line (first mode-line)
-  "Return the `aw-select' help string, or nil when the option is nil.
+(defun dp-window-utility--dispatch-hint (first mode-line)
+  "Return the window prompt's dispatch hint, or nil when `?' is unbound.
 When FIRST is non-nil, use MODE-LINE; otherwise use `Choose another
-window`.  Append ` (? for actions)` when `aw-dispatch-alist' binds `?`.
+window`.  Append ` (? for actions)' when `aw-dispatch-alist' binds `?'.
+The hint is the one-line text shown in the echo area; the mode-line
+copy is controlled by `disbuf-pivot-mode-line-help'."
+  (when (assq ?? aw-dispatch-alist)
+    (concat (if first mode-line "Choose another window")
+            " (? for actions)")))
+
+(defun dp-window-utility--aw-mode-line (first mode-line)
+  "Return the mode-line copy of the dispatch hint, or nil.
+When FIRST is non-nil, use MODE-LINE; otherwise use `Choose another
+window`.  Append ` (? for actions)' when `aw-dispatch-alist' binds `?'.
+Return the base string without the hint when `?' is unbound.
 `disbuf-pivot-mode-line-help' controls whether a string is returned."
   (when dp-mode-line-help
-    (concat (if first mode-line "Choose another window")
-            (if (assq ?? aw-dispatch-alist) " (? for actions)" ""))))
+    (or (dp-window-utility--dispatch-hint first mode-line)
+        (if first mode-line "Choose another window"))))
 
-(defun dp-window-utility--aw-repeat-message ()
-  "Say that the chosen window cannot display the buffer."
-  (message (concat "disbuf-pivot: the chosen window cannot display "
-                   "the buffer; choose another")))
+(defun dp-window-utility--aw-show-hint (first mode-line)
+  "Show the dispatch hint in the echo area when it exists.
+FIRST and MODE-LINE are passed to
+`disbuf-pivot-window-utility--dispatch-hint'."
+  (let ((hint (dp-window-utility--dispatch-hint first mode-line)))
+    (when hint
+      (message "%s" hint))))
+
+(defun dp-window-utility--aw-repeat-message (&optional hint)
+  "Say that the chosen window cannot display the buffer.
+Append HINT on a new line when non-nil."
+  (message "%s%s"
+           (concat "disbuf-pivot: the chosen window cannot display "
+                   "the buffer; choose another")
+           (if hint (concat "\n" hint) "")))
 
 (defun dp-window-utility-choose-display-window (scope ignore-current &optional mode-line)
   "Ask for a window with `aw-select' to display a buffer in.
@@ -89,7 +111,8 @@ SCOPE and IGNORE-CURRENT are bound to `aw-scope' and
 and defaults to `Display buffer in window`; the mode line also offers
 `? for actions' when `aw-dispatch-alist' binds it.
 
-Ask again while the chosen window cannot display the buffer, a window
+The echo area shows the dispatch hint before the choice.  Ask again
+while the chosen window cannot display the buffer, a window
 `disbuf-pivot-window-utility-cannot-display-p' answers for; the echo area
 says why.  Should the choice return the window it was told to ignore --
 `aw-select' has none other to offer -- choose nothing.
@@ -108,12 +131,15 @@ quits the command whose display it is."
           done win)
       (while (and (not done)
                   (progn
-                    (unless first
-                      (dp-window-utility--aw-repeat-message))
+                    (if first
+                        (dp-window-utility--aw-show-hint first base)
+                      (dp-window-utility--aw-repeat-message
+                       (dp-window-utility--dispatch-hint nil base)))
                     (let ((mode-line
                            (dp-window-utility--aw-mode-line first base)))
                       (setq first nil)
-                      (setq win (aw-select mode-line))))
+                      (let ((aw-minibuffer-flag nil))
+                        (setq win (aw-select mode-line)))))
                   (window-live-p win))
         (cond
          ;; `aw-select' returns the window it was told to ignore when it
@@ -196,12 +222,12 @@ quits."
 (defun dp-window-utility-choose-tab-window (alist)
   "Ask for a window of the selected frame for ALIST.
 With one window, `disbuf-pivot-window-utility-choose-sole-window' shows the
-split keys and reads a key.  With more, `aw-select' shows the labels,
-and the mode line says `? for actions' when `aw-dispatch-alist' binds
-`?'.  Ask again while the
-chosen window cannot display a buffer; the echo area says why.  The
-`inhibit-same-window' entry of ALIST, and a selected window that cannot
-display a buffer, are excluded.  Return the window, or nil."
+split keys and reads a key.  With more, `aw-select' shows the labels;
+the echo area shows the dispatch hint and the mode line may copy it.
+Ask again while the chosen window cannot display a buffer; the echo
+area says why.  The `inhibit-same-window' entry of ALIST, and a
+selected window that cannot display a buffer, are excluded.  Return
+the window, or nil."
   (let ((windows (window-list nil 'no-minibuf))
         (ignore-current
          (or (cdr (assq 'inhibit-same-window alist))
@@ -215,13 +241,18 @@ display a buffer, are excluded.  Return the window, or nil."
             done win)
         (while (and (not done)
                     (progn
-                      (unless first
-                        (dp-window-utility--aw-repeat-message))
+                      (if first
+                          (dp-window-utility--aw-show-hint
+                           first "Display buffer in window")
+                        (dp-window-utility--aw-repeat-message
+                         (dp-window-utility--dispatch-hint
+                          nil "Display buffer in window")))
                       (let ((mode-line
                              (dp-window-utility--aw-mode-line
                               first "Display buffer in window")))
                         (setq first nil)
-                        (setq win (aw-select mode-line))))
+                        (let ((aw-minibuffer-flag nil))
+                          (setq win (aw-select mode-line)))))
                     (window-live-p win))
           (cond
            ((dp-window-utility-cannot-display-p win))

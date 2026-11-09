@@ -4,6 +4,9 @@
 
 ### User-visible Changes
 
+- Fix: with `disbuf-pivot-mode-line-help` nil, the dispatch hint
+  remains in the echo area; the option controls only the mode-line
+  copy.
 - Add: `disbuf-pivot-mode-line-help`; nil by default hides the
   dispatch hint in the mode line, non-nil shows it.  It does not affect
   the echo-area dispatch hint or `ace-window-display-mode` labels.

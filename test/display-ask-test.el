@@ -294,9 +294,10 @@
                (equal (nreverse mode-lines)
                       '("Display buffer in window (? for actions)"
                         "Choose another window (? for actions)")))
-        (check "prefix: the repeat explains in the echo area"
+        (check "prefix: the echo area shows the hint and the repeat"
                (equal (nreverse messages)
-                      '("disbuf-pivot: the chosen window cannot display the buffer; choose another")))
+                      '("Display buffer in window (? for actions)"
+                        "disbuf-pivot: the chosen window cannot display the buffer; choose another\nChoose another window (? for actions)")))
         (check "prefix: the buffer is in the second choice"
                (eq (window-buffer w1) (get-buffer "*t9*")))
         (check "prefix: the display returns that window" (eq result w1)))))
@@ -307,6 +308,34 @@
   (check "mode line: the help string is off by default"
          (null (disbuf-pivot-window-utility--aw-mode-line
                 t "Display buffer in window"))))
+
+;;; ---- the echo hint is independent of the mode-line option
+(let ((disbuf-pivot-mode-line-help nil)
+      (messages nil))
+  (cl-letf (((symbol-function 'message)
+             (lambda (format-string &rest args)
+               (push (apply #'format format-string args) messages))))
+    (dp-window-utility--aw-show-hint t "Display buffer in window")
+    (check "echo: the dispatch hint is shown when the mode-line option is nil"
+           (equal (nreverse messages)
+                  '("Display buffer in window (? for actions)")))))
+
+;;; ---- the prompt passes nil for the mode line and binds aw-minibuffer-flag
+(let ((noninteractive nil)
+      (disbuf-pivot-mode-line-help nil)
+      (aw-minibuffer-flag t)
+      (seen-mode-line 'unset)
+      (seen-flag 'unset))
+  (cl-letf (((symbol-function 'aw-select)
+             (lambda (mode-line)
+               (setq seen-mode-line mode-line
+                     seen-flag aw-minibuffer-flag)
+               w1)))
+    (dp-window-utility-choose-display-window 'frame nil)
+    (check "prompt: the mode-line option nil passes nil to aw-select"
+           (null seen-mode-line))
+    (check "prompt: aw-minibuffer-flag is nil around aw-select"
+           (null seen-flag))))
 
 ;;; ---- the prefix splits under the maximum
 (let ((noninteractive nil)

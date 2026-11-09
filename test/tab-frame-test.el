@@ -188,9 +188,10 @@
              (equal (nreverse mode-lines)
                     '("Display buffer in window (? for actions)"
                       "Choose another window (? for actions)")))
-      (check "tab: the repeat explains in the echo area"
+      (check "tab: the echo area shows the hint and the repeat"
              (equal (nreverse messages)
-                    '("disbuf-pivot: the chosen window cannot display the buffer; choose another")))))
+                    '("Display buffer in window (? for actions)"
+                      "disbuf-pivot: the chosen window cannot display the buffer; choose another\nChoose another window (? for actions)")))))
   (set-window-dedicated-p w1 nil))
 
 ;;; ---- the tab package's reader supplies the name
