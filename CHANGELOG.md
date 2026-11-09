@@ -17,6 +17,8 @@
 
 ### Internal Changes
 
+- Docs: define "cannot prompt" as a restriction and "no prompt" as the
+  behavior.
 - Docs: define the contexts where the package cannot prompt, and use
   the term in the ACTION fallback rule.
 - Docs: state the fallback behavior of ACTION chains: later functions
