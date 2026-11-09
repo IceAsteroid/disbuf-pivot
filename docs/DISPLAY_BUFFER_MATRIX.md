@@ -43,7 +43,7 @@ a caller fallback; see `docs/DESIGN_RULESET.md` section 3.
 | `display-buffer-full-frame` | Respect | - | - | - | - | - | - |
 | `display-buffer-pop-up-frame` | Regulate | - | - | Y | - | - | - |
 | `display-buffer-use-some-frame` | Regulate | Y | - | Y | - | - | - |
-| `display-buffer-in-child-frame` | Respect | - | - | - | - | - | - |
+| `display-buffer-in-child-frame` | Respect | - | - | Y | - | - | - |
 | `display-buffer-in-tab` | Regulate | - | Y | - | - | - | - |
 | `display-buffer-in-new-tab` | Regulate | - | - | - | - | - | - |
 | `display-buffer-in-side-window` | Respect | - | - | - | - | - | - |
@@ -54,6 +54,10 @@ a caller fallback; see `docs/DESIGN_RULESET.md` section 3.
 `(inhibit-same-window . t)` internally and never uses the selected
 window.  The tab meaning of `reusable-frames` differs: nil means do not
 search any frames.
+
+`display-buffer-full-frame` delegates to `display-buffer-reuse-window`,
+`display-buffer-same-window`, `display-buffer-pop-up-window`, and
+`display-buffer-use-some-window` in that order, so their entries apply.
 
 `display-buffer-in-previous-window` is Regulate: the `previous-window`
 entry is a preferred candidate, and without a usable entry, the first
@@ -92,7 +96,7 @@ chooses the least recently used window and falls back to
 | `display-buffer-in-atom-window` | - | Y | - | - | - | - | - | Y | - | - | - | - | - |
 | `display-buffer-use-some-frame` | - | - | Y | - | - | - | - | - | - | - | - | - | - |
 | `display-buffer-pop-up-frame` | - | - | - | Y | - | - | - | - | - | - | - | - | - |
-| `display-buffer-in-child-frame` | - | - | - | - | - | Y | Y | - | - | - | - | - | - |
+| `display-buffer-in-child-frame` | - | - | - | - | - | - | Y | - | - | - | - | - | - |
 | `display-buffer-in-tab` | - | - | - | - | - | - | - | - | - | Y | Y | Y | - |
 | `display-buffer-in-new-tab` | - | - | - | - | - | - | - | - | - | Y | Y | - | - |
 | `display-buffer-no-window` | - | - | - | - | - | - | - | - | - | - | - | - | Y |
@@ -100,7 +104,9 @@ chooses the least recently used window and falls back to
 
 `pop-up-frames` is a target selector, not an alist read by
 `display-buffer-pop-up-frame`.  The fallback action and the package's
-target detection use it to choose a frame strategy.
+target detection use it to choose a frame strategy.  The reuse
+functions read it through `window--pop-up-frames` when
+`reusable-frames` has no entry.
 
 ## 4. Shared entries
 
@@ -126,11 +132,15 @@ internally; the selected window is not a candidate for that function.
 
 ## 6. Verification notes
 
-The Emacs 31.1 source confirms three cells the docstrings leave out:
+The Emacs 31.1 source confirms these cells:
 `display-buffer-in-previous-window` does not read
 `inhibit-switch-frame`; `display-buffer-use-some-window` does not read
 `reusable-frames`; `display-buffer-in-tab` does not read
-`inhibit-same-window`.
+`inhibit-same-window`; `display-buffer-in-child-frame` does read
+`inhibit-switch-frame`.
+
+`display-buffer-in-child-frame` does not read a top-level
+`parent-frame`; it reads `parent-frame` from `child-frame-parameters`.
 
 - `display-buffer-pop-up-window` and the size entries: the manual says
   it honors `window-height`, `window-width`, and `preserve-size`; the

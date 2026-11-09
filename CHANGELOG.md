@@ -17,6 +17,7 @@
 
 ### Internal Changes
 
+- Docs: port the remaining action-alist corrections.
 - Docs: define "cannot prompt" as a restriction and "no prompt" as the
   behavior.
 - Docs: define the contexts where the package cannot prompt, and use
