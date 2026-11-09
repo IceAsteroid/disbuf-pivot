@@ -78,13 +78,19 @@ A caller's ACTION may name several functions.  The first function is
 the caller's primary intent; the later functions are the caller's
 fallbacks.  Classify the first function.  If it is `Respect` or not
 covered, return nil and let the whole caller list run.  If it is
-`Regulate`, apply its rule.  When the rule prompts, the "use caller
-intent" dispatch action runs the caller's whole function list in order
-with the merged alist, under a guard that prevents the package's entry
-from running again.  Do not reorder or deduplicate the list.  Use the
-first association of an alist key, as Emacs does.  An ACTION with no
-function is no preference; ACTION `t` is an other-window request
-(section 4).
+`Regulate`, apply its rule.  Caller intent info names the chain:
+"Caller asks for X; fallback Y."
+
+When the rule prompts, the "use caller intent" dispatch action is a
+user choice; it runs the caller's whole function list in order with the
+merged alist, under a guard that prevents the package's entry from
+running again.  The package does not regulate a later function; it
+remains a caller fallback.  If the first function fails, or the package
+returns nil because no prompt can run (section 9) or the display fails,
+the caller's ACTION functions run, with the later functions as
+fallbacks.  Do not reorder or deduplicate the list.  Use the first
+association of an alist key, as Emacs does.  An ACTION with no function
+is no preference; ACTION `t` is an other-window request (section 4).
 
 A package prefix command is user intent, not caller intent.
 `disbuf-pivot-prefix-mode` remaps the built-in prefix commands to the
@@ -125,7 +131,7 @@ non-selected window.
 | Placed `window`, `slot`, `parent-frame`, `child-frame-parameters` | Respect the caller's placement; no prompt | Optional |
 | Side window | Leave the caller's side placement as-is; no prompt | Optional |
 | ACTION `t` | Treat as an other-window request; exclude the selected window; prompt | "Caller asks for other window" |
-| Caller ACTION with several functions | Classify the first function; later functions are the caller's fallbacks.  The "use caller intent" action runs the whole list in order | Summarize the chain in one line |
+| Caller ACTION with several functions | Classify the first function; later functions are the caller's fallbacks.  The "use caller intent" action runs the whole list in order when the user chooses it | "Caller asks for X; fallback Y" |
 | `allow-no-window` and the user chooses no display | Call `display-buffer-no-window`; return `fail` | "No window requested" |
 | Anything not covered | Return nil; the caller's action or the remaining display rules run | Optional |
 | `switch-to-buffer` | Default; it obeys the rules only with `switch-to-buffer-obey-display-actions` | None |
@@ -171,7 +177,8 @@ Choosing one repeats the prompt.
   labels no windows.
 - Caller intent info is one line.  Detailed information goes in the
   dispatch help.
-- C-g aborts the prompt.
+- C-g aborts the display; it does not run the caller's fallbacks.  The
+  "use caller intent" action is the explicit way to run the chain.
 - The prompt offers a leave-undisplayed dispatch action only when
   `allow-no-window` is non-nil.
 - A split action ends a repeat.  If the split action fails, show the
@@ -279,6 +286,8 @@ it.  Entries used during the prompt are interpreted as follows.
 - Failure after the choice: if the window is dead, repeat; if the frame
   or tab is gone, prompt again; if the display function errors, report
   it and return nil.
+- The caller's ACTION functions and the remaining display rules run
+  after a nil return.
 
 ## 10. Implementation tasks
 
@@ -288,7 +297,8 @@ it.  Entries used during the prompt are interpreted as follows.
 3. Classify the first function in the caller's ACTION; later functions
    are the caller's fallbacks.  Respect the classes in section 3; return
    nil for anything the package does not regulate.  The "use caller
-   intent" action runs the caller's whole function list in order.
+   intent" action runs the caller's whole function list in order when
+   the user chooses it.
 4. Regulate same-window, reuse, other-window, new-window, direction,
    below-selected, at-bottom, previous window, and the tab and frame
    choices.  Use the tab reader and frame prompt; an existing tab or

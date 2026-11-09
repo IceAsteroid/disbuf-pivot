@@ -17,6 +17,10 @@
 
 ### Internal Changes
 
+- Docs: state the fallback behavior of ACTION chains: later functions
+  are unregulated fallbacks; caller intent info names the chain;
+  no-prompt or a failed first function lets them run; C-g aborts; "use
+  caller intent" is a user choice.
 - Docs: state the first-function rule for a caller's ACTION with several
   functions.
 - Docs: define the tab or frame action and child-frame action terms,
