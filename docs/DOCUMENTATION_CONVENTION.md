@@ -16,14 +16,20 @@ entries below are this package's terms.
 - **pivot** — the window, tab, or frame where a buffer is displayed;
   the package's name for it.  The package name uses the word.
 - **window prompt** — the prompt that calls `aw-select` to label the
-  eligible windows and reads a label.  The mode-line help string is
-  optional; `?` shows the dispatch actions in the echo area.
+  eligible windows and reads a label.  The dispatch hint is shown in
+  the echo area; its mode-line copy is optional; `?` shows the dispatch
+  action list in the echo area.
 - **dispatch prompt** — the echo-area prompt in
   `disbuf-pivot-window-utility-choose-sole-window` that lists the split
   actions from `aw-dispatch-alist` and reads one key; it labels no
   windows.
 - **dispatch action** — a key in `aw-dispatch-alist` that a prompt runs
   instead of reading a window label.
+- **dispatch action list** — the list of dispatch actions from
+  `aw-dispatch-alist` shown by `?`.
+- **dispatch hint** — the one-line string `Display buffer in window
+  (? for actions)` or `Choose another window (? for actions)`.  It
+  tells the user that `?` shows the dispatch action list.
 - **split rule** — `disbuf-pivot-window-utility-split-p`, which
   compares the number of windows with
   `disbuf-pivot-window-utility-split-maximum` and its exclusion

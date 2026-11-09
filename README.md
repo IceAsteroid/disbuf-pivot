@@ -34,9 +34,10 @@ For every buffer an earlier entry does not take, the entry:
 
 `disbuf-pivot-action-functions` changes the functions and their order.
 `disbuf-pivot-action-select` says whether the window chosen with the
-window prompt is selected.  The window prompt uses `aw-select`; set
-`disbuf-pivot-mode-line-help` to show its help string and the
-`? for actions` hint in the mode line.  The echo area says when a
+window prompt is selected.  The window prompt uses `aw-select`;
+`disbuf-pivot-mode-line-help` controls only the mode-line copy of the
+dispatch hint.  The echo area also shows the dispatch hint, appended to
+caller intent info when that line is shown.  The echo area says when a
 chosen window cannot display the buffer.  The action declines in batch,
 while the minibuffer is active, and when no window can display the
 buffer; the remaining `display-buffer` rules then apply.  C-g aborts the

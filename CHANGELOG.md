@@ -5,8 +5,8 @@
 ### User-visible Changes
 
 - Add: `disbuf-pivot-mode-line-help`; nil by default hides the
-  `aw-select` help string in the mode line, non-nil shows it.  It does
-  not affect `ace-window-display-mode` labels.
+  dispatch hint in the mode line, non-nil shows it.  It does not affect
+  the echo-area dispatch hint or `ace-window-display-mode` labels.
 - Doc: describe the consult reader's child-frame cleanup and
   minibuffer-height preservation separately; state the existing-frame
   condition in the frame prefix; qualify the `aw-select` prompt feedback;
@@ -17,6 +17,9 @@
 
 ### Internal Changes
 
+- Docs: define the dispatch hint and the dispatch action list; state
+  that `disbuf-pivot-mode-line-help` controls only the mode-line
+  dispatch hint, not the echo-area one.
 - Docs: state that the mode-line help string is a hint, not the
   dispatch actions, and that caller intent info is shown before the
   window prompt.

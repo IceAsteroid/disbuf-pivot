@@ -151,9 +151,9 @@ non-selected window.
 - `disbuf-pivot-caller-intent-info` -- non-nil (default) shows one
   brief line for prompted placements.  Silent selected-window defaults
   show no info.  Nil hides the line for prompts.
-- `disbuf-pivot-mode-line-help` -- nil (default) hides the `aw-select`
-  help string in the mode line; non-nil shows it.  It does not affect
-  `ace-window-display-mode` labels.
+- `disbuf-pivot-mode-line-help` -- nil (default) hides the dispatch
+  hint in the mode line; non-nil shows it.  It does not affect the
+  echo-area dispatch hint or `ace-window-display-mode` labels.
 - `disbuf-pivot-action-select` -- `auto` (default), `t`, or `nil`.
   It controls selection after an action-mode prompt.
 - `disbuf-pivot-other-window-prefix-select` -- `auto` (default), `t`,
@@ -174,15 +174,19 @@ Choosing one repeats the prompt.
 ## 6. Interaction rules
 
 - The window prompt calls `aw-select` to label and read a window.
-  `disbuf-pivot-mode-line-help` controls the help string in the mode
-  line; nil by default.  The help string is a hint, not the dispatch
-  actions; `?` shows the dispatch actions in the echo area.  Show
-  caller intent info before the window prompt.  The echo area also
-  holds the repeat message.
+  `disbuf-pivot-mode-line-help` controls only the mode-line copy of the
+  dispatch hint; nil by default.  The dispatch hint is not the dispatch
+  action list; `?` shows the dispatch action list in the echo area.
+  The echo area shows the dispatch hint, appended to caller intent info
+  when that line is shown, independent of the mode-line option.  Show
+  it as its own message when caller intent info is not shown.  Bind
+  `aw-minibuffer-flag` to nil around `aw-select` so ace-window does not
+  echo the mode-line string.  Show caller intent info before the window
+  prompt.  The echo area also holds the repeat message.
 - The dispatch prompt is the one-window prompt; it reads one key and
   labels no windows.
 - Caller intent info is one line.  Detailed information goes in the
-  list that `?` shows.
+  dispatch action list.
 - C-g aborts the display; it does not run the caller's fallbacks.  The
   "use caller intent" action is the explicit way to run the chain.
 - The prompt offers a leave-undisplayed dispatch action only when
