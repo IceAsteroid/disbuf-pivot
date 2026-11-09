@@ -17,6 +17,8 @@
 
 ### Internal Changes
 
+- Docs: state the first-function rule for a caller's ACTION with several
+  functions.
 - Docs: define the tab or frame action and child-frame action terms,
   record the top-level and child frame definitions, and regulate the tab
   or frame actions; preselect an existing tab or frame and start a new

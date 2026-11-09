@@ -74,6 +74,18 @@ The package distinguishes these classes:
   `frame-predicate`, `allow-no-window`.  Honor the constraint.
 - **no preference** -- use the selected window when it can display.
 
+A caller's ACTION may name several functions.  The first function is
+the caller's primary intent; the later functions are the caller's
+fallbacks.  Classify the first function.  If it is `Respect` or not
+covered, return nil and let the whole caller list run.  If it is
+`Regulate`, apply its rule.  When the rule prompts, the "use caller
+intent" dispatch action runs the caller's whole function list in order
+with the merged alist, under a guard that prevents the package's entry
+from running again.  Do not reorder or deduplicate the list.  Use the
+first association of an alist key, as Emacs does.  An ACTION with no
+function is no preference; ACTION `t` is an other-window request
+(section 4).
+
 A package prefix command is user intent, not caller intent.
 `disbuf-pivot-prefix-mode` remaps the built-in prefix commands to the
 package prefix commands.  The package prefix commands keep the same
@@ -113,6 +125,7 @@ non-selected window.
 | Placed `window`, `slot`, `parent-frame`, `child-frame-parameters` | Respect the caller's placement; no prompt | Optional |
 | Side window | Leave the caller's side placement as-is; no prompt | Optional |
 | ACTION `t` | Treat as an other-window request; exclude the selected window; prompt | "Caller asks for other window" |
+| Caller ACTION with several functions | Classify the first function; later functions are the caller's fallbacks.  The "use caller intent" action runs the whole list in order | Summarize the chain in one line |
 | `allow-no-window` and the user chooses no display | Call `display-buffer-no-window`; return `fail` | "No window requested" |
 | Anything not covered | Return nil; the caller's action or the remaining display rules run | Optional |
 | `switch-to-buffer` | Default; it obeys the rules only with `switch-to-buffer-obey-display-actions` | None |
@@ -199,6 +212,10 @@ The table describes a caller's ACTION that names the function.  A
 package prefix command or a user choice in a prompt is separate; the
 package may call the same function after that choice.
 
+The table applies when the function is the first function in the
+caller's ACTION.  A later function in the same ACTION is a caller
+fallback; section 3 gives the rule for a list of functions.
+
 | Action function | Treatment |
 |---|---|
 | `display-buffer-same-window` | Regulate.  If the user chooses the selected window despite `inhibit-same-window`, bind that entry to nil for this call. |
@@ -268,9 +285,10 @@ it.  Entries used during the prompt are interpreted as follows.
 1. Add the options in section 5 with the stated defaults.
 2. Change the default action list: remove `dp-action-split-or-ask`;
    split actions are prompt choices only.
-3. Classify the caller's intent before displaying.  Respect the
-   classes in section 3; return nil for anything the package does not
-   regulate.
+3. Classify the first function in the caller's ACTION; later functions
+   are the caller's fallbacks.  Respect the classes in section 3; return
+   nil for anything the package does not regulate.  The "use caller
+   intent" action runs the caller's whole function list in order.
 4. Regulate same-window, reuse, other-window, new-window, direction,
    below-selected, at-bottom, previous window, and the tab and frame
    choices.  Use the tab reader and frame prompt; an existing tab or
@@ -302,6 +320,9 @@ Every rule needs a Buttercup test.  Combine:
   without a target, other-window, new-window, direction, below-selected,
   at-bottom, previous window, existing tab, new tab, existing frame, new
   frame, placed, side, ACTION `t`, `allow-no-window`, `switch-to-buffer`;
+- caller ACTION: one function, several functions, all-Regulate,
+  all-Respect, mixed, duplicate, empty, and an inapplicable first
+  function;
 - tab and frame readers: an existing tab or frame is the initial value;
   a new one starts without an existing preselect; the prompt string
   states the caller's intention;
