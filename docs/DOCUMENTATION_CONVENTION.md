@@ -20,13 +20,15 @@ entries below are this package's terms.
   the echo area; its mode-line copy is optional; `?` shows the dispatch
   action list in the echo area.
 - **dispatch prompt** — the echo-area prompt in
-  `disbuf-pivot-window-utility-choose-sole-window` that lists the split
-  actions from `aw-dispatch-alist` and reads one key; it labels no
-  windows.
-- **dispatch action** — a key in `aw-dispatch-alist` that a prompt runs
-  instead of reading a window label.
-- **dispatch action list** — the list of dispatch actions from
-  `aw-dispatch-alist` shown by `?`.
+  `disbuf-pivot-window-utility-choose-sole-window` that shows the
+  dispatch action list and reads one key; it labels no windows.
+- **dispatch action** — a key a prompt runs instead of reading a window
+  label.  `aw-dispatch-alist` supplies the user's actions; the package
+  supplies its own.
+- **dispatch action list** — the grouped list of actions a prompt
+  offers: the split actions from `aw-dispatch-alist`, the caller
+  actions, and the other actions the package offers.  The window prompt
+  shows it with `?`; the one-window dispatch prompt shows it directly.
 - **dispatch hint** — the one-line string `Display buffer in window
   (? for actions)` or `Choose another window (? for actions)`.  It
   tells the user that `?` shows the dispatch action list.
@@ -68,6 +70,8 @@ entries below are this package's terms.
   and is not a side window.
 - **eligible window** — a window the current prompt offers: it is a
   displayable window, and the current intent does not exclude it.
+- **excluded buffer** — a buffer that matches
+  `disbuf-pivot-exclude-conditions`; the package does not regulate it.
 - **built-in prefix command** — one of Emacs's `same-window-prefix`,
   `other-window-prefix`, `other-tab-prefix`, and
   `other-frame-prefix`; a command that sets

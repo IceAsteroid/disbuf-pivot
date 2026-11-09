@@ -137,6 +137,7 @@ non-selected window.
 | ACTION `t` | Treat as an other-window request; exclude the selected window; prompt | "Caller asks for other window" |
 | Caller ACTION with several functions | Classify the first function; later functions are the caller's fallbacks.  The "use caller intent" action runs the whole list in order when the user chooses it | "Caller asks for X; fallback Y" |
 | `allow-no-window` and the user chooses no display | Call `display-buffer-no-window`; return `fail` | "No window requested" |
+| Excluded buffer | Return nil; the caller's action or the remaining display rules run; no prompt | None |
 | Anything not covered | Return nil; the caller's action or the remaining display rules run | Optional |
 | `switch-to-buffer` | Default; it obeys the rules only with `switch-to-buffer-obey-display-actions` | None |
 
@@ -151,6 +152,12 @@ non-selected window.
 - `disbuf-pivot-caller-intent-info` -- non-nil (default) shows one
   brief line for prompted placements.  Silent selected-window defaults
   show no info.  Nil hides the line for prompts.
+- `disbuf-pivot-exclude-conditions` -- nil (default) or a list of
+  `buffer-match-p` conditions.  A matching buffer is not regulated:
+  the entry returns nil and the caller's action or the remaining
+  display rules apply.  A condition can match the buffer name (a
+  regexp), a derived major mode (`(derived-mode . MODE)`), or a
+  predicate (`(predicate . FN)`).
 - `disbuf-pivot-mode-line-help` -- nil (default) hides the dispatch
   hint in the mode line; non-nil shows it.  It does not affect the
   echo-area dispatch hint or `ace-window-display-mode` labels.
@@ -183,10 +190,32 @@ Choosing one repeats the prompt.
   `aw-minibuffer-flag` to nil around `aw-select` so ace-window does not
   echo the mode-line string.  Show caller intent info before the window
   prompt.  The echo area also holds the repeat message.
-- The dispatch prompt is the one-window prompt; it reads one key and
-  labels no windows.
+- The dispatch prompt is the one-window echo-area prompt; it reads one
+  key and labels no windows.
+- The dispatch action list groups the actions:
+  - **Split**: the split actions from `aw-dispatch-alist`, with their
+    keys and descriptions.
+  - **Caller intent**: "Use caller intent" and any caller action the
+    rule offers, named by its user-facing action, not by the raw
+    function.
+  - **Other**: a new frame for a new-window intent; leave undisplayed
+    only with `allow-no-window`.
+  One fallback line follows: "Any other key uses this window," or "Any
+  other key cancels" when the selected window is ignored.
+- The list is generated from `aw-dispatch-alist` and the package's
+  actions; do not hardcode keys.  A package key is offered only when it
+  does not collide with `aw-dispatch-alist`.
+- The window prompt shows the dispatch action list on demand: the
+  caller intent line carries the dispatch hint, and `?` shows the list.
+  The one-window dispatch prompt shows the grouped list with its one-key
+  read.
 - Caller intent info is one line.  Detailed information goes in the
   dispatch action list.
+- The package checks `disbuf-pivot-exclude-conditions` in its entry
+  condition before recording the ACTION.  A matching buffer returns
+  nil; no prompt runs, and the caller's ACTION and the remaining display
+  rules apply.  `display-buffer-overriding-action` and earlier
+  `display-buffer-alist` entries still take precedence.
 - C-g aborts the display; it does not run the caller's fallbacks.  The
   "use caller intent" action is the explicit way to run the chain.
 - The prompt offers a leave-undisplayed dispatch action only when

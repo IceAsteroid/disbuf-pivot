@@ -37,11 +37,15 @@ For every buffer an earlier entry does not take, the entry:
 window prompt is selected.  The window prompt uses `aw-select`;
 `disbuf-pivot-mode-line-help` controls only the mode-line copy of the
 dispatch hint.  The echo area also shows the dispatch hint, appended to
-caller intent info when that line is shown.  The echo area says when a
-chosen window cannot display the buffer.  The action declines in batch,
-while the minibuffer is active, and when no window can display the
-buffer; the remaining `display-buffer` rules then apply.  C-g aborts the
-display; it does not run the caller's fallbacks.
+caller intent info when that line is shown.  The dispatch action list is
+grouped by Split, Caller intent, and Other; `?` shows it.
+`disbuf-pivot-exclude-conditions` lists
+`buffer-match-p` conditions; a matching buffer is left to the caller's
+action and the remaining `display-buffer` rules.  The echo area says
+when a chosen window cannot display the buffer.  The action declines in
+batch, while the minibuffer is active, and when no window can display
+the buffer; the remaining `display-buffer` rules then apply.  C-g aborts
+the display; it does not run the caller's fallbacks.
 
 ## The prefix commands
 

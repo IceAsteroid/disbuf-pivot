@@ -17,6 +17,8 @@
 
 ### Internal Changes
 
+- Docs: define the grouped dispatch action list and
+  `disbuf-pivot-exclude-conditions`.
 - Docs: define the dispatch hint and the dispatch action list; state
   that `disbuf-pivot-mode-line-help` controls only the mode-line
   dispatch hint, not the echo-area one.
