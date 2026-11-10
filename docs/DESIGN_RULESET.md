@@ -396,7 +396,7 @@ Every rule needs a Buttercup test.  Combine:
   without a target, other-window, new-window, use some window, use least
   recent window, direction, below-selected, at-bottom, previous window,
   existing tab, new tab, existing frame, new frame, placed, side, ACTION
-  `t`, `allow-no-window`, `switch-to-buffer`;
+  `t`, `allow-no-window`, excluded buffer, `switch-to-buffer`;
 - caller ACTION: one function, several functions, all-Regulate,
   all-Respect, mixed, duplicate, empty, and an inapplicable first
   function;
@@ -408,11 +408,14 @@ Every rule needs a Buttercup test.  Combine:
   and dead; window already displaying the buffer or not;
 - target state: existing, new, none;
 - caller constraint: none, `inhibit-same-window`, `reusable-frames`,
-  `previous-window`, `frame-predicate`, `allow-no-window`;
+  `previous-window`, `frame-predicate`, `inhibit-switch-frame`,
+  `window-min-width`, `window-min-height`, `allow-no-window`;
 - option: each value of `disbuf-pivot-reuse`,
   `disbuf-pivot-same-window-conflict`, `disbuf-pivot-caller-intent-info`,
+  `disbuf-pivot-exclude-conditions`, `disbuf-pivot-mode-line-help`,
   `disbuf-pivot-action-select`, and
-  `disbuf-pivot-other-window-prefix-select`;
+  `disbuf-pivot-other-window-prefix-select`; the default and a
+  reordered `disbuf-pivot-action-functions`;
 - context: batch, active minibuffer, timer, process filter, keyboard
   macro, and recursive display.
 

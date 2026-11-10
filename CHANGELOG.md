@@ -20,6 +20,8 @@
 
 ### Internal Changes
 
+- Docs: complete the test matrix for the new options, constraints, and
+  excluded buffer.
 - Docs: name the `disbuf-pivot-action-functions` default and option.
 - Docs: replace stale prompt wording; name the window prompt and the
   other-frame prefix order.
