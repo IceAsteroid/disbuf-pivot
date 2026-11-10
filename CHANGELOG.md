@@ -20,6 +20,8 @@
 
 ### Internal Changes
 
+- Docs: define "failure after the choice" and use it for the post-choice
+  display cases.
 - Docs: reject "failed interactive display" and name the failure cases.
 - Docs: align the window terms as **displayable window**, **can
   display** and **undisplayable window**, **cannot display**; use the
@@ -31,9 +33,9 @@
   other-frame prefix order.
 - Docs: make new-target tab and frame actions start a new target and
   never select an existing one.
-- Docs: reserve nil returns for the cannot-prompt and Respect cases;
-  when the display fails while the package can prompt, prompt again or
-  abort instead of running caller fallbacks.
+- Docs: reserve nil returns for the cannot-prompt and Respect cases; a
+  failure after the choice while the package can prompt prompts again
+  or aborts instead of running caller fallbacks.
 - Docs: classify `display-buffer-use-some-window` and
   `display-buffer-use-least-recent-window` as strategy intents and
   regulate them.

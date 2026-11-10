@@ -95,9 +95,10 @@ merged alist, under a guard that prevents the package's entry from
 running again.  The package does not regulate a later function; it
 remains a caller fallback.  If the package cannot prompt (section 9),
 it returns nil and the caller's ACTION functions run, with the later
-functions as fallbacks.  If the display fails while the package can
-prompt, prompt again or abort; do not return nil into the caller's
-chain.  Do not reorder or deduplicate the list.  Use the first
+functions as fallbacks.  A failure after the choice while the package
+can prompt is handled by prompting again or aborting; it does not
+return nil into the caller's chain.  Do not reorder or deduplicate the
+list.  Use the first
 association of an alist key, as Emacs does.  An ACTION with no function
 is no preference; ACTION `t` is an other-window request (section 4).
 
@@ -345,8 +346,9 @@ or the frame prompt runs; the action returns nil.
 - Failure after the choice: if the chosen window is undisplayable
   because it is dead, repeat the window prompt; if it is undisplayable
   because its frame or tab is gone, prompt again with the frame prompt
-  or tab reader; if the display function errors, report it and abort.
-  Do not return nil into the caller's chain while a prompt can run.
+  or tab reader; if the display function returns nil or errors, report
+  it and abort.  Do not return nil into the caller's chain while a
+  prompt can run.
 - A nil return is reserved for the cannot-prompt contexts and the
   Respect or not-covered cases; the caller's ACTION functions and the
   remaining display rules run after it.
@@ -361,9 +363,9 @@ or the frame prompt runs; the action returns nil.
    are the caller's fallbacks.  Respect the classes in section 3; return
    nil for anything the package does not regulate.  The "use caller
    intent" action runs the caller's whole function list in order when
-   the user chooses it.  If the display fails while the package can
-   prompt, prompt again or abort; do not return nil into the caller's
-   chain.
+   the user chooses it.  A failure after the choice while the package
+   can prompt is handled by prompting again or aborting; do not return
+   nil into the caller's chain.
 4. Regulate same-window, reuse, other-window, new-window,
    use-some-window, use-least-recent-window, direction, below-selected,
    at-bottom, previous window, and the tab and frame choices.  Use the

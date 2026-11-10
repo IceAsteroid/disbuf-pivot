@@ -44,10 +44,11 @@ grouped by Split, Caller intent, and Other; `?` shows it.
 action and the remaining `display-buffer` rules.  The echo area says
 when a chosen window cannot display the buffer.  The action declines in
 batch, while the minibuffer is active, and when no window can display
-the buffer; the remaining `display-buffer` rules then apply.  If the
-display fails while the package can prompt, it asks again or aborts;
-it does not run the caller's fallbacks.  C-g aborts the display; it
-does not run the caller's fallbacks.
+the buffer; the remaining `display-buffer` rules then apply.  If a
+failure occurs after you choose a window, tab, or frame and the package
+can still prompt, it asks again or aborts; it does not run the caller's
+fallbacks.  C-g aborts the display; it does not run the caller's
+fallbacks.
 
 ## The prefix commands
 

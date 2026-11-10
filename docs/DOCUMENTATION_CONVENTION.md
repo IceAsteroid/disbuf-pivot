@@ -48,6 +48,10 @@ entries below are this package's terms.
 - **chosen window** — the window the user chooses through the package's
   prompt or dispatch action.  A window used silently by the default
   policy is not a chosen window.
+- **failure after the choice** — a failure after the user chooses a
+  window, tab, or frame from a prompt: the chosen window is
+  undisplayable, its frame or tab is gone, or the display function
+  returns nil or errors.  The design rules list the responses.
 - **caller intent** — what the caller's ACTION asks for; the design
   rules classify it by what it names: a place, a strategy, a
   constraint, or no preference.
