@@ -20,6 +20,8 @@
 
 ### Internal Changes
 
+- Docs: note that a child frame's parent may be a top-level or child
+  frame, and treat `bump-use-time` as a shared display entry.
 - Docs: define the grouped dispatch action list and
   `disbuf-pivot-exclude-conditions`.
 - Docs: define the dispatch hint and the dispatch action list; state

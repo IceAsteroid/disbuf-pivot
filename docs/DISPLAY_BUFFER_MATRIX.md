@@ -141,6 +141,7 @@ The Emacs 31.1 source confirms these cells:
 
 `display-buffer-in-child-frame` does not read a top-level
 `parent-frame`; it reads `parent-frame` from `child-frame-parameters`.
+The value may name a top-level frame or a child frame.
 
 - `display-buffer-pop-up-window` and the size entries: the manual says
   it honors `window-height`, `window-width`, and `preserve-size`; the

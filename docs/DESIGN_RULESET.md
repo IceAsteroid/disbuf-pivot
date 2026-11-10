@@ -77,6 +77,8 @@ The package distinguishes these classes:
 
 `display-buffer-in-child-frame` takes `parent-frame` from
 `child-frame-parameters`; a top-level `parent-frame` entry is not read.
+The value may name a top-level frame or a child frame.  The package's
+own frame prompt offers top-level frames only.
 
 A caller's ACTION may name several functions.  The first function is
 the caller's primary intent; the later functions are the caller's
@@ -269,15 +271,15 @@ fallback; section 3 gives the rule for a list of functions.
 | `display-buffer-reuse-mode-window` | Regulate as reuse with `mode`. | `mode`, `inhibit-same-window`, `reusable-frames`, `inhibit-switch-frame` |
 | `display-buffer-pop-up-window` | Regulate for a split action. | `inhibit-switch-frame`; shared window alists |
 | `display-buffer-in-previous-window` | Regulate.  Show the `previous-window` entry as the preferred candidate; when it is not usable, mark the windows that previously showed the buffer. | `previous-window`, `inhibit-same-window`, `reusable-frames` |
-| `display-buffer-use-some-window` | Regulate: show caller intent info, prompt with the window prompt, and let the user choose.  Do not let the function choose silently. | `some-window`, `lru-frames`, `lru-time`, `bump-use-time`, `window-min-width`, `window-min-height`, `inhibit-same-window`, `inhibit-switch-frame` |
-| `display-buffer-use-least-recent-window` | Regulate like `display-buffer-use-some-window`. | `reusable-frames`, `inhibit-switch-frame`, `lru-frames`, `lru-time`, `window-min-width`, `window-min-height`, `bump-use-time`; `inhibit-same-window` is forced to t internally |
+| `display-buffer-use-some-window` | Regulate: show caller intent info, prompt with the window prompt, and let the user choose.  Do not let the function choose silently. | `some-window`, `lru-frames`, `lru-time`, `window-min-width`, `window-min-height`, `inhibit-same-window`, `inhibit-switch-frame` |
+| `display-buffer-use-least-recent-window` | Regulate like `display-buffer-use-some-window`. | `reusable-frames`, `inhibit-switch-frame`, `lru-frames`, `lru-time`, `window-min-width`, `window-min-height`; `inhibit-same-window` is forced to t internally |
 | `display-buffer-in-direction` | Regulate for the "use caller intent" direction action. | `direction`, `window` |
 | `display-buffer-below-selected` | Regulate for the below direction.  `window-min-height` is an eligibility constraint. | `window-min-height` |
 | `display-buffer-at-bottom` | Regulate for the at-bottom direction. | None specific |
 | `display-buffer-full-frame` | Respect.  Delegated to `display-buffer-reuse-window`, `display-buffer-same-window`, `display-buffer-pop-up-window`, and `display-buffer-use-some-window` in that order. | None specific |
 | `display-buffer-pop-up-frame` | Regulate for a new frame.  Use `pop-up-frame-parameters`; the new frame is top-level unless that entry sets `parent-frame`. | `pop-up-frame-parameters`, `inhibit-switch-frame`; `pop-up-frames` selects the frame strategy but is not read by this function |
 | `display-buffer-use-some-frame` | Regulate for an existing frame; `frame-predicate` filters the candidates. | `frame-predicate`, `inhibit-same-window`, `inhibit-switch-frame` |
-| `display-buffer-in-child-frame` | Respect. | `child-frame-parameters` (including a `parent-frame` entry), `inhibit-switch-frame` |
+| `display-buffer-in-child-frame` | Respect. | `child-frame-parameters` (including a `parent-frame` entry naming a top-level or child frame), `inhibit-switch-frame` |
 | `display-buffer-in-tab` | Regulate; preselect an existing or reusable tab; a new tab starts without an existing-tab preselect. | `reusable-frames` (nil differs), `ignore-current-tab`, `tab-name`, `tab-group` |
 | `display-buffer-in-new-tab` | Regulate; a new tab starts without an existing-tab preselect. | `tab-name`, `tab-group` |
 | `display-buffer-in-side-window` | Respect; side as-is. | `side`, `slot` |
@@ -300,10 +302,11 @@ it.  Entries used during the prompt are interpreted as follows.
 | `inhibit-switch-frame` | Frame raising and focus; honor. |
 | `window-parameters`, `dedicated`, `preserve-size`, `window-height`, `window-width`, `window-size` | Apply to the chosen window through the standard display path. |
 | `window-min-width`, `window-min-height` | Eligibility constraints; honor when choosing a window. |
-| `some-window`, `lru-frames`, `lru-time`, `bump-use-time` | Pass to `display-buffer-use-some-window` or `display-buffer-use-least-recent-window` when the package calls it; otherwise leave in the alist. |
+| `some-window`, `lru-frames`, `lru-time` | Pass to `display-buffer-use-some-window` or `display-buffer-use-least-recent-window` when the package calls it; otherwise leave in the alist. |
+| `bump-use-time` | Bump the chosen window's use time; handled by `window--display-buffer`. |
 | `pop-up-frame-parameters` | New-frame parameters; honor. |
 | `pop-up-frames` | Selects the frame strategy; `display-buffer-pop-up-frame` does not read it.  The reuse functions use it as the frame scope when `reusable-frames` has no entry. |
-| `child-frame-parameters` (including a `parent-frame` entry) | Child-frame placement; respect. |
+| `child-frame-parameters` (including a `parent-frame` entry naming a top-level or child frame) | Child-frame placement; respect. |
 | `side`, `slot` | Side placement; leave as-is. |
 | `direction`, `window` | Direction action; honor. |
 | `allow-no-window` | Allow the leave-undisplayed outcome. |
