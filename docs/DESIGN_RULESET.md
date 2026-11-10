@@ -156,6 +156,10 @@ non-selected window.
 - `disbuf-pivot-same-window-conflict` -- `ask` (default) or
   `same-window`.  It applies when the caller asks for the same window
   and sets `inhibit-same-window`.
+- `disbuf-pivot-action-functions` -- the action functions the entry
+  tries, in order.  The default is `display-buffer-reuse-window`,
+  `display-buffer-same-window`, and `dp-action-choose-window`; it does
+  not include an automatic split.
 - `disbuf-pivot-caller-intent-info` -- non-nil (default) shows one
   brief line for prompted placements.  Silent selected-window defaults
   show no info.  Nil hides the line for prompts.
@@ -349,8 +353,9 @@ or the frame prompt runs; the action returns nil.
 ## 10. Implementation tasks
 
 1. Add the options in section 5 with the stated defaults.
-2. Change the default action list: remove `dp-action-split-or-ask`;
-   split actions are prompt choices only.
+2. Change the default action list: replace `dp-action-split-or-ask`
+   with `dp-action-choose-window`; split actions are prompt choices
+   only.
 3. Classify the first function in the caller's ACTION; later functions
    are the caller's fallbacks.  Respect the classes in section 3; return
    nil for anything the package does not regulate.  The "use caller

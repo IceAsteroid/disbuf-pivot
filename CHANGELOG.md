@@ -20,6 +20,7 @@
 
 ### Internal Changes
 
+- Docs: name the `disbuf-pivot-action-functions` default and option.
 - Docs: replace stale prompt wording; name the window prompt and the
   other-frame prefix order.
 - Docs: make new-target tab and frame actions start a new target and
