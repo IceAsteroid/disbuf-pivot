@@ -20,6 +20,9 @@
 
 ### Internal Changes
 
+- Docs: classify `display-buffer-use-some-window` and
+  `display-buffer-use-least-recent-window` as strategy intents and
+  regulate them.
 - Docs: note that a child frame's parent may be a top-level or child
   frame, and treat `bump-use-time` as a shared display entry.
 - Docs: define the grouped dispatch action list and

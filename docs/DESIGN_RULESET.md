@@ -68,8 +68,9 @@ The package distinguishes these classes:
   at-bottom.  Regulate like direction: show caller intent info, prompt
   with the window prompt, and offer a dispatch action that calls the
   caller's function.
-- **names a strategy** -- same-window, reuse, other-window, new-window.
-  Regulate the display by the rules below.
+- **names a strategy** -- same-window, reuse, other-window, new-window,
+  use-some-window, use-least-recent-window.  Regulate the display by
+  the rules below.
 - **names a constraint** -- `reusable-frames`, `previous-window`,
   `frame-predicate`, `inhibit-switch-frame`, `window-min-width`,
   `window-min-height`, `allow-no-window`.  Honor the constraint.
@@ -127,6 +128,8 @@ non-selected window.
 | A window displays the buffer | Reuse the preferred window; `disbuf-pivot-reuse` can ask instead | "Reuse; window(s) X display the buffer" |
 | Reuse intent, no window displays the buffer | Prompt with the window prompt; offer split actions | "Reuse; no window displays the buffer" |
 | Reuse intent, several windows display the buffer | `disbuf-pivot-reuse` chooses auto or ask; ask marks the reuse windows | "Reuse; windows X, Y display the buffer" |
+| Use some window | Prompt with the window prompt; show caller intent info; let the user choose; offer split actions | "Caller asks for some window" |
+| Use least recent window | Prompt with the window prompt; show caller intent info; let the user choose; offer split actions | "Caller asks for a recently unused window" |
 | Caller sets `inhibit-same-window` | Show caller intent info; prompt with `ace-window`; the user may choose an existing window or a dispatch action, including the selected window | "Caller asks for a non-selected window" |
 | Other-window | Prompt with the window prompt; exclude the selected window; offer split actions | "Caller asks for other window" |
 | New-window | Prompt; offer split and new-frame actions; do not offer existing windows | "Caller asks for new window" |
@@ -347,9 +350,9 @@ or the frame prompt runs; the action returns nil.
    nil for anything the package does not regulate.  The "use caller
    intent" action runs the caller's whole function list in order when
    the user chooses it.
-4. Regulate same-window, reuse, other-window, new-window, direction,
-   below-selected, at-bottom, previous window, and the tab and frame
-   choices.  Use the tab reader and frame prompt; an existing tab or
+4. Regulate same-window, reuse, other-window, new-window,
+   use-some-window, use-least-recent-window, direction, below-selected,
+   at-bottom, previous window, and the tab and frame choices.  Use the tab reader and frame prompt; an existing tab or
    frame is preselected, a new one starts without an existing preselect.
    Keep the tab and frame flows of the package prefix commands.  Use the
    action functions in section 7 as the display primitives.
@@ -375,9 +378,10 @@ or the frame prompt runs; the action returns nil.
 Every rule needs a Buttercup test.  Combine:
 
 - caller intent: same-window, no preference, reuse with a target, reuse
-  without a target, other-window, new-window, direction, below-selected,
-  at-bottom, previous window, existing tab, new tab, existing frame, new
-  frame, placed, side, ACTION `t`, `allow-no-window`, `switch-to-buffer`;
+  without a target, other-window, new-window, use some window, use least
+  recent window, direction, below-selected, at-bottom, previous window,
+  existing tab, new tab, existing frame, new frame, placed, side, ACTION
+  `t`, `allow-no-window`, `switch-to-buffer`;
 - caller ACTION: one function, several functions, all-Regulate,
   all-Respect, mixed, duplicate, empty, and an inapplicable first
   function;
