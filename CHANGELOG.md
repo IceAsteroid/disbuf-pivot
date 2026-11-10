@@ -20,6 +20,10 @@
 
 ### Internal Changes
 
+- Docs: reject "failed interactive display" and name the failure cases.
+- Docs: align the window terms as **displayable window**, **can
+  display** and **undisplayable window**, **cannot display**; use the
+  noun form for windows.
 - Docs: complete the test matrix for the new options, constraints, and
   excluded buffer.
 - Docs: name the `disbuf-pivot-action-functions` default and option.
@@ -27,9 +31,9 @@
   other-frame prefix order.
 - Docs: make new-target tab and frame actions start a new target and
   never select an existing one.
-- Docs: reserve nil returns for the cannot-prompt and Respect cases; an
-  interactive display failure prompts again or aborts instead of
-  running caller fallbacks.
+- Docs: reserve nil returns for the cannot-prompt and Respect cases;
+  when the display fails while the package can prompt, prompt again or
+  abort instead of running caller fallbacks.
 - Docs: classify `display-buffer-use-some-window` and
   `display-buffer-use-least-recent-window` as strategy intents and
   regulate them.

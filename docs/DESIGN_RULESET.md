@@ -186,7 +186,7 @@ options are not consulted by the core behavior.
 Frame preview is not part of the first implementation.  The tab preview
 with consult remains optional.
 
-Windows that cannot display are labelled and marked as ineligible.
+Undisplayable windows are labelled and marked as ineligible.
 Choosing one repeats the prompt.
 
 ## 6. Interaction rules
@@ -342,10 +342,11 @@ or the frame prompt runs; the action returns nil.
 - Recursive display during tab or frame creation, or during a preview:
   return nil for the nested call.
 - Multiple `display-buffer` calls in one command: no cache.
-- Failure after the choice: if the window is dead, repeat; if the frame
-  or tab is gone, prompt again; if the display function errors, report
-  it and abort.  Do not return nil into the caller's chain while a
-  prompt can run.
+- Failure after the choice: if the chosen window is undisplayable
+  because it is dead, repeat the window prompt; if it is undisplayable
+  because its frame or tab is gone, prompt again with the frame prompt
+  or tab reader; if the display function errors, report it and abort.
+  Do not return nil into the caller's chain while a prompt can run.
 - A nil return is reserved for the cannot-prompt contexts and the
   Respect or not-covered cases; the caller's ACTION functions and the
   remaining display rules run after it.
@@ -360,8 +361,9 @@ or the frame prompt runs; the action returns nil.
    are the caller's fallbacks.  Respect the classes in section 3; return
    nil for anything the package does not regulate.  The "use caller
    intent" action runs the caller's whole function list in order when
-   the user chooses it.  A failed interactive display prompts again or
-   aborts; it does not return nil into the caller's chain.
+   the user chooses it.  If the display fails while the package can
+   prompt, prompt again or abort; do not return nil into the caller's
+   chain.
 4. Regulate same-window, reuse, other-window, new-window,
    use-some-window, use-least-recent-window, direction, below-selected,
    at-bottom, previous window, and the tab and frame choices.  Use the
@@ -379,8 +381,8 @@ or the frame prompt runs; the action returns nil.
 7. Make C-g abort.  Remove any option that changes C-g behavior.
 8. Default selection to `auto`; honor `post-command-select-window`;
    keep `t` and `nil` as forcing options.
-9. Label every window; mark windows that cannot display; choose again
-   when one is chosen.
+9. Label every window; mark undisplayable windows; choose again when
+   one is chosen.
 10. Add the context guard from section 9.
 11. Add tests for every rule in section 4, every action function in
     section 7, every action alist entry in section 8, and every context

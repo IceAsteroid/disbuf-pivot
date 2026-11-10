@@ -56,8 +56,10 @@ entries below are this package's terms.
   package shows it in the echo area.
 - **caller constraint** — an action-alist entry from the caller that
   limits the candidate windows; the design rules name the entries.
-- **cannot display** — a window does not accept another buffer's
-  display.  The design rules list the conditions.
+- **undisplayable window**, **cannot display** — a window that is not a
+  **displayable window**: it is dead, is a minibuffer window, is
+  dedicated to another buffer, or is a side window.  The design rules
+  list the conditions.
 - **cannot prompt** — the package cannot read interactive input: the
   window prompt, the dispatch prompt, the tab reader, or the frame
   prompt.  The design rules list the contexts.
@@ -65,9 +67,9 @@ entries below are this package's terms.
   rule gives the window or placement, or the context is **cannot
   prompt** and the action returns nil.  **No prompt** is the rules-table
   form; **do not prompt** is the imperative.
-- **displayable window** — a window that can display a buffer: it is
-  live, is not a minibuffer window, is not dedicated to another buffer,
-  and is not a side window.
+- **displayable window**, **can display** — a window that can display a
+  buffer: it is live, is not a minibuffer window, is not dedicated to
+  another buffer, and is not a side window.
 - **eligible window** — a window the current prompt offers: it is a
   displayable window, and the current intent does not exclude it.
 - **excluded buffer** — a buffer that matches
@@ -103,10 +105,13 @@ use instead.  A shell command, an identifier, or a code fragment is not
 prose.
 
 - utility popup — use **dedicated window**, **side window**, **child
-  frame**, or **window that cannot display a buffer**, whichever is
-  meant.
-- physical / physically, for a window that cannot display — say
-  **cannot display** and name the condition.
+  frame**, or **undisplayable window**, whichever is meant.
+- physical / physically, for an undisplayable window — say
+  **undisplayable window** or **cannot display**, and name the
+  condition.
+- failed interactive display — name the failure: the chosen window is
+  undisplayable, its frame or tab is gone, or the display function
+  errors.
 - display action, for the package's entry — say **the package's
   `display-buffer-alist` entry**, or name the condition and action
   function.
