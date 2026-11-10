@@ -132,13 +132,13 @@ non-selected window.
 | Reuse intent, several windows display the buffer | `disbuf-pivot-reuse` chooses auto or ask; ask marks the reuse windows | "Reuse; windows X, Y display the buffer" |
 | Use some window | Prompt with the window prompt; show caller intent info; let the user choose; offer split actions | "Caller asks for some window" |
 | Use least recent window | Prompt with the window prompt; show caller intent info; let the user choose; offer split actions | "Caller asks for a recently unused window" |
-| Caller sets `inhibit-same-window` | Show caller intent info; prompt with `ace-window`; the user may choose an existing window or a dispatch action, including the selected window | "Caller asks for a non-selected window" |
+| Caller sets `inhibit-same-window` | Show caller intent info; prompt with the window prompt; the user may choose an existing window or a dispatch action, including the selected window | "Caller asks for a non-selected window" |
 | Other-window | Prompt with the window prompt; exclude the selected window; offer split actions | "Caller asks for other window" |
 | New-window | Prompt; offer split and new-frame actions; do not offer existing windows | "Caller asks for new window" |
 | Direction | Prompt with the window prompt; show caller intent info; offer a dispatch action that applies the direction; leave side windows as-is | "Caller asks for direction X" |
 | Below-selected / at-bottom | Prompt with the window prompt; show caller intent info; offer a dispatch action that calls the caller's function; leave side windows as-is | "Caller asks for a window below the selected window" or "at the bottom of the frame" |
 | Previous window | Prompt with the window prompt; show the named `previous-window` as the preferred candidate, or mark the windows that previously showed the buffer; use `disbuf-pivot-reuse` when no previous window is usable | "Caller asks for previous window X" or "Caller asks for a window that previously showed the buffer" |
-| Tab or frame action | A prefix prompts frame, then tab when needed, then window.  A caller's tab or frame action prompts with the tab reader or frame prompt.  An existing-target action preselects an existing tab or frame; a new-target action starts a new one and does not select an existing tab or frame with the same name | "Caller asks for existing tab/frame X" or "Caller asks for a new tab/frame" |
+| Tab or frame action | The other-frame prefix prompts frame, then tab when needed, then window.  A caller's tab or frame action prompts with the tab reader or frame prompt.  An existing-target action preselects an existing tab or frame; a new-target action starts a new one and does not select an existing tab or frame with the same name | "Caller asks for existing tab/frame X" or "Caller asks for a new tab/frame" |
 | Placed `window`, `slot`, `parent-frame`, `child-frame-parameters` | Respect the caller's placement; no prompt | Optional |
 | Side window | Leave the caller's side placement as-is; no prompt | Optional |
 | ACTION `t` | Treat as an other-window request; exclude the selected window; prompt | "Caller asks for other window" |
@@ -233,9 +233,10 @@ Choosing one repeats the prompt.
   chosen window unless the selection option says so.
 - Frame focus and raising use the standard action functions and honor
   `inhibit-switch-frame`.
-- The tab and frame order is frame, then tab when needed, then window.
-  A new frame uses its selected window.  Skip the tab prompt for a new
-  frame, and for a frame with one tab unless `tab-bar-mode` is active.
+- For the other-frame prefix, the order is frame, then tab when needed,
+  then window.  A new frame uses its selected window.  Skip the tab
+  prompt for a new frame, and for a frame with one tab unless
+  `tab-bar-mode` is active.
 - An existing-target action preselects an existing tab or frame; a
   new-target action starts a new one and must not select an existing
   tab or frame with the same name.  The prompt string states the
@@ -364,11 +365,12 @@ or the frame prompt runs; the action returns nil.
    does not select an existing target.  Keep the tab and frame flows of
    the package prefix commands.  Use the action functions in section 7
    as the display primitives.
-5. Handle `inhibit-same-window`: show caller intent info, call
-   `ace-window`, keep the selected window, and bind the entry to nil
+5. Handle `inhibit-same-window`: show caller intent info, call the
+   window prompt, keep the selected window, and bind the entry to nil
    when the user chooses it.
-6. Put caller intent info in the echo area.  Keep the mode line as the
-   ace prompt.  Show one brief line for prompted placements.
+6. Put caller intent info and the dispatch hint in the echo area.  The
+   mode-line copy is optional (`disbuf-pivot-mode-line-help`).  Show
+   one brief line for prompted placements.
 7. Make C-g abort.  Remove any option that changes C-g behavior.
 8. Default selection to `auto`; honor `post-command-select-window`;
    keep `t` and `nil` as forcing options.

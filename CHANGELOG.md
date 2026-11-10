@@ -20,6 +20,8 @@
 
 ### Internal Changes
 
+- Docs: replace stale prompt wording; name the window prompt and the
+  other-frame prefix order.
 - Docs: make new-target tab and frame actions start a new target and
   never select an existing one.
 - Docs: reserve nil returns for the cannot-prompt and Respect cases; an
