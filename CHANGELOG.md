@@ -20,6 +20,9 @@
 
 ### Internal Changes
 
+- Docs: reserve nil returns for the cannot-prompt and Respect cases; an
+  interactive display failure prompts again or aborts instead of
+  running caller fallbacks.
 - Docs: classify `display-buffer-use-some-window` and
   `display-buffer-use-least-recent-window` as strategy intents and
   regulate them.
