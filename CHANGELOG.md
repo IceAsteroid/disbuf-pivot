@@ -20,6 +20,8 @@
 
 ### Internal Changes
 
+- Docs: make new-target tab and frame actions start a new target and
+  never select an existing one.
 - Docs: reserve nil returns for the cannot-prompt and Respect cases; an
   interactive display failure prompts again or aborts instead of
   running caller fallbacks.

@@ -62,8 +62,9 @@ The package distinguishes these classes:
   caller's placement; do not prompt unless the user invoked a prefix.
 - **names a tab or frame** -- a tab or frame action, `tab-name`,
   `tab-group`, or `pop-up-frames`.  Regulate the tab or frame choice:
-  prompt with the tab reader or frame prompt; an existing tab or frame
-  is preselected, a new one starts without an existing preselect.
+  prompt with the tab reader or frame prompt.  An existing-target action
+  preselects an existing tab or frame; a new-target action starts a new
+  one and does not select an existing target.
 - **names a relative placement** -- direction, below-selected,
   at-bottom.  Regulate like direction: show caller intent info, prompt
   with the window prompt, and offer a dispatch action that calls the
@@ -137,7 +138,7 @@ non-selected window.
 | Direction | Prompt with the window prompt; show caller intent info; offer a dispatch action that applies the direction; leave side windows as-is | "Caller asks for direction X" |
 | Below-selected / at-bottom | Prompt with the window prompt; show caller intent info; offer a dispatch action that calls the caller's function; leave side windows as-is | "Caller asks for a window below the selected window" or "at the bottom of the frame" |
 | Previous window | Prompt with the window prompt; show the named `previous-window` as the preferred candidate, or mark the windows that previously showed the buffer; use `disbuf-pivot-reuse` when no previous window is usable | "Caller asks for previous window X" or "Caller asks for a window that previously showed the buffer" |
-| Tab or frame action | A prefix prompts frame, then tab when needed, then window.  A caller's tab or frame action prompts with the tab reader or frame prompt; an existing tab or frame is preselected, a new one starts without an existing-tab or existing-frame preselect | "Caller asks for existing tab/frame X" or "Caller asks for a new tab/frame" |
+| Tab or frame action | A prefix prompts frame, then tab when needed, then window.  A caller's tab or frame action prompts with the tab reader or frame prompt.  An existing-target action preselects an existing tab or frame; a new-target action starts a new one and does not select an existing tab or frame with the same name | "Caller asks for existing tab/frame X" or "Caller asks for a new tab/frame" |
 | Placed `window`, `slot`, `parent-frame`, `child-frame-parameters` | Respect the caller's placement; no prompt | Optional |
 | Side window | Leave the caller's side placement as-is; no prompt | Optional |
 | ACTION `t` | Treat as an other-window request; exclude the selected window; prompt | "Caller asks for other window" |
@@ -235,10 +236,11 @@ Choosing one repeats the prompt.
 - The tab and frame order is frame, then tab when needed, then window.
   A new frame uses its selected window.  Skip the tab prompt for a new
   frame, and for a frame with one tab unless `tab-bar-mode` is active.
-- An existing tab or frame is the reader's initial value; a new tab or
-  frame starts without an existing-tab or existing-frame preselect.
-  The prompt string states the caller's intention; the later window
-  prompt shows it in caller intent info.
+- An existing-target action preselects an existing tab or frame; a
+  new-target action starts a new one and must not select an existing
+  tab or frame with the same name.  The prompt string states the
+  caller's intention; the later window prompt shows it in caller intent
+  info.
 - Reuse caller intent info names the qualifying windows.  Same-window
   and no-preference info is optional.
 - The same-window conflict message states that the caller's requests
@@ -281,11 +283,11 @@ fallback; section 3 gives the rule for a list of functions.
 | `display-buffer-below-selected` | Regulate for the below direction.  `window-min-height` is an eligibility constraint. | `window-min-height` |
 | `display-buffer-at-bottom` | Regulate for the at-bottom direction. | None specific |
 | `display-buffer-full-frame` | Respect.  Delegated to `display-buffer-reuse-window`, `display-buffer-same-window`, `display-buffer-pop-up-window`, and `display-buffer-use-some-window` in that order. | None specific |
-| `display-buffer-pop-up-frame` | Regulate for a new frame.  Use `pop-up-frame-parameters`; the new frame is top-level unless that entry sets `parent-frame`. | `pop-up-frame-parameters`, `inhibit-switch-frame`; `pop-up-frames` selects the frame strategy but is not read by this function |
+| `display-buffer-pop-up-frame` | Regulate for a new frame.  Ask for a new frame name; do not offer existing frames.  Use `pop-up-frame-parameters`; the new frame is top-level unless that entry sets `parent-frame`. | `pop-up-frame-parameters`, `inhibit-switch-frame`; `pop-up-frames` selects the frame strategy but is not read by this function |
 | `display-buffer-use-some-frame` | Regulate for an existing frame; `frame-predicate` filters the candidates. | `frame-predicate`, `inhibit-same-window`, `inhibit-switch-frame` |
 | `display-buffer-in-child-frame` | Respect. | `child-frame-parameters` (including a `parent-frame` entry naming a top-level or child frame), `inhibit-switch-frame` |
 | `display-buffer-in-tab` | Regulate; preselect an existing or reusable tab; a new tab starts without an existing-tab preselect. | `reusable-frames` (nil differs), `ignore-current-tab`, `tab-name`, `tab-group` |
-| `display-buffer-in-new-tab` | Regulate; a new tab starts without an existing-tab preselect. | `tab-name`, `tab-group` |
+| `display-buffer-in-new-tab` | Regulate; ask for a new tab name; do not select an existing tab with the same name. | `tab-name`, `tab-group` |
 | `display-buffer-in-side-window` | Respect; side as-is. | `side`, `slot` |
 | `display-buffer-in-atom-window` | Respect. | `side`, `window` |
 | `display-buffer-no-window` | Regulate: leave undisplayed; only with `allow-no-window`. | `allow-no-window` |
@@ -356,10 +358,12 @@ or the frame prompt runs; the action returns nil.
    aborts; it does not return nil into the caller's chain.
 4. Regulate same-window, reuse, other-window, new-window,
    use-some-window, use-least-recent-window, direction, below-selected,
-   at-bottom, previous window, and the tab and frame choices.  Use the tab reader and frame prompt; an existing tab or
-   frame is preselected, a new one starts without an existing preselect.
-   Keep the tab and frame flows of the package prefix commands.  Use the
-   action functions in section 7 as the display primitives.
+   at-bottom, previous window, and the tab and frame choices.  Use the
+   tab reader and frame prompt; an existing-target action preselects an
+   existing tab or frame, and a new-target action starts a new one and
+   does not select an existing target.  Keep the tab and frame flows of
+   the package prefix commands.  Use the action functions in section 7
+   as the display primitives.
 5. Handle `inhibit-same-window`: show caller intent info, call
    `ace-window`, keep the selected window, and bind the entry to nil
    when the user chooses it.
@@ -389,9 +393,10 @@ Every rule needs a Buttercup test.  Combine:
 - caller ACTION: one function, several functions, all-Regulate,
   all-Respect, mixed, duplicate, empty, and an inapplicable first
   function;
-- tab and frame readers: an existing tab or frame is the initial value;
-  a new one starts without an existing preselect; the prompt string
-  states the caller's intention;
+- tab and frame readers: an existing-target action preselects an
+  existing tab or frame; a new-target action starts a new one and does
+  not select an existing one; the prompt string states the caller's
+  intention;
 - window state: selected window eligible, dedicated, side, minibuffer,
   and dead; window already displaying the buffer or not;
 - target state: existing, new, none;
