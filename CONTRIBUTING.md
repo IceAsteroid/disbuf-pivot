@@ -97,7 +97,7 @@ Keep that direction.  The display repository is separate from
 - `docs/DOCUMENTATION_CONVENTION.md` -- terms, prose, and documentation.
 - `docs/GIT_CONVENTION.md` -- commits and history.
 - `docs/CHANGELOG_CONVENTION.md` -- changelog entries.
-- `docs/DESIGN_RULESET.md` -- target behavior.
+- `docs/DESIGN_RULESET.md` -- intended behavior.
 - `docs/DISPLAY_BUFFER_MATRIX.md` -- Emacs 31.1 action matrix
   (reference, not normative).
 - `AGENTS.md` -- the coding-agent index.

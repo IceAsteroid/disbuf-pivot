@@ -1,7 +1,7 @@
 # DESIGN_RULESET
 
 This file is the design authority for `disbuf-pivot`.  It describes the
-target behavior; the source does not yet implement all of it.
+intended behavior; the source does not yet implement all of it.
 `docs/DOCUMENTATION_CONVENTION.md` is the authority for terms and
 documentation; `docs/GIT_CONVENTION.md` for commits;
 `docs/CHANGELOG_CONVENTION.md` for changelog entries.  Define a term
@@ -107,7 +107,7 @@ A package prefix command is user intent, not caller intent.
 package prefix commands.  The package prefix commands keep the same
 override for the next command, so they take precedence over the
 caller's ACTION; they make the target explicit and predictable.
-Section 6 gives the target flow.
+Section 6 gives the placement path.
 
 The selected window cannot display a buffer when it is a minibuffer
 window, is dedicated to another buffer, is a side window, or is not

@@ -20,6 +20,9 @@
 
 ### Internal Changes
 
+- Docs: redefine pivot as the decision point; define target and
+  placement path; replace "target behavior" with "intended behavior"
+  and "target flow" with "placement path".
 - Docs: define "failure after the choice" and use it for the post-choice
   display cases.
 - Docs: reject "failed interactive display" and name the failure cases.
@@ -132,7 +135,8 @@
   tab and frame window prompts honor `inhibit-same-window`; the
   other-window prefix follows `reusable-frames` and
   `inhibit-same-window`; a tab name that occurs more than once selects
-  its own tab; the pivot searches the parent frame of a child frame.
+  its own tab; the prefix commands search the parent frame of a child
+  frame.
 - Doc: the package and repository are `disbuf-pivot`; the source URL
   headers name the repository, and the README and codification describe
   the behavior and terms.

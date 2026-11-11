@@ -4,7 +4,7 @@ This file is the authority for terms, prose, and documentation
 conventions.  It applies to code, Commentary, docstrings, `README.md`,
 `CHANGELOG.md`, and commit messages.  `docs/GIT_CONVENTION.md` is the
 authority for commit structure; `docs/CHANGELOG_CONVENTION.md` for
-changelog structure; `docs/DESIGN_RULESET.md` for target behavior.  The
+changelog structure; `docs/DESIGN_RULESET.md` for intended behavior.  The
 emacs-utils and column-popup files are models; they do not govern this
 repository.
 
@@ -13,8 +13,15 @@ repository.
 Emacs's terms and common technical terms are used as they are.  The
 entries below are this package's terms.
 
-- **pivot** — the window, tab, or frame where a buffer is displayed;
-  the package's name for it.  The package name uses the word.
+- **pivot** — the point at which the package either respects the
+  caller's intent or replaces that intent with the user's explicit
+  choice.  The package name uses the word.
+- **target** — a frame, tab, or window that the caller's intent names or
+  the user chooses through a prompt.  A frame or tab target is a
+  container; a window target is the window that displays the buffer.
+- **placement path** — the sequence frame, then tab, then window; tab,
+  then window; or window, ending at the window that displays the buffer.
+  A target is one step on the path.
 - **window prompt** — the prompt that calls `aw-select` to label the
   eligible windows and reads a label.  The dispatch hint is shown in
   the echo area; its mode-line copy is optional; `?` shows the dispatch

@@ -6,8 +6,9 @@ window, or a child frame can send the display to an unintended window or
 frame; a buffer visible in another tab or frame can be reused; and a
 repeated tab or frame name can be ambiguous.  The buffer can then appear
 in a place the user did not choose.  disbuf-pivot replaces that implicit
-pick with an explicit one.  It calls the window, tab, or frame where the
-buffer is displayed the *pivot*.
+pick with an explicit one.  The *pivot* is the point at which the package
+either respects the caller's intent or replaces that intent with the
+user's explicit choice.
 
 ## The package's `display-buffer-alist` entry
 
@@ -133,7 +134,7 @@ separate library:
   options, and the tab and frame prompts.
 - `disbuf-pivot-window-utility` holds the window test, the split
   options, and the window prompt.
-- `disbuf-pivot-prefix` holds the prefix commands and the pivot mode.
+- `disbuf-pivot-prefix` holds the prefix commands and the prefix mode.
 - `disbuf-pivot-tab-bar` holds the tab candidates, history, selection
   and plain reader.
 - `disbuf-pivot-tab-bar-consult` holds the optional consult reader and
