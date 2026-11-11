@@ -419,7 +419,7 @@
                  ask-ignore))
       (setq display-buffer-overriding-action '(nil . nil)))))
 
-;;; ---- the pivot searches the parent frame
+;;; ---- the prefix commands search the parent frame
 (let ((windows (list w1 w2))
       (seen nil))
   (cl-letf (((symbol-function 'selected-frame) (lambda () 'child))
@@ -430,7 +430,7 @@
                (setq seen frame)
                windows)))
     (let ((result (dp-prefix--find-last-active-window)))
-      (check "pivot: a child frame searches its parent frame"
+      (check "prefix: a child frame searches its parent frame"
              (and (eq seen 'parent)
                   (memq result windows))))))
 

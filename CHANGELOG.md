@@ -20,6 +20,8 @@
 
 ### Internal Changes
 
+- Test: name the child-frame parent-frame check after the prefix
+  commands.
 - Docs: redefine pivot as the decision point; define target and
   placement path; replace "target behavior" with "intended behavior"
   and "target flow" with "placement path".
