@@ -98,6 +98,12 @@ entries below are this package's terms.
 
 ## Emacs terms used by the design
 
+- **combined action alist** — the action alist `display-buffer` builds
+  by combining, in order, the alists from
+  `display-buffer-overriding-action`, the matching
+  `display-buffer-alist` entry, the caller's ACTION,
+  `display-buffer-base-action`, and `display-buffer-fallback-action`.
+  The first association of a key wins.
 - **top-level frame** — an Emacs frame whose `parent-frame` parameter
   is nil.  On a graphical display it is a separate desktop window
   managed by the graphical environment's window manager; on a text
@@ -126,6 +132,8 @@ prose.
 - display action, for the package's entry — say **the package's
   `display-buffer-alist` entry**, or name the condition and action
   function.
+- merged alist — use **combined action alist**.
+- flow, for the frame/tab/window sequence — use **placement path**.
 - no-prompt — use **no prompt**.
 - workspace — use **window**, or name the function that returns it.
 - editing window — say **displayable window**, or "the most recently

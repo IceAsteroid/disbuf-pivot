@@ -91,8 +91,8 @@ covered, return nil and let the whole caller list run.  If it is
 
 When the rule prompts, the "use caller intent" dispatch action is a
 user choice; it runs the caller's whole function list in order with the
-merged alist, under a guard that prevents the package's entry from
-running again.  The package does not regulate a later function; it
+combined action alist, under a guard that prevents the package's entry
+from running again.  The package does not regulate a later function; it
 remains a caller fallback.  If the package cannot prompt (section 9),
 it returns nil and the caller's ACTION functions run, with the later
 functions as fallbacks.  A failure after the choice while the package
@@ -300,9 +300,10 @@ fallback; section 3 gives the rule for a list of functions.
 
 ## 8. Action alist checklist
 
-The package passes the merged alist to the function it calls.  It does
-not drop an entry except `inhibit-same-window` when the user overrides
-it.  Entries used during the prompt are interpreted as follows.
+The package passes the combined action alist to the function it calls.
+It does not drop an entry except `inhibit-same-window` when the user
+overrides it.  Entries used during the prompt are interpreted as
+follows.
 
 | Entry | Treatment |
 |---|---|
@@ -325,7 +326,7 @@ it.  Entries used during the prompt are interpreted as follows.
 | `body-function` | Apply after the buffer is displayed. |
 | `post-command-select-window` | Honor; the selection option defaults to `auto`. |
 | `category` | Pass through; use it in caller intent info when present. |
-| `tab-name`, `tab-group`, `ignore-current-tab` | Tab flow; honor. |
+| `tab-name`, `tab-group`, `ignore-current-tab` | Tab placement; honor. |
 | `reuse-indirect` | Pass to `display-buffer-reuse-window`. |
 
 ## 9. Contexts
@@ -371,9 +372,9 @@ or the frame prompt runs; the action returns nil.
    at-bottom, previous window, and the tab and frame choices.  Use the
    tab reader and frame prompt; an existing-target action preselects an
    existing tab or frame, and a new-target action starts a new one and
-   does not select an existing target.  Keep the tab and frame flows of
-   the package prefix commands.  Use the action functions in section 7
-   as the display primitives.
+   does not select an existing target.  Keep the tab and frame placement
+   paths of the package prefix commands.  Use the action functions in
+   section 7 as the display primitives.
 5. Handle `inhibit-same-window`: show caller intent info, call the
    window prompt, keep the selected window, and bind the entry to nil
    when the user chooses it.

@@ -95,7 +95,7 @@ inside it is chosen with `aw-select'."
   "The ACTION argument of the `display-buffer' call being decided.
 The condition of the mode's entry records it, because `buffer-match-p'
 passes the ACTION to the condition and the action functions receive only
-the merged alist.")
+the combined action alist.")
 
 (defun dp-action-control-p (_buffer action)
   "Match every buffer an earlier `display-buffer-alist' entry does not take.

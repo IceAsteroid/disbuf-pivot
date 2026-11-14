@@ -20,6 +20,8 @@
 
 ### Internal Changes
 
+- Docs: replace "merged alist" with "combined action alist" and "flow"
+  with "placement path".
 - Test: name the child-frame parent-frame check after the prefix
   commands.
 - Docs: redefine pivot as the decision point; define target and
