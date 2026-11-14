@@ -20,6 +20,8 @@
 
 ### Internal Changes
 
+- Docs: define selection entries, window-setting entries, and the
+  window-settings opt-out; reject bare "the opt-out".
 - Docs: replace "merged alist" with "combined action alist" and "flow"
   with "placement path".
 - Test: name the child-frame parent-frame check after the prefix

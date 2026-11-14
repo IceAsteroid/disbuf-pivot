@@ -67,6 +67,18 @@ entries below are this package's terms.
   package shows it in the echo area.
 - **caller constraint** — an action-alist entry from the caller that
   limits the candidate windows; the design rules name the entries.
+- **selection entry** — an entry in an action alist that limits,
+  orders, or chooses the candidate window, frame, tab, or placement,
+  or the display outcome.  The package uses it during the prompt; it is
+  not applied to the chosen window afterward.
+- **window-setting entry** — an entry in an action alist that changes
+  the chosen window itself: its dedication, parameters, or size.  The
+  design rules name the entries.  `body-function` is not a
+  window-setting entry.
+- **window-settings opt-out** — the dispatch action `Display without
+  caller window settings`.  It removes the window-setting entries from
+  the combined action alist for the package's display call.  It does
+  not change the caller's ACTION and does not affect later calls.
 - **undisplayable window**, **cannot display** — a window that is not a
   **displayable window**: it is dead, is a minibuffer window, is
   dedicated to another buffer, or is a side window.  The design rules
@@ -134,6 +146,7 @@ prose.
   function.
 - merged alist — use **combined action alist**.
 - flow, for the frame/tab/window sequence — use **placement path**.
+- the opt-out — use **window-settings opt-out** or name the action.
 - no-prompt — use **no prompt**.
 - workspace — use **window**, or name the function that returns it.
 - editing window — say **displayable window**, or "the most recently
