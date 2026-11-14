@@ -97,10 +97,18 @@ remains a caller fallback.  If the package cannot prompt (section 9),
 it returns nil and the caller's ACTION functions run, with the later
 functions as fallbacks.  A failure after the choice while the package
 can prompt is handled by prompting again or aborting; it does not
-return nil into the caller's chain.  Do not reorder or deduplicate the
-list.  Use the first
-association of an alist key, as Emacs does.  An ACTION with no function
-is no preference; ACTION `t` is an other-window request (section 4).
+return nil into the caller's chain.  Emacs calls every function in its
+combined list with the same combined action alist; a function that
+returns nil passes to the next, and an error propagates.  The
+package's caller-list run for "use caller intent" follows the same nil
+and error rule.  The window-settings opt-out dispatch action changes
+the combined action alist only for the package's display call and for a
+caller list the package runs from that prompt; it does not change the
+alist Emacs passes to a later caller fallback after the package returns
+nil.  Do not reorder or deduplicate the list.  Use the first
+association of an alist key, as Emacs does.
+An ACTION with no function is no preference; ACTION `t` is an
+other-window request (section 4).
 
 A package prefix command is user intent, not caller intent.
 `disbuf-pivot-prefix-mode` remaps the built-in prefix commands to the
@@ -374,7 +382,7 @@ function, not a window-setting entry; the package preserves it.
 
 | Entry | Treatment |
 |---|---|
-| `body-function` | Preserve; call after the buffer is displayed and before the size entries.  It is a body function, not a window-setting entry; it is not named in caller intent info and the window-settings opt-out does not remove it. |
+| `body-function` | Preserve; call after the buffer is displayed and before the size entries.  It is a body function, not a window-setting entry; it is not named in caller intent info and the window-settings opt-out does not remove it.  A failure follows the failure-after-the-choice rule. |
 | `post-command-select-window` | Honor; the selection option defaults to `auto`.  The window-settings opt-out leaves it. |
 | `bump-use-time` | Handle through `window--display-buffer`.  The window-settings opt-out leaves it. |
 | `inhibit-switch-frame` | Frame raising and focus; honor.  The window-settings opt-out leaves it. |
@@ -399,11 +407,14 @@ or the frame prompt runs; the action returns nil.
   because it is dead, repeat the window prompt; if it is undisplayable
   because its frame or tab is gone, prompt again with the frame prompt
   or tab reader; if the display function returns nil or errors, report
-  it and abort.  Do not return nil into the caller's chain while a
-  prompt can run.
+  it and abort.  A `body-function` error is such a failure; it is not a
+  window-setting entry and the window-settings opt-out does not remove
+  it.  Do not return nil into the caller's chain while a prompt can run.
 - A nil return is reserved for the cannot-prompt contexts and the
-  Respect or not-covered cases; the caller's ACTION functions and the
-  remaining display rules run after it.
+  Respect or not-covered cases; Emacs calls the later action functions
+  with the same combined action alist, and the remaining display rules
+  run after it.  The window-settings opt-out is local to the package's
+  display call.
 
 ## 10. Implementation tasks
 
@@ -489,7 +500,9 @@ Every rule needs a Buttercup test.  Combine:
   macro, and recursive display.
 
 Also test C-g, split failure, dead windows, display errors (prompt again
-or abort, never the caller's fallbacks), that selection entries are not
-applied to the chosen window, the window-settings opt-out's
-all-association removal, and repeated choices.  Every cell in the rules
-table has a test; there are no undecided cells.
+or abort, never the caller's fallbacks), a `body-function` error, that
+selection entries are not applied to the chosen window, the
+window-settings opt-out's all-association removal and its local scope
+(later action functions receive the original combined action alist),
+and repeated choices.  Every cell in the rules table has a test; there
+are no undecided cells.

@@ -20,6 +20,9 @@
 
 ### Internal Changes
 
+- Docs: describe action function fallbacks; every function receives the
+  same combined action alist, a nil return falls through, and an error
+  does not; the window-settings opt-out is local to the display call.
 - Docs: add the "Display without caller window settings" action; name
   window-setting effects in caller intent info; remove every association
   of each window-setting key for the display call.
