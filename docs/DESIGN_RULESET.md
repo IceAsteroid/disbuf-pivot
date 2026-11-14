@@ -480,17 +480,21 @@ or the frame prompt runs; the action returns nil.
 - Failure after the choice: if the chosen window is undisplayable
   because it is dead, prompt again by the rule in section 6; if it is
   undisplayable because its frame or tab is gone, prompt again with the
-  frame prompt or tab reader; if the display function returns nil or
-  errors, report it and abort.  A `body-function` error is such a
+  frame prompt or tab reader.  If the display function returns nil,
+  report it with `message` and return `fail`; if it signals an error,
+  propagate or re-signal it.  A `body-function` error is such a
   failure; it is not a window-setting entry and the window-settings
   opt-out does not remove it.  Do not return nil into the caller's
   chain while a prompt can offer an action.
+- A nil choice: the prompt returns nil without C-g; the action returns
+  nil; the caller's ACTION functions and the remaining display rules
+  run.
 - A nil return is reserved for the cannot-prompt contexts, the Respect
-  or not-covered cases, and the case with no eligible window where the
-  dispatch prompt offers no dispatch action; Emacs calls the later
-  action functions with the same combined action alist, and the
-  remaining display rules run after it.  The window-settings opt-out is
-  local to the package's display call.
+  or not-covered cases, a nil choice, and the case with no eligible
+  window where the dispatch prompt offers no dispatch action; Emacs
+  calls the later action functions with the same combined action alist,
+  and the remaining display rules run after it.  The window-settings
+  opt-out is local to the package's display call.
 
 ## 10. Implementation tasks
 
@@ -504,7 +508,8 @@ or the frame prompt runs; the action returns nil.
    intent" action runs the caller's whole function list in order when
    the user chooses it.  A failure after the choice while the package
    can prompt is handled by prompting again or aborting; do not return
-   nil into the caller's chain.
+   nil into the caller's chain.  A nil choice returns nil; it is not a
+   failure after the choice.
 4. Regulate same-window, reuse, other-window, new-window,
    use-some-window, use-least-recent-window, full-frame, direction,
    below-selected, at-bottom, previous window, and the tab and frame
@@ -595,10 +600,11 @@ Every rule needs a Buttercup test.  Combine:
 - context: batch, active minibuffer, timer, process filter, keyboard
   macro, and recursive display.
 
-Also test C-g, split failure, dead windows, display errors (prompt again
-or abort, never the caller's fallbacks), a `body-function` error, that
-selection entries are not applied to the chosen window, the
-window-settings opt-out's all-association removal and its local scope
-(later action functions receive the original combined action alist),
-and repeated choices.  Every cell in the rules table has a test; there
-are no undecided cells.
+Also test C-g (quit), a nil choice (returns nil and the caller's ACTION
+functions run), split failure, dead windows, a display function that
+returns nil (message and `fail`) or signals an error (propagates or is
+re-signaled), a `body-function` error, that selection entries are not
+applied to the chosen window, the window-settings opt-out's
+all-association removal and its local scope (later action functions
+receive the original combined action alist), and repeated choices.
+Every cell in the rules table has a test; there are no undecided cells.

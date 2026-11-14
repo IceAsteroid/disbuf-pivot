@@ -169,11 +169,11 @@
                (eq (window-buffer w3) (get-buffer "*t2*")))))
     (set-window-dedicated-p w2 nil)
     (delete-window w3))
-  ;; an aborted choice declines and the following action functions run
+  ;; a nil choice returns nil and the following action functions run
   (let ((result nil))
     (cl-letf (((symbol-function 'aw-select) (lambda (&rest _) nil)))
       (setq result (display-buffer (get-buffer-create "*t3*"))))
-    (check "aborted choice: a window is still returned"
+    (check "nil choice: a window is still returned"
            (and result (window-live-p result))))
   ;; in batch the rule declines without choosing
   (let ((noninteractive t)

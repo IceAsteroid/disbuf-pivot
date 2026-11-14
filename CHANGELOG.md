@@ -20,6 +20,11 @@
 
 ### Internal Changes
 
+- Docs: define abort as ending the display without running the later
+  functions in the caller's ACTION; define the nil choice and its nil
+  return; state that a nil display primitive reports with `message` and
+  returns `fail`, and an error propagates or is re-signaled; rename the
+  test "aborted choice" to "nil choice".
 - Docs: state that caller intent info reports the entries the rule
   reads from the combined action alist and names the action that
   supplies an entry when it is not the caller's ACTION; apply the

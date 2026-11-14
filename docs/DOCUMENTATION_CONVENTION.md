@@ -59,6 +59,9 @@ entries below are this package's terms.
   window, tab, or frame from a prompt: the chosen window is
   undisplayable, its frame or tab is gone, or the display function
   returns nil or errors.  The design rules list the responses.
+- **abort** — end the display and do not run the later functions in the
+  caller's ACTION.  C-g is the user's way to abort; `quit` is its
+  mechanism.  A nil choice is not an abort.
 - **caller intent** — what the caller's ACTION asks for; the design
   rules classify it by what it names: a place, a strategy, a
   constraint, or no preference.
