@@ -276,12 +276,17 @@ The table applies when the function is the first function in the
 caller's ACTION.  A later function in the same ACTION is a caller
 fallback; section 3 gives the rule for a list of functions.
 
+The "Relevant alists" column lists the selection and placement entries
+the action function reads.  Window-setting entries are shared by every
+action function; section 8 handles them.  A selection entry is not
+applied to the chosen window after the choice.
+
 | Action function | Treatment | Relevant alists |
 |---|---|---|
 | `display-buffer-same-window` | Regulate.  If the user chooses the selected window despite `inhibit-same-window`, bind that entry to nil for this call. | `inhibit-same-window` |
 | `display-buffer-reuse-window` | Regulate.  If the user chooses a window the caller excluded, bind `inhibit-same-window` to nil for this call. | `inhibit-same-window`, `reusable-frames`, `inhibit-switch-frame`, `reuse-indirect` |
 | `display-buffer-reuse-mode-window` | Regulate as reuse with `mode`. | `mode`, `inhibit-same-window`, `reusable-frames`, `inhibit-switch-frame` |
-| `display-buffer-pop-up-window` | Regulate for a split action. | `inhibit-switch-frame`; shared window alists |
+| `display-buffer-pop-up-window` | Regulate for a split action. | `inhibit-switch-frame`; shared window-setting entries (section 8) |
 | `display-buffer-in-previous-window` | Regulate.  Show the `previous-window` entry as the preferred candidate; when it is not usable, mark the windows that previously showed the buffer. | `previous-window`, `inhibit-same-window`, `reusable-frames` |
 | `display-buffer-use-some-window` | Regulate: show caller intent info, prompt with the window prompt, and let the user choose.  Do not let the function choose silently. | `some-window`, `lru-frames`, `lru-time`, `window-min-width`, `window-min-height`, `inhibit-same-window`, `inhibit-switch-frame` |
 | `display-buffer-use-least-recent-window` | Regulate like `display-buffer-use-some-window`. | `reusable-frames`, `inhibit-switch-frame`, `lru-frames`, `lru-time`, `window-min-width`, `window-min-height`; `inhibit-same-window` is forced to t internally |
@@ -300,10 +305,20 @@ fallback; section 3 gives the rule for a list of functions.
 
 ## 8. Action alist checklist
 
-The package passes the combined action alist to the function it calls.
-It does not drop an entry except `inhibit-same-window` when the user
-overrides it.  Entries used during the prompt are interpreted as
-follows.
+The entries have different roles.  The package passes the combined
+action alist to the function it calls.  It does not drop an entry
+silently.  It binds `inhibit-same-window` to nil when the user
+overrides it.
+
+A **selection entry** limits, orders, or chooses the candidate window,
+frame, tab, or placement, or the display outcome.  The package uses it
+during the prompt; it is not applied to the chosen window afterward.
+A **window-setting entry** changes the chosen window itself: its
+dedication, parameters, or size.  The package preserves it and applies
+it through the standard display path.  `body-function` is a body
+function, not a window-setting entry; the package preserves it.
+
+### Selection entries
 
 | Entry | Treatment |
 |---|---|
@@ -312,22 +327,39 @@ follows.
 | `mode` | Pass to `display-buffer-reuse-mode-window` when reuse is regulated with a mode. |
 | `frame-predicate` | Frame candidates; honor. |
 | `reusable-frames` | Reuse and tab scope; honor.  The tab meaning of nil differs. |
-| `inhibit-switch-frame` | Frame raising and focus; honor. |
-| `window-parameters`, `dedicated`, `preserve-size`, `window-height`, `window-width`, `window-size` | Apply to the chosen window through the standard display path. |
 | `window-min-width`, `window-min-height` | Eligibility constraints; honor when choosing a window. |
-| `some-window`, `lru-frames`, `lru-time` | Pass to `display-buffer-use-some-window` or `display-buffer-use-least-recent-window` when the package calls it; otherwise leave in the alist. |
-| `bump-use-time` | Bump the chosen window's use time; handled by `window--display-buffer`. |
-| `pop-up-frame-parameters` | New-frame parameters; honor. |
-| `pop-up-frames` | Selects the frame strategy; `display-buffer-pop-up-frame` does not read it.  The reuse functions use it as the frame scope when `reusable-frames` has no entry. |
-| `child-frame-parameters` (including a `parent-frame` entry naming a top-level or child frame) | Child-frame placement; respect. |
-| `side`, `slot` | Side placement; leave as-is. |
-| `direction`, `window` | Direction action; honor. |
-| `allow-no-window` | Allow the leave-undisplayed outcome. |
-| `body-function` | Apply after the buffer is displayed. |
-| `post-command-select-window` | Honor; the selection option defaults to `auto`. |
-| `category` | Pass through; use it in caller intent info when present. |
-| `tab-name`, `tab-group`, `ignore-current-tab` | Tab placement; honor. |
+| `some-window`, `lru-frames`, `lru-time` | Pass to `display-buffer-use-some-window` or `display-buffer-use-least-recent-window` when the package calls it; otherwise leave in the alist.  Do not apply them to the chosen window. |
 | `reuse-indirect` | Pass to `display-buffer-reuse-window`. |
+| `pop-up-frames` | Selects the frame strategy; `display-buffer-pop-up-frame` does not read it.  The reuse functions use it as the frame scope when `reusable-frames` has no entry. |
+| `allow-no-window` | Allow the leave-undisplayed outcome. |
+
+### Placement entries
+
+| Entry | Treatment |
+|---|---|
+| `tab-name`, `tab-group`, `ignore-current-tab` | Tab placement; honor. |
+| `direction`, `window` | Direction action; honor. |
+| `side`, `slot` | Side placement; leave as-is. |
+| `child-frame-parameters` (including a `parent-frame` entry naming a top-level or child frame) | Child-frame placement; respect. |
+| `pop-up-frame-parameters` | New-frame parameters; honor. |
+
+### Window-setting entries
+
+| Entry | Treatment |
+|---|---|
+| `dedicated` | Preserve; apply through `window--display-buffer`.  A reused normal window is not dedicated; a new window receives the entry's value; a window already dedicated to this buffer and showing it keeps its flag; a window dedicated to this buffer but not showing it is reset to nil before display; a window dedicated to another buffer is undisplayable and is not offered.  `display-buffer-in-side-window` is Respect and adds `(dedicated . side)` by default unless the alist already has a `dedicated` entry (`window.el:1120–1122`); the prompt does not offer side windows. |
+| `window-parameters` | Preserve; apply to the chosen window. |
+| `preserve-size`, `window-height`, `window-width`, `window-size` | Preserve; apply only when the window never showed another buffer. |
+
+### Other entries
+
+| Entry | Treatment |
+|---|---|
+| `body-function` | Preserve; call after the buffer is displayed and before the size entries.  It is a body function, not a window-setting entry. |
+| `post-command-select-window` | Honor; the selection option defaults to `auto`. |
+| `bump-use-time` | Handle through `window--display-buffer`. |
+| `inhibit-switch-frame` | Frame raising and focus; honor. |
+| `category` | Pass through; use it in caller intent info when present. |
 
 ## 9. Contexts
 
@@ -409,12 +441,18 @@ Every rule needs a Buttercup test.  Combine:
   existing tab or frame; a new-target action starts a new one and does
   not select an existing one; the prompt string states the caller's
   intention;
-- window state: selected window eligible, dedicated, side, minibuffer,
-  and dead; window already displaying the buffer or not;
+- window state: selected window eligible, dedicated to another buffer,
+  dedicated to this buffer, side, minibuffer, and dead; window already
+  displaying the buffer or not;
 - target state: existing, new, none;
 - caller constraint: none, `inhibit-same-window`, `reusable-frames`,
   `previous-window`, `frame-predicate`, `inhibit-switch-frame`,
   `window-min-width`, `window-min-height`, `allow-no-window`;
+- window-setting entry: `dedicated` on a reused normal window, a new
+  window, a window already dedicated to this buffer and showing it, a
+  window dedicated to this buffer but not showing it, and a window
+  dedicated to another buffer; `window-parameters`; `preserve-size`,
+  `window-height`, `window-width`, `window-size`;
 - option: each value of `disbuf-pivot-reuse`,
   `disbuf-pivot-same-window-conflict`, `disbuf-pivot-caller-intent-info`,
   `disbuf-pivot-exclude-conditions`, `disbuf-pivot-mode-line-help`,
@@ -425,5 +463,6 @@ Every rule needs a Buttercup test.  Combine:
   macro, and recursive display.
 
 Also test C-g, split failure, dead windows, display errors (prompt again
-or abort, never the caller's fallbacks), and repeated choices.  Every
-cell in the rules table has a test; there are no undecided cells.
+or abort, never the caller's fallbacks), that selection entries are not
+applied to the chosen window, and repeated choices.  Every cell in the
+rules table has a test; there are no undecided cells.

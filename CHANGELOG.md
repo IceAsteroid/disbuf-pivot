@@ -20,6 +20,8 @@
 
 ### Internal Changes
 
+- Docs: group action alist entries by role; state the treatments for
+  `dedicated`, the size entries, and `body-function`.
 - Docs: define selection entries, window-setting entries, and the
   window-settings opt-out; reject bare "the opt-out".
 - Docs: replace "merged alist" with "combined action alist" and "flow"
