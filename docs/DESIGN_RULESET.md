@@ -319,15 +319,15 @@ applied to the chosen window after the choice.
 | `display-buffer-in-direction` | Regulate for the "use caller intent" direction action. | `direction`, `window` |
 | `display-buffer-below-selected` | Regulate for the below direction.  `window-min-height` is an eligibility constraint. | `window-min-height` |
 | `display-buffer-at-bottom` | Regulate for the at-bottom direction. | None specific |
-| `display-buffer-full-frame` | Respect.  Delegated to `display-buffer-reuse-window`, `display-buffer-same-window`, `display-buffer-pop-up-window`, and `display-buffer-use-some-window` in that order. | None specific |
 | `display-buffer-pop-up-frame` | Regulate for a new frame.  Ask for a new frame name; do not offer existing frames.  Use `pop-up-frame-parameters`; the new frame is top-level unless that entry sets `parent-frame`. | `pop-up-frame-parameters`, `inhibit-switch-frame`; `pop-up-frames` selects the frame strategy but is not read by this function |
 | `display-buffer-use-some-frame` | Regulate for an existing frame; `frame-predicate` filters the candidates. | `frame-predicate`, `inhibit-same-window`, `inhibit-switch-frame` |
-| `display-buffer-in-child-frame` | Respect. | `child-frame-parameters` (including a `parent-frame` entry naming a top-level or child frame), `inhibit-switch-frame` |
 | `display-buffer-in-tab` | Regulate; preselect an existing or reusable tab; a new tab starts without an existing-tab preselect. | `reusable-frames` (nil differs), `ignore-current-tab`, `tab-name`, `tab-group` |
 | `display-buffer-in-new-tab` | Regulate; ask for a new tab name; do not select an existing tab with the same name. | `tab-name`, `tab-group` |
+| `display-buffer-no-window` | Regulate: leave undisplayed; only with `allow-no-window`. | `allow-no-window` |
+| `display-buffer-full-frame` | Respect.  Delegated to `display-buffer-reuse-window`, `display-buffer-same-window`, `display-buffer-pop-up-window`, and `display-buffer-use-some-window` in that order. | None specific |
+| `display-buffer-in-child-frame` | Respect. | `child-frame-parameters` (including a `parent-frame` entry naming a top-level or child frame), `inhibit-switch-frame` |
 | `display-buffer-in-side-window` | Respect; side as-is. | `side`, `slot` |
 | `display-buffer-in-atom-window` | Respect. | `side`, `window` |
-| `display-buffer-no-window` | Regulate: leave undisplayed; only with `allow-no-window`. | `allow-no-window` |
 
 ## 8. Action alist checklist
 
