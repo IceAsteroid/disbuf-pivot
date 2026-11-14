@@ -290,14 +290,16 @@ Choosing one repeats the prompt.
 - The window prompt shows the dispatch action list on demand: the
   caller intent line carries the dispatch hint, and `?` shows the list.
   The dispatch prompt shows the grouped list with its one-key read.
-- Caller intent info is one line.  Detailed information goes in the
-  dispatch action list.
+- Caller intent info is one line.  It names the action that supplies an
+  entry when the entry is not from the caller's ACTION.  Detailed
+  information goes in the dispatch action list.
 - When the combined action alist has a window-setting entry, caller
   intent info names their effects and conditions, not the raw entries:
-  "Caller asks for a dedicated window (new windows only)", "Caller asks
-  for a 20-line window (new windows only)", "Caller asks for window
-  parameters".  `body-function` is not named; it is a body function,
-  not a window-setting entry.
+  "Caller asks for a dedicated window (new windows only)", "An entry
+  from `display-buffer-base-action` asks for a 20-line window (new
+  windows only)", "An entry from `display-buffer-overriding-action`
+  asks for window parameters".  `body-function` is not named; it is a
+  body function, not a window-setting entry.
 - "Display without caller window settings" removes every association
   of each window-setting key from the combined action alist for the
   package's display call and re-prompts; in the dispatch prompt it
@@ -345,8 +347,10 @@ Choosing one repeats the prompt.
   in caller intent info.
 - Reuse caller intent info names the qualifying windows.  Same-window
   and no-preference info is optional.
-- The same-window conflict message states that the caller's requests
-  conflict, then applies `disbuf-pivot-same-window-conflict`.
+- The same-window conflict message states which request is the
+  caller's and which entry conflicts, naming the action that supplies
+  the entry when it is not the caller's ACTION, then applies
+  `disbuf-pivot-same-window-conflict`.
 - Direction uses `display-buffer-in-direction` for the "use caller
   intent" dispatch action.  Below-selected and at-bottom use their own
   functions for that action.  Side windows are left as-is.
@@ -444,9 +448,9 @@ function, not a window-setting entry; the package preserves it.
 
 | Entry | Treatment |
 |---|---|
-| `dedicated` | Preserve; apply through `window--display-buffer`.  A reused normal window is not dedicated; a new window receives the entry's value; a window already dedicated to this buffer and showing it keeps its flag; a window dedicated to this buffer but not showing it is reset to nil before display; a window dedicated to another buffer is undisplayable and is not offered.  `display-buffer-in-side-window` is Respect and adds `(dedicated . side)` by default unless the alist already has a `dedicated` entry (`window.el:1120–1122`); the prompt does not offer side windows.  Caller intent info says "new windows only".  The window-settings opt-out removes the entry. |
-| `window-parameters` | Preserve; apply to the chosen window.  Caller intent info says "window parameters".  The window-settings opt-out removes the entry. |
-| `preserve-size`, `window-height`, `window-width`, `window-size` | Preserve; apply only when the window never showed another buffer.  Caller intent info names the effect and says "new windows only".  The window-settings opt-out removes the entries. |
+| `dedicated` | Preserve; apply through `window--display-buffer`.  A reused normal window is not dedicated; a new window receives the entry's value; a window already dedicated to this buffer and showing it keeps its flag; a window dedicated to this buffer but not showing it is reset to nil before display; a window dedicated to another buffer is undisplayable and is not offered.  `display-buffer-in-side-window` is Respect and adds `(dedicated . side)` by default unless the alist already has a `dedicated` entry (`window.el:1120–1122`); the prompt does not offer side windows.  Caller intent info says "new windows only" and names the action that supplies the entry when it is not the caller's ACTION.  The window-settings opt-out removes the entry. |
+| `window-parameters` | Preserve; apply to the chosen window.  Caller intent info says "window parameters" and names the action that supplies the entry when it is not the caller's ACTION.  The window-settings opt-out removes the entry. |
+| `preserve-size`, `window-height`, `window-width`, `window-size` | Preserve; apply only when the window never showed another buffer.  Caller intent info names the effect, says "new windows only", and names the action that supplies the entry when it is not the caller's ACTION.  The window-settings opt-out removes the entries. |
 
 ### Other entries
 

@@ -62,9 +62,11 @@ entries below are this package's terms.
 - **caller intent** — what the caller's ACTION asks for; the design
   rules classify it by what it names: a place, a strategy, a
   constraint, or no preference.
-- **caller intent info** — the message that states what the caller
-  asked for and, when relevant, which caller constraint applies.  The
-  package shows it in the echo area.
+- **caller intent info** — the message that states what the caller's
+  ACTION asks for and the other entries in the combined action alist
+  that the rule reads.  When an entry is not from the caller's ACTION,
+  the message names the action that supplies it.  The package shows it
+  in the echo area.
 - **caller constraint** — an action-alist entry from the caller that
   limits the candidate windows; the design rules name the entries.
 - **selection entry** — an entry in an action alist that limits,

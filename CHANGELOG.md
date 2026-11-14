@@ -20,6 +20,11 @@
 
 ### Internal Changes
 
+- Docs: state that caller intent info reports the entries the rule
+  reads from the combined action alist and names the action that
+  supplies an entry when it is not the caller's ACTION; apply the
+  source naming to the window-setting effects and the same-window
+  conflict.
 - Docs: key the rule rows by the caller's first function; fold the
   generic reuse row into the no-preference and reuse rows; state the
   no-preference order (reuse, selected window, prompt); the
