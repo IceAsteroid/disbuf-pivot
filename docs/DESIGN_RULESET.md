@@ -103,7 +103,9 @@ The package distinguishes these classes:
   constraint.  `inhibit-switch-frame` is honored where the display
   function reads it; it does not limit the candidate windows.
   `allow-no-window` permits the leave-undisplayed outcome (section 4).
-- **no preference** -- use the selected window when it can display.
+- **no preference** -- follow the default order of
+  `disbuf-pivot-action-functions`: reuse a window that displays the
+  buffer, use the selected window when it can display, then prompt.
 
 `display-buffer-in-child-frame` takes `parent-frame` from
 `child-frame-parameters`; a top-level `parent-frame` entry is not read.
@@ -169,29 +171,34 @@ non-selected window.
 
 ## 4. Rules
 
-Section 6 gives the rule.
+Section 6 gives the rule.  The class rows are keyed by the caller's
+first function; no function is no preference.  An entry the rule reads,
+such as `inhibit-same-window` or a window-setting entry, follows
+section 8 in addition to the row.  The no-preference rows follow the
+default order of `disbuf-pivot-action-functions`; a reordered list
+changes the order.
 
 | Case | Behavior | Caller intent info |
 |---|---|---|
 | Same-window, selected window can display | Use the selected window; no prompt | None |
 | Same-window, selected window cannot display | Prompt by the rule in section 6; offer split actions | "Caller asks for same window; selected window cannot display" |
 | Same-window plus `inhibit-same-window` | Report the conflict; `disbuf-pivot-same-window-conflict` chooses the same window or prompts by the rule in section 6 | Conflict message |
-| No preference, selected window can display | Use the selected window; no prompt | None |
-| No preference, selected window cannot display | Prompt by the rule in section 6; offer split actions | "Selected window cannot display the buffer" |
-| A window displays the buffer | Reuse the preferred window; `disbuf-pivot-reuse` can ask by the rule in section 6 instead | "Reuse; window(s) X display the buffer" |
+| No preference, a window displays the buffer | Reuse the preferred window; `disbuf-pivot-reuse` can ask by the rule in section 6 | "Reuse; window(s) X display the buffer" when it asks |
+| No preference, no window displays and the selected window can display | Use the selected window; no prompt | None |
+| No preference, no window displays and the selected window cannot display | Prompt by the rule in section 6; offer split actions | "Selected window cannot display the buffer" |
+| Reuse intent, a window displays the buffer | Reuse it; `disbuf-pivot-reuse` chooses auto or ask; ask marks every reuse window and prompts by the rule in section 6 | "Reuse; window(s) X display the buffer" |
 | Reuse intent, no window displays the buffer | Prompt by the rule in section 6; offer split actions | "Reuse; no window displays the buffer" |
-| Reuse intent, several windows display the buffer | `disbuf-pivot-reuse` chooses auto or ask; ask marks the reuse windows and prompts by the rule in section 6 | "Reuse; windows X, Y display the buffer" |
 | Use some window | Prompt by the rule in section 6; show caller intent info; let the user choose; offer split actions | "Caller asks for some window" |
 | Use least recent window | Prompt by the rule in section 6; show caller intent info; let the user choose; offer split actions | "Caller asks for a recently unused window" |
 | Full frame | Show caller intent info; prompt by the rule in section 6; offer "Display full frame", tab/frame, split, and normal display | "Caller asks for the full frame; other windows will be deleted" |
-| Caller sets `inhibit-same-window` | Show caller intent info; prompt by the rule in section 6; the user may choose an existing window or a dispatch action, including the selected window | "Caller asks for a non-selected window" |
 | Other-window | Prompt by the rule in section 6; exclude the selected window; offer split actions | "Caller asks for other window" |
 | New-window | Dispatch prompt; offer split and new-frame actions; do not offer existing windows | "Caller asks for new window" |
 | Direction | Prompt by the rule in section 6; show caller intent info; offer a dispatch action that applies the direction; leave side windows as-is | "Caller asks for direction X" |
 | Below-selected / at-bottom | Prompt by the rule in section 6; show caller intent info; offer a dispatch action that calls the caller's function; leave side windows as-is | "Caller asks for a window below the selected window" or "at the bottom of the frame" |
 | Previous window | Prompt by the rule in section 6; show the named `previous-window` as the preferred candidate, or mark the windows that previously showed the buffer; use `disbuf-pivot-reuse` when no previous window is usable | "Caller asks for previous window X" or "Caller asks for a window that previously showed the buffer" |
 | Tab or frame action | The other-frame prefix prompts frame, then tab when needed, then the window by the rule in section 6.  A caller's tab or frame action prompts with the tab reader or frame prompt; an existing target then prompts for its window by the rule in section 6, and a new target uses its selected window.  An existing-target action preselects an existing tab or frame; a new-target action starts a new one and does not select an existing tab or frame with the same name | "Caller asks for existing tab/frame X" or "Caller asks for a new tab/frame" |
-| Placed `window`, `slot`, `child-frame-parameters` (including a `parent-frame` entry) | Respect the caller's placement; no prompt | Optional |
+| Placed `child-frame-parameters` (including a `parent-frame` entry) | Respect the caller's placement; no prompt | Optional |
+| Atom window | Respect the caller's placement; no prompt | Optional |
 | Side window | Leave the caller's side placement as-is; no prompt | Optional |
 | ACTION `t` | Treat as an other-window request; exclude the selected window; prompt by the rule in section 6 | "Caller asks for other window" |
 | Caller ACTION with several functions | Classify the first function; later functions are the caller's fallbacks.  The "use caller intent" action runs the whole list in order when the user chooses it | "Caller asks for X; fallback Y" |
@@ -542,6 +549,9 @@ Every rule needs a Buttercup test.  Combine:
   previous window, existing tab, new tab, existing frame, new frame,
   placed, side, ACTION `t`, `allow-no-window`, excluded buffer,
   `switch-to-buffer`;
+- no preference order: a window displays the buffer; no window displays
+  and the selected window can display; no window displays and the
+  selected window cannot display;
 - caller ACTION: one function, several functions, all-Regulate,
   all-Respect, mixed, duplicate, empty, and an inapplicable first
   function;

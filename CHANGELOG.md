@@ -20,6 +20,11 @@
 
 ### Internal Changes
 
+- Docs: key the rule rows by the caller's first function; fold the
+  generic reuse row into the no-preference and reuse rows; state the
+  no-preference order (reuse, selected window, prompt); the
+  cross-cutting entries follow section 8; add the atom window row and
+  remove the duplicate `inhibit-same-window` case.
 - Docs: define the decision order and the rule that selects the prompt:
   the window prompt with more than one eligible window, the dispatch
   prompt with one, and the dispatch prompt with no eligible window when
