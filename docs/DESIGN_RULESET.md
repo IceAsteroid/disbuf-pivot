@@ -70,8 +70,8 @@ The package distinguishes these classes:
   with the window prompt, and offer a dispatch action that calls the
   caller's function.
 - **names a strategy** -- same-window, reuse, other-window, new-window,
-  use-some-window, use-least-recent-window.  Regulate the display by
-  the rules below.
+  use-some-window, use-least-recent-window, full-frame.  Regulate the
+  display by the rules below.
 - **names a constraint** -- `reusable-frames`, `previous-window`,
   `frame-predicate`, `inhibit-switch-frame`, `window-min-width`,
   `window-min-height`, `allow-no-window`.  Honor the constraint.
@@ -141,6 +141,7 @@ non-selected window.
 | Reuse intent, several windows display the buffer | `disbuf-pivot-reuse` chooses auto or ask; ask marks the reuse windows | "Reuse; windows X, Y display the buffer" |
 | Use some window | Prompt with the window prompt; show caller intent info; let the user choose; offer split actions | "Caller asks for some window" |
 | Use least recent window | Prompt with the window prompt; show caller intent info; let the user choose; offer split actions | "Caller asks for a recently unused window" |
+| Full frame | Show caller intent info; use the window prompt with more than one window and the dispatch prompt with one; offer "Display full frame", tab/frame, split, and normal display | "Caller asks for the full frame; other windows will be deleted" |
 | Caller sets `inhibit-same-window` | Show caller intent info; prompt with the window prompt; the user may choose an existing window or a dispatch action, including the selected window | "Caller asks for a non-selected window" |
 | Other-window | Prompt with the window prompt; exclude the selected window; offer split actions | "Caller asks for other window" |
 | New-window | Prompt; offer split and new-frame actions; do not offer existing windows | "Caller asks for new window" |
@@ -249,6 +250,17 @@ Choosing one repeats the prompt.
   receive the original combined action alist.  If the user chooses
   "use caller intent" after the window-settings opt-out, the caller's
   list runs with the modified alist.
+- For a full-frame intent, caller intent info says "Caller asks for the
+  full frame; other windows will be deleted."  Use the window prompt
+  when more than one window is eligible; use the dispatch prompt when
+  one window is eligible.  Add "Display full frame" to the Caller intent
+  group and "Display in another or new tab" (when `tab-bar-mode` is
+  active) and "Display in another or new frame" to the Other group.
+  "Display full frame" deletes the other windows; a window label, the
+  fallback line, a split action, or a tab or frame action displays
+  another way without that deletion.  The caller's full-frame action
+  remains the caller's chain: its nil or error is not a failure after
+  the choice.
 - The package checks `disbuf-pivot-exclude-conditions` in its entry
   condition before recording the ACTION.  A matching buffer returns
   nil; no prompt runs, and the caller's ACTION and the remaining display
@@ -319,12 +331,12 @@ applied to the chosen window after the choice.
 | `display-buffer-in-direction` | Regulate for the "use caller intent" direction action. | `direction`, `window` |
 | `display-buffer-below-selected` | Regulate for the below direction.  `window-min-height` is an eligibility constraint. | `window-min-height` |
 | `display-buffer-at-bottom` | Regulate for the at-bottom direction. | None specific |
+| `display-buffer-full-frame` | Regulate.  Show caller intent info; use the window prompt or dispatch prompt; "Display full frame" deletes other windows; a window label or fallback displays normally; split, tab, and frame actions override | None specific |
 | `display-buffer-pop-up-frame` | Regulate for a new frame.  Ask for a new frame name; do not offer existing frames.  Use `pop-up-frame-parameters`; the new frame is top-level unless that entry sets `parent-frame`. | `pop-up-frame-parameters`, `inhibit-switch-frame`; `pop-up-frames` selects the frame strategy but is not read by this function |
 | `display-buffer-use-some-frame` | Regulate for an existing frame; `frame-predicate` filters the candidates. | `frame-predicate`, `inhibit-same-window`, `inhibit-switch-frame` |
 | `display-buffer-in-tab` | Regulate; preselect an existing or reusable tab; a new tab starts without an existing-tab preselect. | `reusable-frames` (nil differs), `ignore-current-tab`, `tab-name`, `tab-group` |
 | `display-buffer-in-new-tab` | Regulate; ask for a new tab name; do not select an existing tab with the same name. | `tab-name`, `tab-group` |
 | `display-buffer-no-window` | Regulate: leave undisplayed; only with `allow-no-window`. | `allow-no-window` |
-| `display-buffer-full-frame` | Respect.  Delegated to `display-buffer-reuse-window`, `display-buffer-same-window`, `display-buffer-pop-up-window`, and `display-buffer-use-some-window` in that order. | None specific |
 | `display-buffer-in-child-frame` | Respect. | `child-frame-parameters` (including a `parent-frame` entry naming a top-level or child frame), `inhibit-switch-frame` |
 | `display-buffer-in-side-window` | Respect; side as-is. | `side`, `slot` |
 | `display-buffer-in-atom-window` | Respect. | `side`, `window` |
@@ -430,13 +442,13 @@ or the frame prompt runs; the action returns nil.
    can prompt is handled by prompting again or aborting; do not return
    nil into the caller's chain.
 4. Regulate same-window, reuse, other-window, new-window,
-   use-some-window, use-least-recent-window, direction, below-selected,
-   at-bottom, previous window, and the tab and frame choices.  Use the
-   tab reader and frame prompt; an existing-target action preselects an
-   existing tab or frame, and a new-target action starts a new one and
-   does not select an existing target.  Keep the tab and frame placement
-   paths of the package prefix commands.  Use the action functions in
-   section 7 as the display primitives.
+   use-some-window, use-least-recent-window, full-frame, direction,
+   below-selected, at-bottom, previous window, and the tab and frame
+   choices.  Use the tab reader and frame prompt; an existing-target
+   action preselects an existing tab or frame, and a new-target action
+   starts a new one and does not select an existing target.  Keep the
+   tab and frame placement paths of the package prefix commands.  Use
+   the action functions in section 7 as the display primitives.
 5. Handle `inhibit-same-window`: show caller intent info, call the
    window prompt, keep the selected window, and bind the entry to nil
    when the user chooses it.
@@ -454,10 +466,17 @@ or the frame prompt runs; the action returns nil.
     window settings"; remove every association of each window-setting
     key from the combined action alist for that display call; leave
     `body-function` and every other non-window-setting entry unchanged.
-12. Add tests for every rule in section 4, every action function in
+12. Regulate `display-buffer-full-frame` when it is the first caller
+    function.  Show caller intent info; use the window prompt with more
+    than one eligible window and the dispatch prompt with one; add
+    "Display full frame" to the Caller intent group and the tab and
+    frame actions to the Other group.  A window label or the fallback
+    line displays normally; "Display full frame" deletes the other
+    windows.
+13. Add tests for every rule in section 4, every action function in
     section 7, every action alist entry in section 8, and every context
     in section 9.
-13. Update `README.md` and `CHANGELOG.md` after the behavior is
+14. Update `README.md` and `CHANGELOG.md` after the behavior is
     implemented.
 
 ## 11. Test matrix
@@ -466,9 +485,10 @@ Every rule needs a Buttercup test.  Combine:
 
 - caller intent: same-window, no preference, reuse with a target, reuse
   without a target, other-window, new-window, use some window, use least
-  recent window, direction, below-selected, at-bottom, previous window,
-  existing tab, new tab, existing frame, new frame, placed, side, ACTION
-  `t`, `allow-no-window`, excluded buffer, `switch-to-buffer`;
+  recent window, full frame, direction, below-selected, at-bottom,
+  previous window, existing tab, new tab, existing frame, new frame,
+  placed, side, ACTION `t`, `allow-no-window`, excluded buffer,
+  `switch-to-buffer`;
 - caller ACTION: one function, several functions, all-Regulate,
   all-Respect, mixed, duplicate, empty, and an inapplicable first
   function;
@@ -483,6 +503,12 @@ Every rule needs a Buttercup test.  Combine:
 - caller constraint: none, `inhibit-same-window`, `reusable-frames`,
   `previous-window`, `frame-predicate`, `inhibit-switch-frame`,
   `window-min-width`, `window-min-height`, `allow-no-window`;
+- full frame: multiple windows use the window prompt; one window uses
+  the dispatch prompt; a window label or the fallback line displays
+  normally; "Display full frame" deletes the other windows; the tab
+  action is offered when `tab-bar-mode` is active; the frame action is
+  offered; the caller's full-frame action's nil or error follows the
+  caller chain;
 - window-setting entry: `dedicated` on a reused normal window, a new
   window, a window already dedicated to this buffer and showing it, a
   window dedicated to this buffer but not showing it, and a window

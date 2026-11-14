@@ -20,6 +20,9 @@
 
 ### Internal Changes
 
+- Docs: regulate `display-buffer-full-frame`; the full-frame action is
+  explicit, normal window labels do not delete windows, and the tab and
+  frame actions override the intent.
 - Docs: put the Regulate action functions before the Respect action
   functions in the action function table.
 - Docs: describe action function fallbacks; every function receives the
