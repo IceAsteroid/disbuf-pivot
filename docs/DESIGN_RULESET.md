@@ -55,26 +55,54 @@ are.
 
 ## 3. Intent classes and eligibility
 
+The package reads two inputs:
+
+- the caller's ACTION: its first function is the intent class; its later
+  functions are the caller's fallbacks;
+- the combined action alist: the entries the first function's rule
+  reads, the eligibility constraints, and the window settings.  The
+  combined action alist includes the caller's ACTION alist and entries
+  from the overriding action, the matching `display-buffer-alist` entry,
+  the special action, the extra action, `display-buffer-base-action`,
+  and `display-buffer-fallback-action`.  The first association of a key
+  wins.
+
+An entry in the combined action alist does not move the call to another
+class by itself.  The first function's rule names the entries it reads.
+For example, `display-buffer-reuse-window` reads `pop-up-frames` as a
+frame scope, not as a frame target; a top-level `parent-frame` is not
+read by `display-buffer-pop-up-frame` or `display-buffer-in-child-frame`
+(the latter reads `parent-frame` inside `child-frame-parameters`).
+
 The package distinguishes these classes:
 
-- **names a place** -- `window`, `slot`, `side`, `parent-frame`,
-  `child-frame-parameters`, and the child-frame action.  Respect the
+- **names a place** -- a first function whose rule reads a placement
+  entry as a fixed place: `display-buffer-in-side-window` (`side`,
+  `slot`), `display-buffer-in-atom-window` (`window`, `side`), and
+  `display-buffer-in-child-frame` (`child-frame-parameters`, including a
+  `parent-frame` entry naming a top-level or child frame).  Respect the
   caller's placement; do not prompt unless the user invoked a prefix.
-- **names a tab or frame** -- a tab or frame action, `tab-name`,
-  `tab-group`, or `pop-up-frames`.  Regulate the tab or frame choice:
-  prompt with the tab reader or frame prompt.  An existing-target action
-  preselects an existing tab or frame; a new-target action starts a new
-  one and does not select an existing target.
-- **names a relative placement** -- direction, below-selected,
-  at-bottom.  Regulate like direction: show caller intent info, prompt
-  with the window prompt, and offer a dispatch action that calls the
-  caller's function.
+- **names a tab or frame** -- a tab or frame action and the entries its
+  rule reads: `tab-name`, `tab-group`, `reusable-frames`,
+  `ignore-current-tab`, `pop-up-frame-parameters`, `frame-predicate`,
+  and `pop-up-frames` where the rule selects a frame.  Regulate the tab
+  or frame choice: prompt with the tab reader or frame prompt.  An
+  existing-target action preselects an existing tab or frame; a
+  new-target action starts a new one and does not select an existing
+  target.
+- **names a relative placement** -- `display-buffer-in-direction`
+  (`direction`, `window`), `display-buffer-below-selected`, and
+  `display-buffer-at-bottom`.  Regulate like direction: show caller
+  intent info, prompt with the window prompt, and offer a dispatch
+  action that calls the caller's function.
 - **names a strategy** -- same-window, reuse, other-window, new-window,
-  use-some-window, use-least-recent-window, full-frame.  Regulate the
-  display by the rules below.
+  use-some-window, use-least-recent-window, previous window, full-frame.
+  Regulate the display by the rules below.
 - **names a constraint** -- `reusable-frames`, `previous-window`,
-  `frame-predicate`, `inhibit-switch-frame`, `window-min-width`,
-  `window-min-height`, `allow-no-window`.  Honor the constraint.
+  `frame-predicate`, `window-min-width`, `window-min-height`.  Honor the
+  constraint.  `inhibit-switch-frame` is honored where the display
+  function reads it; it does not limit the candidate windows.
+  `allow-no-window` permits the leave-undisplayed outcome (section 4).
 - **no preference** -- use the selected window when it can display.
 
 `display-buffer-in-child-frame` takes `parent-frame` from

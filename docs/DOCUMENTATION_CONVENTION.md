@@ -113,7 +113,8 @@ entries below are this package's terms.
 - **combined action alist** — the action alist `display-buffer` builds
   by combining, in order, the alists from
   `display-buffer-overriding-action`, the matching
-  `display-buffer-alist` entry, the caller's ACTION,
+  `display-buffer-alist` entry, the special action, the caller's ACTION,
+  the extra action (the old-style ACTION and the FRAME argument),
   `display-buffer-base-action`, and `display-buffer-fallback-action`.
   The first association of a key wins.
 - **top-level frame** — an Emacs frame whose `parent-frame` parameter

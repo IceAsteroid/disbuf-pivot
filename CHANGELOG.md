@@ -20,6 +20,11 @@
 
 ### Internal Changes
 
+- Docs: define the display input: the caller's ACTION supplies the
+  intent class, and the combined action alist supplies the entries the
+  first function's rule reads; an entry does not move the call to
+  another class by itself; add the special action and the extra action
+  to the combined action alist definition.
 - Docs: regulate `display-buffer-full-frame`; the full-frame action is
   explicit, normal window labels do not delete windows, and the tab and
   frame actions override the intent.
