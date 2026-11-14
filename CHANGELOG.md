@@ -20,6 +20,12 @@
 
 ### Internal Changes
 
+- Docs: define the decision order and the rule that selects the prompt:
+  the window prompt with more than one eligible window, the dispatch
+  prompt with one, and the dispatch prompt with no eligible window when
+  it offers a dispatch action; otherwise the action returns nil.  The
+  window prompt labels the windows it covers and marks undisplayable
+  windows as ineligible.
 - Docs: define the display input: the caller's ACTION supplies the
   intent class, and the combined action alist supplies the entries the
   first function's rule reads; an entry does not move the call to

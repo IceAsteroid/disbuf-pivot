@@ -35,7 +35,7 @@ entries below are this package's terms.
 - **dispatch action list** — the grouped list of actions a prompt
   offers: the split actions from `aw-dispatch-alist`, the caller
   actions, and the other actions the package offers.  The window prompt
-  shows it with `?`; the one-window dispatch prompt shows it directly.
+  shows it with `?`; the dispatch prompt shows it directly.
 - **dispatch hint** — the one-line string `Display buffer in window
   (? for actions)` or `Choose another window (? for actions)`.  It
   tells the user that `?` shows the dispatch action list.
