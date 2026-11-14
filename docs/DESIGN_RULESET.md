@@ -207,9 +207,10 @@ Choosing one repeats the prompt.
 - The dispatch action list groups the actions:
   - **Split**: the split actions from `aw-dispatch-alist`, with their
     keys and descriptions.
-  - **Caller intent**: "Use caller intent" and any caller action the
-    rule offers, named by its user-facing action, not by the raw
-    function.
+  - **Caller intent**: "Use caller intent", "Display without caller
+    window settings" when the combined action alist has a window-setting
+    entry, and any caller action the rule offers, named by its
+    user-facing action, not by the raw function.
   - **Other**: a new frame for a new-window intent; leave undisplayed
     only with `allow-no-window`.
   One fallback line follows: "Any other key uses this window," or "Any
@@ -223,6 +224,23 @@ Choosing one repeats the prompt.
   read.
 - Caller intent info is one line.  Detailed information goes in the
   dispatch action list.
+- When the combined action alist has a window-setting entry, caller
+  intent info names their effects and conditions, not the raw entries:
+  "Caller asks for a dedicated window (new windows only)", "Caller asks
+  for a 20-line window (new windows only)", "Caller asks for window
+  parameters".  `body-function` is not named; it is a body function,
+  not a window-setting entry.
+- "Display without caller window settings" removes every association
+  of each window-setting key from the combined action alist for the
+  package's display call and re-prompts; in the one-window dispatch
+  prompt it displays in the sole window.  It leaves every
+  non-window-setting entry unchanged, including selection entries,
+  `body-function`, `post-command-select-window`, `bump-use-time`, and
+  `inhibit-switch-frame`.  It does not change the caller's ACTION.  It
+  is local: if the package returns nil, Emacs's later action functions
+  receive the original combined action alist.  If the user chooses
+  "use caller intent" after the window-settings opt-out, the caller's
+  list runs with the modified alist.
 - The package checks `disbuf-pivot-exclude-conditions` in its entry
   condition before recording the ACTION.  A matching buffer returns
   nil; no prompt runs, and the caller's ACTION and the remaining display
@@ -308,7 +326,8 @@ applied to the chosen window after the choice.
 The entries have different roles.  The package passes the combined
 action alist to the function it calls.  It does not drop an entry
 silently.  It binds `inhibit-same-window` to nil when the user
-overrides it.
+overrides it, and removes the window-setting entries when the user
+chooses "Display without caller window settings".
 
 A **selection entry** limits, orders, or chooses the candidate window,
 frame, tab, or placement, or the display outcome.  The package uses it
@@ -347,19 +366,19 @@ function, not a window-setting entry; the package preserves it.
 
 | Entry | Treatment |
 |---|---|
-| `dedicated` | Preserve; apply through `window--display-buffer`.  A reused normal window is not dedicated; a new window receives the entry's value; a window already dedicated to this buffer and showing it keeps its flag; a window dedicated to this buffer but not showing it is reset to nil before display; a window dedicated to another buffer is undisplayable and is not offered.  `display-buffer-in-side-window` is Respect and adds `(dedicated . side)` by default unless the alist already has a `dedicated` entry (`window.el:1120–1122`); the prompt does not offer side windows. |
-| `window-parameters` | Preserve; apply to the chosen window. |
-| `preserve-size`, `window-height`, `window-width`, `window-size` | Preserve; apply only when the window never showed another buffer. |
+| `dedicated` | Preserve; apply through `window--display-buffer`.  A reused normal window is not dedicated; a new window receives the entry's value; a window already dedicated to this buffer and showing it keeps its flag; a window dedicated to this buffer but not showing it is reset to nil before display; a window dedicated to another buffer is undisplayable and is not offered.  `display-buffer-in-side-window` is Respect and adds `(dedicated . side)` by default unless the alist already has a `dedicated` entry (`window.el:1120–1122`); the prompt does not offer side windows.  Caller intent info says "new windows only".  The window-settings opt-out removes the entry. |
+| `window-parameters` | Preserve; apply to the chosen window.  Caller intent info says "window parameters".  The window-settings opt-out removes the entry. |
+| `preserve-size`, `window-height`, `window-width`, `window-size` | Preserve; apply only when the window never showed another buffer.  Caller intent info names the effect and says "new windows only".  The window-settings opt-out removes the entries. |
 
 ### Other entries
 
 | Entry | Treatment |
 |---|---|
-| `body-function` | Preserve; call after the buffer is displayed and before the size entries.  It is a body function, not a window-setting entry. |
-| `post-command-select-window` | Honor; the selection option defaults to `auto`. |
-| `bump-use-time` | Handle through `window--display-buffer`. |
-| `inhibit-switch-frame` | Frame raising and focus; honor. |
-| `category` | Pass through; use it in caller intent info when present. |
+| `body-function` | Preserve; call after the buffer is displayed and before the size entries.  It is a body function, not a window-setting entry; it is not named in caller intent info and the window-settings opt-out does not remove it. |
+| `post-command-select-window` | Honor; the selection option defaults to `auto`.  The window-settings opt-out leaves it. |
+| `bump-use-time` | Handle through `window--display-buffer`.  The window-settings opt-out leaves it. |
+| `inhibit-switch-frame` | Frame raising and focus; honor.  The window-settings opt-out leaves it. |
+| `category` | Pass through; use it in caller intent info when present.  The window-settings opt-out leaves it. |
 
 ## 9. Contexts
 
@@ -419,10 +438,15 @@ or the frame prompt runs; the action returns nil.
 9. Label every window; mark undisplayable windows; choose again when
    one is chosen.
 10. Add the context guard from section 9.
-11. Add tests for every rule in section 4, every action function in
+11. Preserve the window-setting entries; name their effects and
+    conditions in caller intent info; add "Display without caller
+    window settings"; remove every association of each window-setting
+    key from the combined action alist for that display call; leave
+    `body-function` and every other non-window-setting entry unchanged.
+12. Add tests for every rule in section 4, every action function in
     section 7, every action alist entry in section 8, and every context
     in section 9.
-12. Update `README.md` and `CHANGELOG.md` after the behavior is
+13. Update `README.md` and `CHANGELOG.md` after the behavior is
     implemented.
 
 ## 11. Test matrix
@@ -452,7 +476,9 @@ Every rule needs a Buttercup test.  Combine:
   window, a window already dedicated to this buffer and showing it, a
   window dedicated to this buffer but not showing it, and a window
   dedicated to another buffer; `window-parameters`; `preserve-size`,
-  `window-height`, `window-width`, `window-size`;
+  `window-height`, `window-width`, `window-size`; the window-settings
+  opt-out removes them and leaves `body-function` and the other
+  entries;
 - option: each value of `disbuf-pivot-reuse`,
   `disbuf-pivot-same-window-conflict`, `disbuf-pivot-caller-intent-info`,
   `disbuf-pivot-exclude-conditions`, `disbuf-pivot-mode-line-help`,
@@ -464,5 +490,6 @@ Every rule needs a Buttercup test.  Combine:
 
 Also test C-g, split failure, dead windows, display errors (prompt again
 or abort, never the caller's fallbacks), that selection entries are not
-applied to the chosen window, and repeated choices.  Every cell in the
-rules table has a test; there are no undecided cells.
+applied to the chosen window, the window-settings opt-out's
+all-association removal, and repeated choices.  Every cell in the rules
+table has a test; there are no undecided cells.

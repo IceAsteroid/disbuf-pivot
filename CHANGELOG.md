@@ -20,6 +20,9 @@
 
 ### Internal Changes
 
+- Docs: add the "Display without caller window settings" action; name
+  window-setting effects in caller intent info; remove every association
+  of each window-setting key for the display call.
 - Docs: group action alist entries by role; state the treatments for
   `dedicated`, the size entries, and `body-function`.
 - Docs: define selection entries, window-setting entries, and the
