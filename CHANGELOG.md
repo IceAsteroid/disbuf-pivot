@@ -20,6 +20,10 @@
 
 ### Internal Changes
 
+- Docs: define transient menu, transient prefix command, transient
+  suffix command, transient stay suffix, and transient exit suffix in
+  the Emacs terms used by the design; the qualified terms avoid the
+  built-in prefix command and package prefix command.
 - Docs: list "driver" in Terms not used; say that the package reads
   the keys, or name the function that reads them.
 - Docs: state which windows the dispatch prompt labels: every window in

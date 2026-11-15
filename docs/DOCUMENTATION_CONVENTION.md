@@ -154,6 +154,18 @@ entries below are this package's terms.
 - **child frame** — an Emacs frame whose `parent-frame` parameter is
   non-nil.  It is displayed within the parent frame's area and is not a
   separate desktop window.
+- **transient menu** — the menu a transient prefix command shows; its
+  keys are bound to transient suffix commands.
+- **transient prefix command** — the command that shows a transient
+  menu.  It sets up the menu and returns; later commands read the
+  menu's keys.  Use the qualified term; a bare "prefix command" is a
+  built-in prefix command or a package prefix command.
+- **transient suffix command** — a command bound to a key in a
+  transient menu.
+- **transient stay suffix** — a transient suffix command that keeps the
+  menu open.
+- **transient exit suffix** — a transient suffix command that closes the
+  menu and runs its function.
 
 ## Terms not used
 
