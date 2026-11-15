@@ -24,8 +24,12 @@
   define the intended choice, the window-setting toggle, and the
   ineligible window; add the eligible and ineligible label faces; drop
   the window prompt, the dispatch hint, and the window-settings opt-out
-  from the design terms.  The current source and README remain on the
-  two-prompt behavior until it is implemented.
+  from the design terms; merge related core terms into single entries;
+  name `disbuf-pivot-window-utility-split-p` and its options instead of
+  using a split rule term; treat the `can display`, `cannot display`,
+  and `do not prompt` forms as prose.  The current source and README
+  remain on the two-prompt behavior and the split rule until the design
+  is implemented.
 - Docs: make the caller's first function the only intent class; state
   that a constraint or window-setting entry is an entry, not a class;
   add the no-display class and the nil choice term; name the later

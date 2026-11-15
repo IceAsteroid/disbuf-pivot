@@ -16,122 +16,112 @@ entries below are this package's terms.
 - **pivot** — the point at which the package either respects the
   caller's intent or replaces that intent with the user's explicit
   choice.  The package name uses the word.
-- **target** — a frame, tab, or window that the caller's intent names or
-  the user chooses through a prompt.  A frame or tab target is a
-  container; a window target is the window that displays the buffer.
-- **intended choice** — the target or dispatch action the package uses
-  if the user accepts without choosing another; the dispatch prompt
-  shows it with a key.  An intended window is not a chosen window until
-  the user accepts.  When no target or action can run, the prompt has no
-  intended choice.
-- **placement path** — the sequence frame, then tab, then window; tab,
-  then window; or window, ending at the window that displays the buffer.
-  A target is one step on the path.
-- **dispatch prompt** — the transient menu the package shows at the
+- **target**, **placement path** — a target is a frame, tab, or window
+  that the caller's intent names or the user chooses through a prompt.
+  A frame or tab target is a container; a window target is the window
+  that displays the buffer.  The placement path is the sequence frame,
+  then tab, then window; tab, then window; or window, ending at the
+  window that displays the buffer.  A target is one step on the path.
+- **intended choice**, **chosen window** — the intended choice is the
+  target or dispatch action the package uses if the user accepts
+  without choosing another; the dispatch prompt shows it with a key.
+  An intended window is not a chosen window until the user accepts;
+  when no target or action can run, the prompt has no intended choice.
+  The chosen window is the window the user chooses through the package's
+  prompt or dispatch action.  A window used silently by the default
+  policy is not a chosen window.
+- **dispatch prompt**, **dispatch action**, **dispatch action list** —
+  the dispatch prompt is the transient menu the package shows at the
   pivot.  It labels every window it covers: a label for an eligible
   window takes one face and acts; a label for an ineligible window
   takes another face and states the condition.  It shows caller intent
   info, the intended choice, the dispatch action list, and a
   window-setting toggle for each window-setting entry, and reads keys.
   It computes the windows before it is shown and does not label its own
-  window.
-- **dispatch action** — a key the dispatch prompt runs instead of a
-  window label.  `aw-dispatch-alist` supplies the user's actions; the
-  package supplies its own.
-- **dispatch action list** — the grouped list of actions the dispatch
-  prompt offers: the split actions from `aw-dispatch-alist`, the caller
-  intent actions, and the Other actions the package offers, including
-  the cancel key.
-- **split rule** — `disbuf-pivot-window-utility-split-p`, which
-  compares the number of windows with
-  `disbuf-pivot-window-utility-split-maximum` and its exclusion
-  options.
+  window.  A dispatch action is a key the dispatch prompt runs instead
+  of a window label; `aw-dispatch-alist` supplies the user's actions;
+  the package supplies its own.  The dispatch action list is the grouped
+  list of actions the prompt offers: the split actions from
+  `aw-dispatch-alist`, the caller intent actions, and the Other actions
+  the package offers, including the cancel key.
 - **split action** — a dispatch action that splits a window and displays
   the buffer in the new window.
-- **tab or frame action** — `display-buffer-in-tab`,
+- **tab or frame action**, **child-frame action**, **tab reader** — a tab
+  or frame action is `display-buffer-in-tab`,
   `display-buffer-in-new-tab`, `display-buffer-pop-up-frame`, or
-  `display-buffer-use-some-frame`.
-- **child-frame action** — `display-buffer-in-child-frame`.
-- **tab reader** — `disbuf-pivot-tab-bar-read-tab-name`, the function
-  that reads a tab name; the optional consult library supplies another
-  reader.
-- **chosen window** — the window the user chooses through the package's
-  prompt or dispatch action.  A window used silently by the default
-  policy is not a chosen window.
+  `display-buffer-use-some-frame`.  A child-frame action is
+  `display-buffer-in-child-frame`.  The tab reader is
+  `disbuf-pivot-tab-bar-read-tab-name`, the function that reads a tab
+  name; the optional consult library supplies another reader.
 - **failure after the choice** — a failure after the user chooses a
   window, tab, frame, or dispatch action from a prompt: the chosen
   window is undisplayable, its frame or tab is gone, or the display
-  function returns nil or errors.  The design rules list the
-  responses.
-- **abort** — end the display instead of prompting again or returning
-  nil, and do not run the later functions in the caller's ACTION.  C-g
-  is the user's way to abort; `quit` is its mechanism.  The
-  leave-undisplayed outcome is not an abort.
-- **nil choice** — the prompt returns nil without C-g; the action
-  returns nil, and the later functions in Emacs's combined function
-  list run.  The dispatch prompt's cancel key makes a nil choice.  A
-  nil choice is not an abort.
-- **caller's ACTION** — the ACTION argument of the `display-buffer`
-  call: a `(FUNCTIONS . ALIST)` pair.  Its first function is the
-  caller's primary intent; its alist is part of the combined action
-  alist.  An ACTION with no function is no preference; ACTION `t` is an
-  other-window request.
-- **caller intent** — what the caller's ACTION asks for; the first
-  function names a place, a tab or frame, a relative placement, a
-  strategy, no display, or no preference.  A constraint or a
-  window-setting entry is an entry the rule reads, not a class.
-- **caller intent info** — the message that states what the caller's
-  ACTION asks for and the other entries in the combined action alist
-  that the rule reads.  When an entry is not from the caller's ACTION,
-  the message names the action that supplies it.  The dispatch prompt
-  shows it.
-- **caller constraint** — an action-alist entry from the caller's
-  ACTION that limits or orders the candidate windows; the design rules
-  name the entries.  `inhibit-switch-frame` and `allow-no-window` are
-  not caller constraints.
-- **selection entry** — an entry in an action alist that limits,
-  orders, or chooses the candidate window, frame, tab, or placement,
-  or the display outcome.  The package uses it during the prompt; it is
-  not applied to the chosen window afterward.
-- **window-setting entry** — an entry in an action alist that changes
-  the chosen window itself: its dedication, parameters, or size.  The
-  design rules name the entries.  `body-function` is not a
-  window-setting entry.
-- **window-setting toggle** — a key the dispatch prompt shows for a
-  window-setting entry.  It removes or restores every association of
-  that entry's key in the combined action alist for the package's
-  display call and for a run of the caller's function list from that
-  prompt.  It does not change the caller's ACTION and does not affect
-  later calls.
-- **undisplayable window**, **cannot display** — a window that is not a
-  **displayable window**: it is dead, is a minibuffer window, is
-  dedicated to another buffer, or is a side window.  The design rules
-  list the conditions.
-- **cannot prompt** — the package cannot read interactive input: the
-  dispatch prompt, the tab reader, or the frame prompt.  The design
-  rules list the contexts.
-- **no prompt**, **do not prompt** — the package does not ask.  The
-  rule gives the window or placement, or the context is **cannot
-  prompt** and the action returns nil.  **No prompt** is the rules-table
-  form; **do not prompt** is the imperative.
-- **displayable window**, **can display** — a window that can display a
-  buffer: it is live, is not a minibuffer window, is not dedicated to
-  another buffer, and is not a side window.
-- **eligible window** — a window the current prompt offers: it is a
-  displayable window, and no rule excludes it from the prompt.
-  `inhibit-same-window` does not exclude the selected window from the
-  prompt; the prompt offers it and binds the entry to nil when the user
-  chooses it.
-- **ineligible window** — a window the current prompt does not offer:
-  an undisplayable window, or a displayable window that a rule excludes
-  from the prompt.  The dispatch prompt labels it with a different face.
+  function returns nil or errors.  The design rules list the responses.
+- **abort**, **nil choice** — an abort ends the display instead of
+  prompting again or returning nil, and does not run the later functions
+  in the caller's ACTION.  C-g is the user's way to abort; `quit` is its
+  mechanism; the leave-undisplayed outcome is not an abort.  A nil
+  choice is the prompt returning nil without C-g; the action returns
+  nil, and the later functions in Emacs's combined function list run.
+  The dispatch prompt's cancel key makes a nil choice.  A nil choice is
+  not an abort.
+- **caller's ACTION**, **caller intent**, **caller intent info** — the
+  caller's ACTION is the ACTION argument of the `display-buffer` call: a
+  `(FUNCTIONS . ALIST)` pair.  Its first function is the caller's
+  primary intent; its alist is part of the combined action alist.  An
+  ACTION with no function is no preference; ACTION `t` is an
+  other-window request.  The caller intent is what the ACTION asks for;
+  the first function names a place, a tab or frame, a relative
+  placement, a strategy, no display, or no preference.  A constraint or
+  a window-setting entry is an entry the rule reads, not a class.  The
+  caller intent info is the message that states what the ACTION asks for
+  and the other entries in the combined action alist that the rule
+  reads.  When an entry is not from the caller's ACTION, the message
+  names the action that supplies it.  The dispatch prompt shows it.
+- **caller constraint**, **selection entry**, **window-setting entry**,
+  **window-setting toggle** — a caller constraint is an action-alist
+  entry from the caller's ACTION that limits or orders the candidate
+  windows; the design rules name the entries; `inhibit-switch-frame` and
+  `allow-no-window` are not caller constraints.  A selection entry is an
+  entry in an action alist that limits, orders, or chooses the candidate
+  window, frame, tab, or placement, or the display outcome.  The package
+  uses it during the prompt; it is not applied to the chosen window
+  afterward.  A window-setting entry is an entry in an action alist that
+  changes the chosen window itself: its dedication, parameters, or
+  size.  The design rules name the entries; `body-function` is not a
+  window-setting entry.  A window-setting toggle is a key the dispatch
+  prompt shows for a window-setting entry.  It removes or restores every
+  association of that entry's key in the combined action alist for the
+  package's display call and for a run of the caller's function list
+  from that prompt.  It does not change the caller's ACTION and does not
+  affect later calls.
+- **displayable window**, **undisplayable window** — a displayable
+  window can display a buffer: it is live, is not a minibuffer window,
+  is not dedicated to another buffer, and is not a side window.  An
+  undisplayable window is not a displayable window: it is dead, is a
+  minibuffer window, is dedicated to another buffer, or is a side
+  window.  The design rules list the conditions.
+- **cannot prompt**, **no prompt** — the package cannot prompt when it
+  cannot read interactive input: the dispatch prompt, the tab reader, or
+  the frame prompt.  The design rules list the contexts.  No prompt
+  means the package does not ask: the rule gives the window or
+  placement, or the context is cannot prompt and the action returns nil.
+  No prompt is the rules-table form; do not prompt is the imperative.
+- **eligible window**, **ineligible window** — an eligible window is one
+  the current prompt offers: it is a displayable window, and no rule
+  excludes it from the prompt.  `inhibit-same-window` does not exclude
+  the selected window from the prompt; the prompt offers it and binds
+  the entry to nil when the user chooses it.  An ineligible window is
+  one the current prompt does not offer: an undisplayable window, or a
+  displayable window that a rule excludes from the prompt.  The dispatch
+  prompt labels an ineligible window with a different face.
 - **excluded buffer** — a buffer that matches
   `disbuf-pivot-exclude-conditions`; the package does not regulate it.
-- **built-in prefix command** — one of Emacs's `same-window-prefix`,
-  `other-window-prefix`, `other-tab-prefix`, and
-  `other-frame-prefix`; a command that sets
-  `display-buffer-overriding-action` for the next command.
-- **package prefix command** — one of the package's
+- **built-in prefix command**, **package prefix command** — a built-in
+  prefix command is one of Emacs's `same-window-prefix`,
+  `other-window-prefix`, `other-tab-prefix`, and `other-frame-prefix`;
+  it sets `display-buffer-overriding-action` for the next command.  A
+  package prefix command is one of the package's
   `disbuf-pivot-same-window-prefix`,
   `disbuf-pivot-other-window-prefix`,
   `disbuf-pivot-other-tab-prefix`, and
@@ -167,8 +157,7 @@ prose.
 - utility popup — use **dedicated window**, **side window**, **child
   frame**, or **undisplayable window**, whichever is meant.
 - physical / physically, for an undisplayable window — say
-  **undisplayable window** or **cannot display**, and name the
-  condition.
+  **undisplayable window** or cannot display, and name the condition.
 - failed interactive display — name the failure: the chosen window is
   undisplayable, its frame or tab is gone, or the display function
   errors.
@@ -191,6 +180,9 @@ prose.
   action function.
 - the opt-out, window-settings opt-out — use **window-setting toggle**,
   or name the toggle.
+- split rule — name `disbuf-pivot-window-utility-split-p` and its
+  options; the core does not consult them.  The current source and
+  README still use the term.
 - no-prompt — use **no prompt**.
 - workspace — use **window**, or name the function that returns it.
 - editing window — say **displayable window**, or "the most recently
