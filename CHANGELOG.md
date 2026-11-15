@@ -20,6 +20,22 @@
 
 ### Internal Changes
 
+- Docs: define the caller's ACTION; state the values of
+  `disbuf-pivot-action-select` and
+  `disbuf-pivot-other-window-prefix-select`; state that a dispatch
+  action replaces the default window choice in either prompt; state
+  that a caller-list run that returns nil prompts again or aborts;
+  report the source of `inhibit-same-window` in caller intent info.
+- Docs: sync the design with the input rule: state that
+  `display-buffer-full-frame` delegates to the reuse, same-window,
+  pop-up-window, and use-some-window functions and their entries apply;
+  mark its matrix Decision as Regulate; correct the `buffer-match-p`
+  conditions; state that the window prompt labels the windows it covers
+  and the dispatch prompt shows caller intent info; reject "fallback
+  line", "placement entry", and "caller action"; state that a constraint
+  is an entry, not a class, and that only caller entries can be caller
+  constraints; add the caller-list run to the window-settings opt-out
+  definition.
 - Docs: define abort as ending the display without running the later
   functions in the caller's ACTION; define the nil choice and its nil
   return; state that a nil display primitive reports with `message` and

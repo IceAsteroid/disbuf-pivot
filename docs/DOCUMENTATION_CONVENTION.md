@@ -23,18 +23,22 @@ entries below are this package's terms.
   then window; or window, ending at the window that displays the buffer.
   A target is one step on the path.
 - **window prompt** — the prompt that calls `aw-select` to label the
-  eligible windows and reads a label.  The dispatch hint is shown in
-  the echo area; its mode-line copy is optional; `?` shows the dispatch
-  action list in the echo area.
+  windows it covers and reads a label; it marks undisplayable windows as
+  ineligible.  The dispatch hint is shown in the echo area; its
+  mode-line copy is optional; `?` shows the dispatch action list in the
+  echo area.
 - **dispatch prompt** — the echo-area prompt in
-  `disbuf-pivot-window-utility-choose-sole-window` that shows the
-  dispatch action list and reads one key; it labels no windows.
-- **dispatch action** — a key a prompt runs instead of reading a window
-  label.  `aw-dispatch-alist` supplies the user's actions; the package
+  `disbuf-pivot-window-utility-choose-sole-window` that shows caller
+  intent info and the dispatch action list, and reads one key; it
+  labels no windows.
+- **dispatch action** — a key a prompt runs instead of its default
+  window choice: instead of reading a window label in the window
+  prompt, or instead of the "Any other key" line in the dispatch
+  prompt.  `aw-dispatch-alist` supplies the user's actions; the package
   supplies its own.
 - **dispatch action list** — the grouped list of actions a prompt
-  offers: the split actions from `aw-dispatch-alist`, the caller
-  actions, and the other actions the package offers.  The window prompt
+  offers: the split actions from `aw-dispatch-alist`, the caller intent
+  actions, and the Other actions the package offers.  The window prompt
   shows it with `?`; the dispatch prompt shows it directly.
 - **dispatch hint** — the one-line string `Display buffer in window
   (? for actions)` or `Choose another window (? for actions)`.  It
@@ -62,16 +66,24 @@ entries below are this package's terms.
 - **abort** — end the display and do not run the later functions in the
   caller's ACTION.  C-g is the user's way to abort; `quit` is its
   mechanism.  A nil choice is not an abort.
-- **caller intent** — what the caller's ACTION asks for; the design
-  rules classify it by what it names: a place, a strategy, a
-  constraint, or no preference.
+- **caller's ACTION** — the ACTION argument of the `display-buffer`
+  call: a `(FUNCTIONS . ALIST)` pair.  Its first function is the
+  caller's primary intent; its alist is part of the combined action
+  alist.  An ACTION with no function is no preference; ACTION `t` is an
+  other-window request.
+- **caller intent** — what the caller's ACTION asks for; the first
+  function names a place, a tab or frame, a relative placement, a
+  strategy, or no preference.  A constraint or a window-setting entry
+  is an entry the rule reads, not a class.
 - **caller intent info** — the message that states what the caller's
   ACTION asks for and the other entries in the combined action alist
   that the rule reads.  When an entry is not from the caller's ACTION,
   the message names the action that supplies it.  The package shows it
   in the echo area.
-- **caller constraint** — an action-alist entry from the caller that
-  limits the candidate windows; the design rules name the entries.
+- **caller constraint** — an action-alist entry from the caller's
+  ACTION that limits or orders the candidate windows; the design rules
+  name the entries.  `inhibit-switch-frame` and `allow-no-window` are
+  not caller constraints.
 - **selection entry** — an entry in an action alist that limits,
   orders, or chooses the candidate window, frame, tab, or placement,
   or the display outcome.  The package uses it during the prompt; it is
@@ -82,8 +94,9 @@ entries below are this package's terms.
   window-setting entry.
 - **window-settings opt-out** — the dispatch action `Display without
   caller window settings`.  It removes the window-setting entries from
-  the combined action alist for the package's display call.  It does
-  not change the caller's ACTION and does not affect later calls.
+  the combined action alist for the package's display call and for a
+  caller list the package runs from that prompt.  It does not change
+  the caller's ACTION and does not affect later calls.
 - **undisplayable window**, **cannot display** — a window that is not a
   **displayable window**: it is dead, is a minibuffer window, is
   dedicated to another buffer, or is a side window.  The design rules
@@ -152,6 +165,11 @@ prose.
   function.
 - merged alist — use **combined action alist**.
 - flow, for the frame/tab/window sequence — use **placement path**.
+- placement entry — say **the entry that names a place**, or name the
+  entry.
+- fallback line — say the "Any other key" line.
+- caller action — say the action from the caller's ACTION, or name the
+  action function.
 - the opt-out — use **window-settings opt-out** or name the action.
 - no-prompt — use **no prompt**.
 - workspace — use **window**, or name the function that returns it.

@@ -40,7 +40,7 @@ a caller fallback; see `docs/DESIGN_RULESET.md` section 3.
 | `display-buffer-in-direction` | Regulate | - | - | - | - | - | - |
 | `display-buffer-below-selected` | Regulate | - | - | - | - | - | - |
 | `display-buffer-at-bottom` | Regulate | - | - | - | - | - | - |
-| `display-buffer-full-frame` | Respect | - | - | - | - | - | - |
+| `display-buffer-full-frame` | Regulate | - | - | - | - | - | - |
 | `display-buffer-pop-up-frame` | Regulate | - | - | Y | - | - | - |
 | `display-buffer-use-some-frame` | Regulate | Y | - | Y | - | - | - |
 | `display-buffer-in-child-frame` | Respect | - | - | Y | - | - | - |
@@ -125,10 +125,11 @@ function's own logic:
 
 ## 5. Package treatment of `inhibit-same-window`
 
-Show caller intent info, call the window prompt, keep the selected
-window a candidate, and bind the entry to nil for the display call if
-the user chooses it.  `display-buffer-use-least-recent-window` forces it
-internally; the selected window is not a candidate for that function.
+Show caller intent info, prompt by the rule in `DESIGN_RULESET`
+section 6, keep the selected window a candidate, and bind the entry to
+nil for the display call if the user chooses it.
+`display-buffer-use-least-recent-window` forces it internally; the
+selected window is not a candidate for that function.
 
 ## 6. Verification notes
 
