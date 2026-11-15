@@ -197,10 +197,10 @@ cell names the intended choice; "no intended choice" means the prompt
 has no default key, so the user chooses a label, an action, or the
 cancel key.
 
-Every dispatch prompt labels every window in the selected tab or frame;
-a row that offers split actions and cancel also offers the window
-labels.  "No intended choice" does not mean the prompt has no window
-labels.
+Every dispatch prompt labels every window in the selected tab or frame.
+When a Behavior cell lists split actions and cancel, the prompt also
+labels the windows.  "No intended choice" does not mean the prompt has
+no window labels.
 
 | Case | Behavior | Caller intent info |
 |---|---|---|
@@ -278,11 +278,13 @@ options are not consulted by the core behavior.
 Frame preview is not part of the first implementation.  The tab preview
 with consult remains optional.
 
-The dispatch prompt labels every window in the selected tab or frame.
-The label of an eligible window acts; the label of an ineligible window
-states the condition and keeps the prompt open.  The prompt draws the
-label of an eligible window with `disbuf-pivot-eligible-label` and the
-label of an ineligible window with `disbuf-pivot-ineligible-label`.
+The dispatch prompt draws the labels on every window in the selected
+tab or frame.  The label of an eligible window acts; the label of an
+ineligible window states the condition and keeps the prompt open.  The
+prompt draws the label of an eligible window with
+`disbuf-pivot-eligible-label` and the label of an ineligible window with
+`disbuf-pivot-ineligible-label`.  The menu's separate group uses the
+same faces.
 
 ## 6. Interaction rules
 
@@ -294,17 +296,19 @@ label of an ineligible window with `disbuf-pivot-ineligible-label`.
   intended choice; the window labels, the split actions, and the cancel
   key remain.  A split action splits the selected window; the cancel key
   returns nil (a nil choice).
-- The dispatch prompt is a transient menu.  It labels every window in
-  the selected tab or frame: the label of an eligible window uses
-  `disbuf-pivot-eligible-label`; the label of an ineligible window uses
-  `disbuf-pivot-ineligible-label`.  It computes the windows before the
-  menu is shown and does not label its own window.  The menu's own
-  window is a side window; the package's entry returns nil for its
-  side-window action.  The menu shows caller intent info, the intended
-  choice, the dispatch action list, and the window-setting toggles.  It
-  reads the keys for the window labels, the dispatch actions, and the
-  toggles; the package does not call `aw-select`.  It stays open while
-  the user toggles a window-setting entry; a label or an action ends it.
+- The dispatch prompt is a transient menu.  It draws the labels on
+  every window in the selected tab or frame: the label of an eligible
+  window uses `disbuf-pivot-eligible-label`; the label of an ineligible
+  window uses `disbuf-pivot-ineligible-label`.  It shows the same labels
+  in a separate group in the menu, with the same keys and faces.  It
+  computes the windows before the menu is shown and does not label its
+  own window.  The menu's own window is a side window; the package's
+  entry returns nil for its side-window action.  The menu shows caller
+  intent info, the intended choice, the dispatch action list, and the
+  window-setting toggles.  It reads the keys for the window labels, the
+  dispatch actions, and the toggles; the package does not call
+  `aw-select`.  It stays open while the user toggles a window-setting
+  entry; a label or an action ends it.
 - The dispatch action list groups the actions:
   - **Split**: the split actions from `aw-dispatch-alist`, with their
     keys and descriptions.
@@ -315,13 +319,15 @@ label of an ineligible window with `disbuf-pivot-ineligible-label`.
   - **Other**: a new frame for a new-window intent; leave undisplayed
     only with `allow-no-window`; the cancel key.
   The window-setting toggles are not dispatch actions; they are shown
-  with the list.  The window labels are not dispatch actions either.
+  with the list.  The window labels are not dispatch actions; they are
+  shown in a separate group with the same keys and faces.
 - The list is generated from `aw-dispatch-alist` and the package's
   actions; do not hardcode keys.  A package action key and a window
   label are offered only when they do not collide with
   `aw-dispatch-alist`.
-- The dispatch prompt shows the dispatch action list and the window
-  labels together; the list is not hidden behind `?`.
+- The dispatch prompt shows the window labels in a separate group and
+  the dispatch action list together; the labels remain visible on the
+  windows, and the list is not hidden behind `?`.
 - Caller intent info is one line; the dispatch prompt shows it.  It
   names the action that supplies an entry when the entry is not from
   the caller's ACTION.  Detailed information goes in the dispatch
@@ -570,11 +576,12 @@ prompt runs; the action returns nil.
 7. Make C-g abort.  Remove any option that changes C-g behavior.
 8. Default selection to `auto`; honor `post-command-select-window`;
    keep `t` and `nil` as forcing options.
-9. The dispatch prompt labels every window in the selected tab or
-   frame; the label of an eligible window acts; the label of an
-   ineligible window states the condition and keeps the prompt open.
-   The prompt reads the keys for the labels, the dispatch actions, and
-   the toggles; do not call `aw-select`.  Add
+9. The dispatch prompt draws the labels on every window in the selected
+   tab or frame and shows them in a separate group in the menu with the
+   same keys and faces; the label of an eligible window acts; the label
+   of an ineligible window states the condition and keeps the prompt
+   open.  The prompt reads the keys for the labels, the dispatch
+   actions, and the toggles; do not call `aw-select`.  Add
    `disbuf-pivot-eligible-label` and `disbuf-pivot-ineligible-label`.
 10. Add the context guard from section 9.
 11. Preserve the window-setting entries; name their effects and
@@ -622,13 +629,15 @@ Every rule needs a Buttercup test.  Combine:
   dedicated to this buffer, side, minibuffer, and dead; window already
   displaying the buffer or not;
 - target state: existing, new, none;
-- dispatch prompt: labels every window in the selected tab or frame;
-  the label of an eligible window acts; the label of an ineligible
-  window states the condition and keeps the prompt open; the two faces;
-  the intended choice is shown with a key; the menu stays open across a
-  window-setting toggle; the menu's own window is not labeled; the
-  cancel key returns nil; the prompt reads the window-label keys, the
-  dispatch action keys, and the toggle keys; `aw-select` is not called;
+- dispatch prompt: draws the labels on every window in the selected tab
+  or frame and shows them in a separate group in the menu with the same
+  keys and faces; the label of an eligible window acts; the label of an
+  ineligible window states the condition and keeps the prompt open; the
+  two faces; the intended choice is shown with a key; the menu stays
+  open across a window-setting toggle; the menu's own window is not
+  labeled; the separate group is not a dispatch action; the cancel key
+  returns nil; the prompt reads the window-label keys, the dispatch
+  action keys, and the toggle keys; `aw-select` is not called;
 - caller constraint: none, `inhibit-same-window`, `reusable-frames`,
   `previous-window`, `frame-predicate`, `window-min-width`,
   `window-min-height`;

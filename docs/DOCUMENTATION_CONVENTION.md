@@ -32,20 +32,21 @@ entries below are this package's terms.
   policy is not a chosen window.
 - **dispatch prompt**, **dispatch action**, **dispatch action list** —
   the dispatch prompt is the transient menu the package shows at the
-  pivot.  It labels every window in the selected tab or frame: a label
-  for an eligible window takes one face and acts; a label for an
-  ineligible window takes another face and states the condition.  It
-  shows caller intent info, the intended choice, the dispatch action
-  list, and a window-setting toggle for each window-setting entry.  It
-  reads the keys for the window labels, the dispatch actions, and the
-  toggles; the package does not call `aw-select`.  It computes the
-  windows before it is shown and does not label its own window.  A
-  dispatch action is a key the dispatch prompt runs instead of a window
-  label; `aw-dispatch-alist` supplies the user's actions;
-  the package supplies its own.  The dispatch action list is the grouped
-  list of actions the prompt offers: the split actions from
-  `aw-dispatch-alist`, the caller intent actions, and the Other actions
-  the package offers, including the cancel key.
+  pivot.  It draws the labels on every window in the selected tab or
+  frame: a label for an eligible window takes one face and acts; a label
+  for an ineligible window takes another face and states the condition.
+  It shows the same labels in a separate group in the menu, with the
+  same keys and faces.  It shows caller intent info, the intended
+  choice, the dispatch action list, and a window-setting toggle for each
+  window-setting entry.  It reads the keys for the window labels, the
+  dispatch actions, and the toggles; the package does not call
+  `aw-select`.  It computes the windows before it is shown and does not
+  label its own window.  A dispatch action is a key the dispatch prompt
+  runs instead of a window label; `aw-dispatch-alist` supplies the
+  user's actions; the package supplies its own.  The dispatch action
+  list is the grouped list of actions the prompt offers: the split
+  actions from `aw-dispatch-alist`, the caller intent actions, and the
+  Other actions the package offers, including the cancel key.
 - **split action** — a dispatch action that splits a window and displays
   the buffer in the new window.
 - **tab or frame action**, **child-frame action** — a tab or frame
