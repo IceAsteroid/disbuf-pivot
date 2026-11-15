@@ -20,6 +20,12 @@
 
 ### Internal Changes
 
+- Docs: replace the two-prompt rule with the transient dispatch prompt;
+  define the intended choice, the window-setting toggle, and the
+  ineligible window; add the eligible and ineligible label faces; drop
+  the window prompt, the dispatch hint, and the window-settings opt-out
+  from the design terms.  The current source and README remain on the
+  two-prompt behavior until it is implemented.
 - Docs: make the caller's first function the only intent class; state
   that a constraint or window-setting entry is an entry, not a class;
   add the no-display class and the nil choice term; name the later
