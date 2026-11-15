@@ -296,19 +296,23 @@ same faces.
   intended choice; the window labels, the split actions, and the cancel
   key remain.  A split action splits the selected window; the cancel key
   returns nil (a nil choice).
-- The dispatch prompt is a transient menu.  It draws the labels on
-  every window in the selected tab or frame: the label of an eligible
-  window uses `disbuf-pivot-eligible-label`; the label of an ineligible
-  window uses `disbuf-pivot-ineligible-label`.  It shows the same labels
-  in a separate group in the menu, with the same keys and faces.  It
-  computes the windows before the menu is shown and does not label its
-  own window.  The menu's own window is a side window; the package's
-  entry returns nil for its side-window action.  The menu shows caller
-  intent info, the intended choice, the dispatch action list, and the
-  window-setting toggles.  It reads the keys for the window labels, the
-  dispatch actions, and the toggles; the package does not call
-  `aw-select`.  It stays open while the user toggles a window-setting
-  entry; a label or an action ends it.
+- The dispatch prompt is the package's menu.  It is not a transient
+  menu: the action function reads its keys and does not return to
+  `display-buffer` until the user chooses.  A transient prefix command
+  returns before the choice; the package does not call one.  It draws
+  the labels on every window in the selected tab or frame: the label of
+  an eligible window uses `disbuf-pivot-eligible-label`; the label of an
+  ineligible window uses `disbuf-pivot-ineligible-label`.  It shows the
+  same labels in a separate group in the menu, with the same keys and
+  faces.  It computes the windows before the menu is shown and does not
+  label its own window.  The menu's own window is a side window; the
+  package's entry returns nil for its side-window action.  The menu
+  shows caller intent info, the intended choice, the dispatch action
+  list, and the window-setting toggles.  It reads the keys for the
+  window labels, the dispatch actions, and the toggles; the package does
+  not call `aw-select` or a transient prefix command.  A window-setting
+  toggle keeps it open; a label, an action, or the cancel key ends it
+  and the action function returns; C-g aborts.
 - The dispatch action list groups the actions:
   - **Split**: the split actions from `aw-dispatch-alist`, with their
     keys and descriptions.
@@ -571,7 +575,9 @@ prompt runs; the action returns nil.
    dispatch prompt, keep the selected window's label eligible, and bind
    the entry to nil when the user chooses it.
 6. Show caller intent info and the intended choice in the dispatch
-   prompt.  The dispatch prompt is a transient menu.  Remove
+   prompt.  The dispatch prompt is the package's menu; the action
+   function reads its keys and does not return until the user chooses.
+   Do not call a transient prefix command.  Remove
    `disbuf-pivot-mode-line-help` and the former one-line hint string.
 7. Make C-g abort.  Remove any option that changes C-g behavior.
 8. Default selection to `auto`; honor `post-command-select-window`;
@@ -633,11 +639,13 @@ Every rule needs a Buttercup test.  Combine:
   or frame and shows them in a separate group in the menu with the same
   keys and faces; the label of an eligible window acts; the label of an
   ineligible window states the condition and keeps the prompt open; the
-  two faces; the intended choice is shown with a key; the menu stays
-  open across a window-setting toggle; the menu's own window is not
-  labeled; the separate group is not a dispatch action; the cancel key
-  returns nil; the prompt reads the window-label keys, the dispatch
-  action keys, and the toggle keys; `aw-select` is not called;
+  two faces; the intended choice is shown with a key; the action
+  function does not return before the choice; a transient prefix command
+  is not called; the menu stays open across a window-setting toggle; the
+  menu's own window is not labeled; the separate group is not a dispatch
+  action; the cancel key returns nil; the prompt reads the window-label
+  keys, the dispatch action keys, and the toggle keys; `aw-select` is not
+  called;
 - caller constraint: none, `inhibit-same-window`, `reusable-frames`,
   `previous-window`, `frame-predicate`, `window-min-width`,
   `window-min-height`;

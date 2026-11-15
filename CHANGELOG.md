@@ -20,6 +20,10 @@
 
 ### Internal Changes
 
+- Docs: make the dispatch prompt the package's menu, not a transient
+  menu: the action function reads its keys and does not return until the
+  user chooses; a transient prefix command returns before the choice and
+  is not called.
 - Docs: define transient menu, transient prefix command, transient
   suffix command, transient stay suffix, and transient exit suffix in
   the Emacs terms used by the design; the qualified terms avoid the

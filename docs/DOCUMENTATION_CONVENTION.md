@@ -31,16 +31,18 @@ entries below are this package's terms.
   prompt or dispatch action.  A window used silently by the default
   policy is not a chosen window.
 - **dispatch prompt**, **dispatch action**, **dispatch action list** —
-  the dispatch prompt is the transient menu the package shows at the
-  pivot.  It draws the labels on every window in the selected tab or
-  frame: a label for an eligible window takes one face and acts; a label
-  for an ineligible window takes another face and states the condition.
-  It shows the same labels in a separate group in the menu, with the
-  same keys and faces.  It shows caller intent info, the intended
-  choice, the dispatch action list, and a window-setting toggle for each
-  window-setting entry.  It reads the keys for the window labels, the
-  dispatch actions, and the toggles; the package does not call
-  `aw-select`.  It computes the windows before it is shown and does not
+  the dispatch prompt is the menu the package shows at the pivot.  It is
+  not a transient menu: the action function reads its keys and does not
+  return to `display-buffer` until the user chooses.  It draws the
+  labels on every window in the selected tab or frame: a label for an
+  eligible window takes one face and acts; a label for an ineligible
+  window takes another face and states the condition.  It shows the same
+  labels in a separate group in the menu, with the same keys and faces.
+  It shows caller intent info, the intended choice, the dispatch action
+  list, and a window-setting toggle for each window-setting entry.  It
+  reads the keys for the window labels, the dispatch actions, and the
+  toggles; the package does not call `aw-select` or a transient prefix
+  command.  It computes the windows before it is shown and does not
   label its own window.  A dispatch action is a key the dispatch prompt
   runs instead of a window label; `aw-dispatch-alist` supplies the
   user's actions; the package supplies its own.  The dispatch action
@@ -199,6 +201,9 @@ prose.
 - dispatch hint — use the **dispatch action list**.  The current source
   and README still show the hint; the design shows the list in the
   dispatch prompt.
+- transient menu, for the dispatch prompt — use **dispatch prompt**;
+  the dispatch prompt is the package's menu, read inside the action
+  function, not a transient menu.
 - caller action — say the action from the caller's ACTION, or name the
   action function.
 - the opt-out, window-settings opt-out — use **window-setting toggle**,
