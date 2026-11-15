@@ -20,6 +20,13 @@
 
 ### Internal Changes
 
+- Docs: rename the tab reader term to tab prompt and add the frame
+  prompt; make the two prompts a standalone entry, separate from the
+  tab or frame action and child-frame action terms; replace the stale
+  "frame readers" wording with "frame prompt"; the tab reader remains
+  the implementation function and replaceable reader, not the prompt
+  term.  The current source and README still use the tab reader
+  wording.
 - Docs: replace the two-prompt rule with the transient dispatch prompt;
   define the intended choice, the window-setting toggle, and the
   ineligible window; add the eligible and ineligible label faces; drop

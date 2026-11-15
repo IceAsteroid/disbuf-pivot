@@ -25,7 +25,7 @@ Full coverage means:
 - every `display-buffer` call that reaches the package's
   `display-buffer-alist` entry;
 - the package prefix commands;
-- the tab and frame readers used by those commands.
+- the tab prompt and frame prompt used by those commands.
 
 Full coverage does not mean every buffer-switching command.  It does not
 include `switch-to-buffer`, completion previews, timers, process
@@ -89,7 +89,7 @@ The package distinguishes these classes:
   rule reads: `tab-name`, `tab-group`, `reusable-frames`,
   `ignore-current-tab`, `pop-up-frame-parameters`, `frame-predicate`,
   and `pop-up-frames` where the rule selects a frame.  Regulate the tab
-  or frame choice: prompt with the tab reader or frame prompt.  An
+  or frame choice: prompt with the tab prompt or frame prompt.  An
   existing-target action preselects an existing tab or frame; a
   new-target action starts a new one and does not select an existing
   target.
@@ -215,7 +215,7 @@ cancel key.
 | Direction | The dispatch prompt; the intended choice is "Use caller intent" (the caller's ACTION); labels and actions override; leave side windows as-is | "Caller asks for direction X" |
 | Below-selected / at-bottom | The dispatch prompt; the intended choice is "Use caller intent" (the caller's ACTION); labels and actions override; leave side windows as-is | "Caller asks for a window below the selected window" or "at the bottom of the frame" |
 | Previous window | The dispatch prompt; the intended choice is "Use caller intent" (the caller's ACTION); show the named `previous-window` as the preferred candidate, or mark the windows that previously showed the buffer; use `disbuf-pivot-reuse` when no previous window is usable | "Caller asks for previous window X" or "Caller asks for a window that previously showed the buffer" |
-| Tab or frame action | The other-frame prefix prompts frame, then tab when needed, then the window with the dispatch prompt.  A caller's tab or frame action prompts with the tab reader or frame prompt; an existing target then shows the dispatch prompt, whose intended choice is the window that displays the buffer in the target, else the target's selected window; a new target uses its selected window.  An existing-target action preselects an existing tab or frame; a new-target action starts a new one and does not select an existing tab or frame with the same name | "Caller asks for existing tab/frame X" or "Caller asks for a new tab/frame" |
+| Tab or frame action | The other-frame prefix prompts frame, then tab when needed, then the window with the dispatch prompt.  A caller's tab or frame action prompts with the tab prompt or frame prompt; an existing target then shows the dispatch prompt, whose intended choice is the window that displays the buffer in the target, else the target's selected window; a new target uses its selected window.  An existing-target action preselects an existing tab or frame; a new-target action starts a new one and does not select an existing tab or frame with the same name | "Caller asks for existing tab/frame X" or "Caller asks for a new tab/frame" |
 | Placed `child-frame-parameters` (including a `parent-frame` entry) | Respect the caller's placement; no prompt | Optional |
 | Atom window | Respect the caller's placement; no prompt | Optional |
 | Side window | Leave the caller's side placement as-is; no prompt | Optional |
@@ -500,7 +500,7 @@ function, not a window-setting entry; the package preserves it.
 
 The package cannot prompt in the batch, active-minibuffer, timer,
 process-filter, keyboard-macro, and recursive-display contexts below.
-In them none of the dispatch prompt, the tab reader, or the frame
+In them none of the dispatch prompt, the tab prompt, or the frame
 prompt runs; the action returns nil.
 
 - Batch: return nil.  Do not prompt.
@@ -514,7 +514,7 @@ prompt runs; the action returns nil.
 - Failure after the choice: if the chosen window is undisplayable
   because it is dead, show the dispatch prompt again; if it is
   undisplayable because its frame or tab is gone, prompt again with the
-  frame prompt or tab reader.  If the display function returns nil,
+  frame prompt or tab prompt.  If the display function returns nil,
   report it with `message` and return `fail`; if it signals an error,
   propagate or re-signal it.  A split action failure is separate:
   section 6 shows the error and shows the dispatch prompt again.  A
@@ -548,7 +548,7 @@ prompt runs; the action returns nil.
 4. Regulate same-window, reuse, other-window, new-window,
    use-some-window, use-least-recent-window, full-frame, direction,
    below-selected, at-bottom, previous window, and the tab and frame
-   choices.  Use the tab reader and frame prompt, then the dispatch
+   choices.  Use the tab prompt and frame prompt, then the dispatch
    prompt for the target window; an existing-target action preselects
    an existing tab or frame, and a new-target action starts a new one
    and does not select an existing target.  Keep the tab and frame
@@ -605,7 +605,7 @@ Every rule needs a Buttercup test.  Combine:
   `display-buffer-overriding-action`, the special action, or the extra
   action that the rule reads affects eligibility or the info line and
   is named; an entry the rule does not read does not change the class;
-- tab and frame readers: an existing-target action preselects an
+- tab prompt and frame prompt: an existing-target action preselects an
   existing tab or frame; a new-target action starts a new one and does
   not select an existing one; the prompt string states the caller's
   intention;

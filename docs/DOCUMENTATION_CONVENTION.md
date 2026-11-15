@@ -46,13 +46,18 @@ entries below are this package's terms.
   the package offers, including the cancel key.
 - **split action** — a dispatch action that splits a window and displays
   the buffer in the new window.
-- **tab or frame action**, **child-frame action**, **tab reader** — a tab
-  or frame action is `display-buffer-in-tab`,
-  `display-buffer-in-new-tab`, `display-buffer-pop-up-frame`, or
-  `display-buffer-use-some-frame`.  A child-frame action is
-  `display-buffer-in-child-frame`.  The tab reader is
-  `disbuf-pivot-tab-bar-read-tab-name`, the function that reads a tab
-  name; the optional consult library supplies another reader.
+- **tab or frame action**, **child-frame action** — a tab or frame
+  action is `display-buffer-in-tab`, `display-buffer-in-new-tab`,
+  `display-buffer-pop-up-frame`, or `display-buffer-use-some-frame`.  A
+  child-frame action is `display-buffer-in-child-frame`.
+- **tab prompt**, **frame prompt** — the tab prompt reads a tab name;
+  `disbuf-pivot-tab-bar-read-tab-name` implements it.
+  `disbuf-pivot-tab-bar-read-function` can replace its reader, and the
+  optional consult library supplies another reader.  The frame prompt
+  reads a frame name from the live visible top-level frames, filtered by
+  `frame-predicate`; `dp-action--frame` implements it.  An existing name
+  selects the frame, a new name makes a new frame, and an empty name
+  makes a new frame with the default name.
 - **failure after the choice** — a failure after the user chooses a
   window, tab, frame, or dispatch action from a prompt: the chosen
   window is undisplayable, its frame or tab is gone, or the display
@@ -102,7 +107,7 @@ entries below are this package's terms.
   minibuffer window, is dedicated to another buffer, or is a side
   window.  The design rules list the conditions.
 - **cannot prompt**, **no prompt** — the package cannot prompt when it
-  cannot read interactive input: the dispatch prompt, the tab reader, or
+  cannot read interactive input: the dispatch prompt, the tab prompt, or
   the frame prompt.  The design rules list the contexts.  No prompt
   means the package does not ask: the rule gives the window or
   placement, or the context is cannot prompt and the action returns nil.
@@ -180,6 +185,12 @@ prose.
   action function.
 - the opt-out, window-settings opt-out — use **window-setting toggle**,
   or name the toggle.
+- tab reader — use **tab prompt**; name
+  `disbuf-pivot-tab-bar-read-tab-name` or the replaceable reader when
+  the implementation is meant.  The current source and README still use
+  the term.
+- frame reader — use **frame prompt**; the frame prompt is a
+  `completing-read` prompt, not a replaceable reader.
 - split rule — name `disbuf-pivot-window-utility-split-p` and its
   options; the core does not consult them.  The current source and
   README still use the term.
