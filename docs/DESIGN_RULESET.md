@@ -197,6 +197,11 @@ cell names the intended choice; "no intended choice" means the prompt
 has no default key, so the user chooses a label, an action, or the
 cancel key.
 
+Every dispatch prompt labels every window in the selected tab or frame;
+a row that offers split actions and cancel also offers the window
+labels.  "No intended choice" does not mean the prompt has no window
+labels.
+
 | Case | Behavior | Caller intent info |
 |---|---|---|
 | Same-window, selected window can display | Use the selected window; no prompt | None |
@@ -273,31 +278,33 @@ options are not consulted by the core behavior.
 Frame preview is not part of the first implementation.  The tab preview
 with consult remains optional.
 
-The dispatch prompt labels every window it covers.  The label of an
-eligible window acts; the label of an ineligible window states the
-condition and keeps the prompt open.  The prompt draws the label of an
-eligible window with `disbuf-pivot-eligible-label` and the label of an
-ineligible window with `disbuf-pivot-ineligible-label`.
+The dispatch prompt labels every window in the selected tab or frame.
+The label of an eligible window acts; the label of an ineligible window
+states the condition and keeps the prompt open.  The prompt draws the
+label of an eligible window with `disbuf-pivot-eligible-label` and the
+label of an ineligible window with `disbuf-pivot-ineligible-label`.
 
 ## 6. Interaction rules
 
 - When a rule shows the dispatch prompt, the prompt labels every window
-  it covers.  The label of an eligible window acts; the label of an
-  ineligible window states the condition and keeps the prompt open.
-  The prompt shows the intended choice with a key.  When the rule has
-  no target or action that can run, the prompt has no intended choice;
-  the split actions and the cancel key remain.  A split action splits
-  the selected window; the cancel key returns nil (a nil choice).
-- The dispatch prompt is a transient menu.  It labels every window it
-  covers: the label of an eligible window uses
+  in the selected tab or frame.  The label of an eligible window acts;
+  the label of an ineligible window states the condition and keeps the
+  prompt open.  The prompt shows the intended choice with a key.  When
+  the rule has no target or action that can run, the prompt has no
+  intended choice; the window labels, the split actions, and the cancel
+  key remain.  A split action splits the selected window; the cancel key
+  returns nil (a nil choice).
+- The dispatch prompt is a transient menu.  It labels every window in
+  the selected tab or frame: the label of an eligible window uses
   `disbuf-pivot-eligible-label`; the label of an ineligible window uses
   `disbuf-pivot-ineligible-label`.  It computes the windows before the
   menu is shown and does not label its own window.  The menu's own
   window is a side window; the package's entry returns nil for its
   side-window action.  The menu shows caller intent info, the intended
   choice, the dispatch action list, and the window-setting toggles.  It
-  stays open while the user toggles a window-setting entry; a label or
-  an action ends it.
+  reads the keys for the window labels, the dispatch actions, and the
+  toggles; the package does not call `aw-select`.  It stays open while
+  the user toggles a window-setting entry; a label or an action ends it.
 - The dispatch action list groups the actions:
   - **Split**: the split actions from `aw-dispatch-alist`, with their
     keys and descriptions.
@@ -563,9 +570,11 @@ prompt runs; the action returns nil.
 7. Make C-g abort.  Remove any option that changes C-g behavior.
 8. Default selection to `auto`; honor `post-command-select-window`;
    keep `t` and `nil` as forcing options.
-9. The dispatch prompt labels every window it covers; the label of an
-   eligible window acts; the label of an ineligible window states the
-   condition and keeps the prompt open.  Add
+9. The dispatch prompt labels every window in the selected tab or
+   frame; the label of an eligible window acts; the label of an
+   ineligible window states the condition and keeps the prompt open.
+   The prompt reads the keys for the labels, the dispatch actions, and
+   the toggles; do not call `aw-select`.  Add
    `disbuf-pivot-eligible-label` and `disbuf-pivot-ineligible-label`.
 10. Add the context guard from section 9.
 11. Preserve the window-setting entries; name their effects and
@@ -613,12 +622,13 @@ Every rule needs a Buttercup test.  Combine:
   dedicated to this buffer, side, minibuffer, and dead; window already
   displaying the buffer or not;
 - target state: existing, new, none;
-- dispatch prompt: labels every window it covers; the label of an
-  eligible window acts; the label of an ineligible window states the
-  condition and keeps the prompt open; the two faces; the intended
-  choice is shown with a key; the menu stays open across a
+- dispatch prompt: labels every window in the selected tab or frame;
+  the label of an eligible window acts; the label of an ineligible
+  window states the condition and keeps the prompt open; the two faces;
+  the intended choice is shown with a key; the menu stays open across a
   window-setting toggle; the menu's own window is not labeled; the
-  cancel key returns nil;
+  cancel key returns nil; the prompt reads the window-label keys, the
+  dispatch action keys, and the toggle keys; `aw-select` is not called;
 - caller constraint: none, `inhibit-same-window`, `reusable-frames`,
   `previous-window`, `frame-predicate`, `window-min-width`,
   `window-min-height`;

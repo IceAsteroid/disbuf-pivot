@@ -20,6 +20,12 @@
 
 ### Internal Changes
 
+- Docs: state which windows the dispatch prompt labels: every window in
+  the selected tab or frame.  State that it reads the keys for the
+  window labels, the dispatch actions, and the window-setting toggles,
+  and that the package does not call `aw-select`; state that a row
+  offering split actions and cancel also offers the window labels.  The
+  transient rewrite left the set of labeled windows undefined.
 - Docs: rename the tab reader term to tab prompt and add the frame
   prompt; make the two prompts a standalone entry, separate from the
   tab or frame action and child-frame action terms; replace the stale
