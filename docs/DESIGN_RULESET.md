@@ -67,6 +67,9 @@ The package reads two inputs:
   and `display-buffer-fallback-action`.  The first association of a key
   wins.
 
+The package's entry condition receives the caller's ACTION; its action
+function receives the combined action alist.
+
 An entry in the combined action alist does not move the call to another
 class by itself.  The first function's rule names the entries it reads.
 For example, `display-buffer-reuse-window` reads `pop-up-frames` as a
@@ -98,6 +101,9 @@ The package distinguishes these classes:
 - **names a strategy** -- same-window, reuse, other-window, new-window,
   use-some-window, use-least-recent-window, previous window, full-frame.
   Regulate the display by the rules below.
+- **names no display** -- `display-buffer-no-window` with
+  `allow-no-window`; call `display-buffer-no-window` and return `fail`
+  (section 4).
 - **no preference** -- follow the default order of
   `disbuf-pivot-action-functions`: reuse a window that displays the
   buffer, use the selected window when it can display, then prompt.
@@ -122,8 +128,8 @@ The package decides in this order:
 3. Read the first function of the caller's ACTION.  An ACTION with no
    function is no preference; ACTION `t` is an other-window request
    (section 4).  A first function that is `Respect` or not covered
-   returns nil; the caller's ACTION functions and the remaining display
-   rules run.  A first function that is `Regulate` uses its class rule.
+   returns nil; the later functions in Emacs's combined function list
+   run.  A first function that is `Regulate` uses its class rule.
 4. The class rule reads the entries it names from the combined action
    alist.  An entry it does not name does not change the class.
 5. The class rule prompts when it says so and displays the buffer; the
@@ -139,22 +145,23 @@ When the rule prompts, the "use caller intent" dispatch action is a
 user choice; it runs the caller's whole function list in order with the
 combined action alist, under a guard that prevents the package's entry
 from running again.  The package does not regulate a later function; it
-remains a caller fallback.  If the package cannot prompt (section 9),
-it returns nil and the caller's ACTION functions run, with the later
-functions as fallbacks.  A failure after the choice while the package
-can prompt is handled by prompting again or aborting; it does not
-return nil into the caller's chain.  Emacs calls every function in its
+remains a later function in the caller's ACTION.  If the package cannot
+prompt (section 9), it returns nil and Emacs continues with the later
+functions in its combined function list; the caller's later functions
+are fallbacks.  A failure after the choice while the package can prompt
+is handled by prompting again or aborting; it does not return nil to
+the caller's ACTION functions.  Emacs calls every function in its
 combined list with the same combined action alist; a function that
-returns nil passes to the next, and an error propagates.  The
-package's caller-list run for "use caller intent" follows the same nil
-and error rule.  If every function in that run returns nil, the package
-prompts again or aborts; it does not return nil into the caller's
-chain.  The window-settings opt-out dispatch action changes
-the combined action alist only for the package's display call and for a
-caller list the package runs from that prompt; it does not change the
-alist Emacs passes to a later caller fallback after the package returns
-nil.  Do not reorder or deduplicate the list.  Use the first
-association of an alist key, as Emacs does.
+returns nil passes to the next, and an error propagates.  The package's
+run of the caller's function list for "use caller intent" follows the
+same nil and error rule.  If every function in that run returns nil,
+the package prompts again or aborts; it does not return nil to the
+caller's ACTION functions.  The window-settings opt-out dispatch action
+changes the combined action alist only for the package's display call
+and for a run of the caller's function list from that prompt; it does
+not change the alist Emacs passes to a later function in the caller's
+ACTION after the package returns nil.  Do not reorder or deduplicate
+the list.  Use the first association of an alist key, as Emacs does.
 
 A package prefix command is user intent, not caller intent.
 `disbuf-pivot-prefix-mode` remaps the built-in prefix commands to the
@@ -206,9 +213,9 @@ changes the order.
 | Side window | Leave the caller's side placement as-is; no prompt | Optional |
 | ACTION `t` | Treat as an other-window request; exclude the selected window; prompt by the rule in section 6 | "Caller asks for other window" |
 | Caller ACTION with several functions | Classify the first function; later functions are the caller's fallbacks.  The "use caller intent" action runs the whole list in order when the user chooses it | "Caller asks for X; fallback Y" |
-| `allow-no-window` and the user chooses no display | Call `display-buffer-no-window`; return `fail` | "No window requested" |
-| Excluded buffer | Return nil; the caller's action or the remaining display rules run; no prompt | None |
-| Anything not covered | Return nil; the caller's action or the remaining display rules run | Optional |
+| No display | With `allow-no-window`, call `display-buffer-no-window`; return `fail` | "No window requested" |
+| Excluded buffer | Return nil; the later functions in Emacs's combined function list run | None |
+| Anything not covered | Return nil; the later functions in Emacs's combined function list run | Optional |
 | `switch-to-buffer` | Default; it obeys the rules only with `switch-to-buffer-obey-display-actions` | None |
 
 ## 5. Options and defaults
@@ -219,8 +226,9 @@ changes the order.
   rule in section 6 applies.
 - `disbuf-pivot-same-window-conflict` -- `ask` (default) or
   `same-window`.  It applies when the caller asks for the same window
-  and sets `inhibit-same-window`.  When it asks, the rule in section 6
-  applies.
+  and sets `inhibit-same-window`.  When it chooses the same window,
+  bind `inhibit-same-window` to nil for the display call.  When it
+  asks, the rule in section 6 applies.
 - `disbuf-pivot-action-functions` -- the action functions the entry
   tries, in order.  The default is `display-buffer-reuse-window`,
   `display-buffer-same-window`, and `dp-action-choose-window`; it does
@@ -231,11 +239,11 @@ changes the order.
   that supplies an entry when it is not the caller's ACTION.
 - `disbuf-pivot-exclude-conditions` -- nil (default) or a list of
   `buffer-match-p` conditions.  A matching buffer is not regulated:
-  the entry returns nil and the caller's action or the remaining
-  display rules apply.  A condition can match the buffer name (a
-  regexp), a major mode (`(derived-mode . MODE)` or
-  `(major-mode . MODE)`), a category (`(category . SYMBOL)`), or a
-  predicate function; `not`, `and`, and `or` combine conditions.
+  the entry returns nil and the later functions in Emacs's combined
+  function list run.  A condition can match the buffer name (a regexp),
+  a major mode (`(derived-mode . MODE)` or `(major-mode . MODE)`), a
+  category (`(category . SYMBOL)`), or a predicate function; `not`,
+  `and`, and `or` combine conditions.
 - `disbuf-pivot-mode-line-help` -- nil (default) hides the dispatch
   hint in the mode line; non-nil shows it.  It does not affect the
   echo-area dispatch hint or `ace-window-display-mode` labels.
@@ -257,8 +265,8 @@ options are not consulted by the core behavior.
 Frame preview is not part of the first implementation.  The tab preview
 with consult remains optional.
 
-Undisplayable windows are labeled and marked as ineligible.
-Choosing one repeats the prompt.
+The window prompt labels undisplayable windows and marks them as
+ineligible.  Choosing one repeats the prompt.
 
 ## 6. Interaction rules
 
@@ -267,8 +275,8 @@ Choosing one repeats the prompt.
   eligible window, it uses the dispatch prompt when that prompt offers a
   dispatch action; otherwise the action returns nil.  The dispatch
   prompt labels no windows.  With one eligible window, "Any other key"
-  uses that window; with none, the selected window is the window a
-  split action splits, and "Any other key" cancels.
+  uses that window; with none, a split action splits the selected
+  window, and "Any other key" cancels.
 - The window prompt calls `aw-select` to label the windows it covers
   and read a window; it marks undisplayable windows as ineligible.
   `disbuf-pivot-mode-line-help` controls only the mode-line copy of the
@@ -300,8 +308,9 @@ Choosing one repeats the prompt.
   actions; do not hardcode keys.  A package key is offered only when it
   does not collide with `aw-dispatch-alist`.
 - The window prompt shows the dispatch action list on demand: the
-  caller intent line carries the dispatch hint, and `?` shows the list.
-  The dispatch prompt shows the grouped list with its one-key read.
+  caller intent line carries the dispatch hint when the line is shown,
+  and `?` shows the list.  The dispatch prompt shows the grouped list
+  with its one-key read.
 - Caller intent info is one line.  It names the action that supplies an
   entry when the entry is not from the caller's ACTION.  Detailed
   information goes in the dispatch action list.
@@ -332,11 +341,11 @@ Choosing one repeats the prompt.
   "Any other key" line when it has an eligible window, displays normally
   without that deletion; a split, tab, or frame action displays another
   way; with no eligible window, "Any other key" cancels.  The caller's
-  full-frame action remains the caller's chain: its nil or error is not
-  a failure after the choice.
+  full-frame action remains part of the caller's ACTION: its nil or
+  error is not a failure after the choice.
 - The package checks `disbuf-pivot-exclude-conditions` in its entry
   condition.  A matching buffer returns nil; no prompt runs, and the
-  caller's ACTION and the remaining display rules apply.
+  later functions in Emacs's combined function list run.
   `display-buffer-overriding-action` and earlier
   `display-buffer-alist` entries still take precedence.
 - C-g aborts the display; it does not run the caller's fallbacks.  The
@@ -375,12 +384,12 @@ Choosing one repeats the prompt.
 
 `Regulate` means the package handles the display under its own rules:
 it shows caller intent info, prompts when needed, lets the user choose
-an existing window or a dispatch action, and displays the buffer in the
-chosen window.  Calling an Emacs action function is the display
-primitive, not a delegation of the regulation.
+a target or a dispatch action, and displays the buffer in the chosen
+window.  Calling an Emacs action function is the display primitive, not
+a delegation of the regulation.
 
-`Respect` means the package returns nil without displaying; the
-caller's action runs.
+`Respect` means the package returns nil without displaying; the later
+functions in Emacs's combined function list run.
 
 The table describes a caller's ACTION that names the function.  A
 package prefix command or a user choice in a prompt is separate; the
@@ -408,7 +417,7 @@ the chosen window after the choice.
 | `display-buffer-below-selected` | Regulate for the below direction.  `window-min-height` is an eligibility constraint. | `window-min-height` |
 | `display-buffer-at-bottom` | Regulate for the at-bottom direction. | None specific |
 | `display-buffer-full-frame` | Regulate.  Show caller intent info; prompt by the rule in section 6; "Display full frame" deletes other windows; a window label or the "Any other key" line displays normally; split, tab, and frame actions override | Delegates to `display-buffer-reuse-window`, `display-buffer-same-window`, `display-buffer-pop-up-window`, and `display-buffer-use-some-window`; their entries apply |
-| `display-buffer-pop-up-frame` | Regulate for a new frame.  Ask for a new frame name; do not offer existing frames.  Use `pop-up-frame-parameters`; the new frame is top-level unless that entry sets `parent-frame`. | `pop-up-frame-parameters`, `inhibit-switch-frame`; `pop-up-frames` selects the frame strategy but is not read by this function |
+| `display-buffer-pop-up-frame` | Regulate for a new frame.  Ask for a new frame name; do not offer existing frames.  Use `pop-up-frame-parameters`; the new frame is top-level unless that entry sets `parent-frame`.  `pop-up-frames` selects the frame strategy but this function does not read it. | `pop-up-frame-parameters`, `inhibit-switch-frame` |
 | `display-buffer-use-some-frame` | Regulate for an existing frame; `frame-predicate` filters the candidates. | `frame-predicate`, `inhibit-same-window`, `inhibit-switch-frame` |
 | `display-buffer-in-tab` | Regulate; preselect an existing or reusable tab; a new tab starts without an existing-tab preselect. | `reusable-frames` (nil differs), `ignore-current-tab`, `tab-name`, `tab-group` |
 | `display-buffer-in-new-tab` | Regulate; ask for a new tab name; do not select an existing tab with the same name. | `tab-name`, `tab-group` |
@@ -471,7 +480,7 @@ function, not a window-setting entry; the package preserves it.
 | Entry | Treatment |
 |---|---|
 | `body-function` | Preserve; call after the buffer is displayed and before the size entries.  It is a body function, not a window-setting entry; it is not named in caller intent info and the window-settings opt-out does not remove it.  A failure follows the failure-after-the-choice rule. |
-| `post-command-select-window` | Honor; the selection option defaults to `auto`.  The window-settings opt-out leaves it. |
+| `post-command-select-window` | Honor; `disbuf-pivot-action-select` defaults to `auto`.  The window-settings opt-out leaves it. |
 | `bump-use-time` | Handle through `window--display-buffer`.  The window-settings opt-out leaves it. |
 | `inhibit-switch-frame` | Frame raising and focus; honor.  The window-settings opt-out leaves it. |
 | `category` | Pass through; use it in caller intent info when present.  The window-settings opt-out leaves it. |
@@ -496,19 +505,19 @@ or the frame prompt runs; the action returns nil.
   undisplayable because its frame or tab is gone, prompt again with the
   frame prompt or tab reader.  If the display function returns nil,
   report it with `message` and return `fail`; if it signals an error,
-  propagate or re-signal it.  A `body-function` error is such a
-  failure; it is not a window-setting entry and the window-settings
-  opt-out does not remove it.  Do not return nil into the caller's
-  chain while a prompt can offer an action.
+  propagate or re-signal it.  A split action failure is separate:
+  section 6 shows the error and prompts again.  A `body-function` error
+  is such a failure; it is not a window-setting entry and the
+  window-settings opt-out does not remove it.  Do not return nil to
+  the caller's ACTION functions while a prompt can offer an action.
 - A nil choice: the prompt returns nil without C-g; the action returns
-  nil; the caller's ACTION functions and the remaining display rules
-  run.
+  nil; the later functions in Emacs's combined function list run.
 - A nil return is reserved for the cannot-prompt contexts, the excluded
   buffer, the Respect or not-covered cases, a nil choice, and the case
   with no eligible window where the dispatch prompt offers no dispatch
-  action; Emacs calls the later action functions with the same combined
-  action alist, and the remaining display rules run after it.  The
-  window-settings opt-out is local to the package's display call.
+  action; Emacs calls the later functions in its combined function list
+  with the same combined action alist.  The window-settings opt-out is
+  local to the package's display call.
 
 ## 10. Implementation tasks
 
@@ -522,8 +531,8 @@ or the frame prompt runs; the action returns nil.
    intent" action runs the caller's whole function list in order when
    the user chooses it.  A failure after the choice while the package
    can prompt is handled by prompting again or aborting; do not return
-   nil into the caller's chain.  A nil choice returns nil; it is not a
-   failure after the choice.
+   nil to the caller's ACTION functions.  A nil choice returns nil; it
+   is not a failure after the choice.
 4. Regulate same-window, reuse, other-window, new-window,
    use-some-window, use-least-recent-window, full-frame, direction,
    below-selected, at-bottom, previous window, and the tab and frame
@@ -549,7 +558,7 @@ or the frame prompt runs; the action returns nil.
     conditions in caller intent info; add "Display without caller
     window settings"; remove every association of each window-setting
     key from the combined action alist for that display call and for a
-    caller list the package runs from that prompt; leave
+    run of the caller's function list from that prompt; leave
     `body-function` and every other non-window-setting entry unchanged.
 12. Regulate `display-buffer-full-frame` when it is the first caller
     function.  Show caller intent info; prompt by the rule in section 6;
@@ -571,8 +580,8 @@ Every rule needs a Buttercup test.  Combine:
   without a target, other-window, new-window, use some window, use least
   recent window, full frame, direction, below-selected, at-bottom,
   previous window, existing tab, new tab, existing frame, new frame,
-  placed, atom, side, ACTION `t`, `allow-no-window`, excluded buffer,
-  `switch-to-buffer`;
+  placed, atom, side, ACTION `t`, no display (`allow-no-window`),
+  excluded buffer, `switch-to-buffer`;
 - no preference order: a window displays the buffer; no window displays
   and the selected window can display; no window displays and the
   selected window cannot display;
@@ -604,7 +613,7 @@ Every rule needs a Buttercup test.  Combine:
   normally; "Display full frame" deletes the other windows; the tab
   action is offered when `tab-bar-mode` is active; the frame action is
   offered; the caller's full-frame action's nil or error follows the
-  caller chain;
+  caller's ACTION;
 - window-setting entry: `dedicated` on a reused normal window, a new
   window, a window already dedicated to this buffer and showing it, a
   window dedicated to this buffer but not showing it, and a window
@@ -625,7 +634,8 @@ Also test C-g (quit), a nil choice (returns nil and the caller's ACTION
 functions run), split failure, dead windows, a display function that
 returns nil (message and `fail`) or signals an error (propagates or is
 re-signaled), a `body-function` error, that selection entries are not
-applied to the chosen window, the window-settings opt-out's
-all-association removal and its local scope (later action functions
-receive the original combined action alist), and repeated choices.
-Every cell in the rules table has a test; there are no undecided cells.
+applied to the chosen window, that `post-command-select-window` is
+honored, the window-settings opt-out's all-association removal and its
+local scope (later functions in Emacs's combined function list receive
+the original combined action alist), and repeated choices.  Every cell
+in the rules table has a test; there are no undecided cells.

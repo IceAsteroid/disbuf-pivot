@@ -20,6 +20,12 @@
 
 ### Internal Changes
 
+- Docs: make the caller's first function the only intent class; state
+  that a constraint or window-setting entry is an entry, not a class;
+  add the no-display class and the nil choice term; name the later
+  functions in Emacs's combined function list instead of "remaining
+  display rules"; state that the entry condition receives the caller's
+  ACTION and the action function receives the combined action alist.
 - Docs: define the caller's ACTION; state the values of
   `disbuf-pivot-action-select` and
   `disbuf-pivot-other-window-prefix-select`; state that a dispatch

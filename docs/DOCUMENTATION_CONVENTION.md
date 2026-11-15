@@ -60,12 +60,17 @@ entries below are this package's terms.
   prompt or dispatch action.  A window used silently by the default
   policy is not a chosen window.
 - **failure after the choice** — a failure after the user chooses a
-  window, tab, or frame from a prompt: the chosen window is
-  undisplayable, its frame or tab is gone, or the display function
-  returns nil or errors.  The design rules list the responses.
-- **abort** — end the display and do not run the later functions in the
-  caller's ACTION.  C-g is the user's way to abort; `quit` is its
-  mechanism.  A nil choice is not an abort.
+  window, tab, frame, or dispatch action from a prompt: the chosen
+  window is undisplayable, its frame or tab is gone, or the display
+  function returns nil or errors.  The design rules list the
+  responses.
+- **abort** — end the display instead of prompting again or returning
+  nil, and do not run the later functions in the caller's ACTION.  C-g
+  is the user's way to abort; `quit` is its mechanism.  The
+  leave-undisplayed outcome is not an abort.
+- **nil choice** — the prompt returns nil without C-g; the action
+  returns nil, and the later functions in Emacs's combined function
+  list run.  A nil choice is not an abort.
 - **caller's ACTION** — the ACTION argument of the `display-buffer`
   call: a `(FUNCTIONS . ALIST)` pair.  Its first function is the
   caller's primary intent; its alist is part of the combined action
@@ -73,8 +78,8 @@ entries below are this package's terms.
   other-window request.
 - **caller intent** — what the caller's ACTION asks for; the first
   function names a place, a tab or frame, a relative placement, a
-  strategy, or no preference.  A constraint or a window-setting entry
-  is an entry the rule reads, not a class.
+  strategy, no display, or no preference.  A constraint or a
+  window-setting entry is an entry the rule reads, not a class.
 - **caller intent info** — the message that states what the caller's
   ACTION asks for and the other entries in the combined action alist
   that the rule reads.  When an entry is not from the caller's ACTION,
@@ -95,8 +100,8 @@ entries below are this package's terms.
 - **window-settings opt-out** — the dispatch action `Display without
   caller window settings`.  It removes the window-setting entries from
   the combined action alist for the package's display call and for a
-  caller list the package runs from that prompt.  It does not change
-  the caller's ACTION and does not affect later calls.
+  run of the caller's function list from that prompt.  It does not
+  change the caller's ACTION and does not affect later calls.
 - **undisplayable window**, **cannot display** — a window that is not a
   **displayable window**: it is dead, is a minibuffer window, is
   dedicated to another buffer, or is a side window.  The design rules
