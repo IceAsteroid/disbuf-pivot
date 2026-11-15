@@ -174,6 +174,9 @@ prose.
   function.
 - merged alist — use **combined action alist**.
 - flow, for the frame/tab/window sequence — use **placement path**.
+- driver — say that the package reads the keys, or name the function
+  that reads them; a transient prefix command returns before the user
+  chooses.
 - placement entry — say **the entry that names a place**, or name the
   entry.
 - fallback line — say the key for the intended choice, or name the

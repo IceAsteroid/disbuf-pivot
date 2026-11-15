@@ -20,6 +20,8 @@
 
 ### Internal Changes
 
+- Docs: list "driver" in Terms not used; say that the package reads
+  the keys, or name the function that reads them.
 - Docs: state which windows the dispatch prompt labels: every window in
   the selected tab or frame, drawn on the windows and shown in a
   separate group in the menu with the same keys and faces.  State that
