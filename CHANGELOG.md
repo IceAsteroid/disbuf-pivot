@@ -20,6 +20,10 @@
 
 ### Internal Changes
 
+- Docs: explain accepting the intended choice: press the key the
+  dispatch prompt shows for it instead of choosing another window
+  label, another dispatch action, or the cancel key; the key is the
+  window label's key or the dispatch action's key.
 - Docs: state that selecting or making a tab enables `tab-bar-mode`
   when `tab-bar-show` is non-nil, so an existing-tab layout switch shows
   the tab bar; the package does not enable it when `tab-bar-show` is

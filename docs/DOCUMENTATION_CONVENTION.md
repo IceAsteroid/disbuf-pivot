@@ -25,6 +25,10 @@ entries below are this package's terms.
 - **intended choice**, **chosen window** — the intended choice is the
   target or dispatch action the package uses if the user accepts
   without choosing another; the dispatch prompt shows it with a key.
+  Accepting it means pressing the key the prompt shows for it instead
+  of choosing another window label, another dispatch action, or the
+  cancel key.  The key is the window label's key when the intended
+  choice is a window, or the dispatch action's key when it is an action.
   An intended window is not a chosen window until the user accepts;
   when no target or action can run, the prompt has no intended choice.
   The chosen window is the window the user chooses through the package's
