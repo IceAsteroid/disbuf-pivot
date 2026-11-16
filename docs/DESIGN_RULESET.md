@@ -415,12 +415,40 @@ A package prefix command is user intent, not caller intent: it sets the
 target for the next command, and the caller's ACTION is not the
 intended choice.
 
-| Prefix | Tab or frame prompt | Dispatch prompt | Intended choice |
-|---|---|---|---|
-| same-window | None | Only when the selected window cannot display | None; the selected window is used when no prompt runs; the dispatch prompt has no intended choice |
-| other-window | None | Yes | The prefix's other-window request |
-| other-tab | The tab prompt | An existing tab: yes; a new tab: no, its selected window | The window that displays the buffer in the tab, else the tab's selected window |
-| other-frame | The frame prompt; the tab prompt when needed for an existing frame | An existing frame: yes; a new frame: no, its selected window | The window that displays the buffer in the target, else the target's selected window |
+| Prefix | Frame prompt | Tab prompt | Dispatch prompt | Intended choice |
+|---|---|---|---|---|
+| same-window | No | No | Only if the selected window cannot display | None; the selected window is used when no prompt runs; the dispatch prompt has no intended choice |
+| other-window | No | No | Yes | The prefix's other-window request |
+| other-tab | No | Yes | Yes for an existing tab; no for a new tab (its selected window) | The window displaying the buffer in the chosen tab, else its selected window |
+| other-frame | Yes | Yes for an existing frame when `tab-bar-mode` is active or the frame has more than one tab; no for a new frame | Yes for an existing tab; no for a new tab (its selected window) | The window displaying the buffer in the chosen tab, else its selected window |
+
+Read each row left to right; `No` skips that prompt, and a conditional
+cell says when it runs.  The other-tab prefix always shows the tab
+prompt; only the other-frame prefix's tab step is gated on
+`tab-bar-mode` or more than one tab.
+
+```text
+same-window
+  → selected window
+  ↳ if the selected window cannot display → dispatch prompt
+
+other-window
+  → dispatch prompt
+
+other-tab
+  → tab prompt
+    ├ existing tab → dispatch prompt
+    └ new tab      → its selected window
+
+other-frame
+  → frame prompt
+    ├ existing frame → tab prompt
+    │                  (when tab-bar-mode is active or the frame has
+    │                   more than one tab)
+    │                  ├ existing tab → dispatch prompt
+    │                  └ new tab      → its selected window
+    └ new frame      → its selected window
+```
 
 For the same-window prefix, use the selected window when it can
 display.  When it cannot, show the dispatch prompt, make the selected
@@ -439,12 +467,13 @@ states the user's request, not the caller's ACTION.  The prefix follows
 Selection follows `disbuf-pivot-other-window-prefix-select`.
 
 The other-tab and other-frame prefixes follow the tab or frame action
-placement path: an existing target shows the dispatch prompt; a new
-target uses its selected window.  An existing target that already
-displays the buffer still shows the dispatch prompt, with that window
-as the intended choice.  Failure after the choice follows section 9.
-Selection after a dispatch prompt follows `disbuf-pivot-action-select`;
-a prefix that shows no dispatch prompt leaves selection to the caller.
+placement path: an existing tab or frame chosen by the prompt shows the
+dispatch prompt; a new tab or frame uses its selected window.  An
+existing tab or frame that already displays the buffer still shows the
+dispatch prompt, with that window as the intended choice.  Failure
+after the choice follows section 9.  Selection after a dispatch prompt
+follows `disbuf-pivot-action-select`; a prefix that shows no dispatch
+prompt leaves selection to the caller.
 
 When the selected frame is a child frame, the prefix commands use the
 parent frame for the dispatch prompt.  Child frames are not targets;

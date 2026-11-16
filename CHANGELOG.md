@@ -20,6 +20,10 @@
 
 ### Internal Changes
 
+- Docs: present the package prefix placement paths as a table and a
+  flow diagram; replace the compressed table and say an existing tab or
+  frame chosen by the prompt shows the dispatch prompt, while a new tab
+  or frame uses its selected window.
 - Docs: add the four package prefix command rules: same-window prompts
   only when the selected window cannot display and uses the parent frame
   for a child frame; other-window shows the dispatch prompt and makes
