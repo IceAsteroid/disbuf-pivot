@@ -20,6 +20,12 @@
 
 ### Internal Changes
 
+- Docs: state that selecting or making a tab enables `tab-bar-mode`
+  when `tab-bar-show` is non-nil, so an existing-tab layout switch shows
+  the tab bar; the package does not enable it when `tab-bar-show` is
+  nil.  It applies to the other-tab prefix, a caller's tab action, the
+  frame prompt's tab step, and a reusable tab.  Define the reusable tab
+  term in the Emacs terms.
 - Docs: present the package prefix placement paths as a table and a
   flow diagram; replace the compressed table and say an existing tab or
   frame chosen by the prompt shows the dispatch prompt, while a new tab

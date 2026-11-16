@@ -389,6 +389,16 @@ same faces.
   selected window.  A new frame uses its selected window.  Skip the tab
   prompt for a new frame, and for a frame with one tab unless
   `tab-bar-mode` is active.
+- When the package selects or makes a tab, it enables `tab-bar-mode` if
+  `tab-bar-show` is non-nil and the mode is off; it does not enable it
+  when `tab-bar-show` is nil.  This applies to the other-tab prefix, a
+  caller's tab action, the frame prompt's tab step, and a reusable tab
+  selected without the tab prompt.  `tab-bar-new-tab` already enables
+  the mode for a new tab (`tab-bar.el:2144–2148`); the package does the
+  same for an existing tab, so the layout switch shows the tab bar.
+  Once the mode is on, the frame prompt's tab step runs for an existing
+  frame even when the frame has one tab; a new frame still uses its
+  selected window.
 - An existing-target action preselects an existing tab or frame; a
   new-target action starts a new one and must not select an existing
   tab or frame with the same name.  The prompt string states the
@@ -640,8 +650,10 @@ prompt runs; the action returns nil.
    prompt for the target window; an existing-target action preselects
    an existing tab or frame, and a new-target action starts a new one
    and does not select an existing target.  Keep the tab and frame
-   placement paths of the package prefix commands.  Use the action
-   functions in section 7 as the display primitives.
+   placement paths of the package prefix commands.  Enable
+   `tab-bar-mode` under `tab-bar-show` when the package selects or
+   makes a tab.  Use the action functions in section 7 as the display
+   primitives.
 5. Handle `inhibit-same-window`: show caller intent info, show the
    dispatch prompt, keep the selected window's label eligible, and bind
    the entry to nil when the user chooses it.
@@ -742,6 +754,10 @@ Every rule needs a Buttercup test.  Combine:
   prompt; an existing target that displays the buffer shows the
   dispatch prompt with the display window as the intended choice;
   failure and selection;
+- tab bar mode: selecting or making a tab enables `tab-bar-mode` when
+  `tab-bar-show` is non-nil and does not when it is nil; an existing tab
+  selection shows the tab bar; the frame prompt's tab step runs after
+  the mode is enabled;
 - option: each value of `disbuf-pivot-reuse`,
   `disbuf-pivot-same-window-conflict`, `disbuf-pivot-caller-intent-info`,
   `disbuf-pivot-exclude-conditions`, `disbuf-pivot-action-select`, and

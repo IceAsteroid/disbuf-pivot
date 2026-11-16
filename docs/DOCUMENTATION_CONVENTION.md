@@ -156,6 +156,12 @@ entries below are this package's terms.
 - **child frame** — an Emacs frame whose `parent-frame` parameter is
   non-nil.  It is displayed within the parent frame's area and is not a
   separate desktop window.
+- **reusable tab** — a tab in one of the frames named by a non-nil
+  `reusable-frames` entry that already displays the buffer.  A tab or
+  frame action finds it with `tab-bar-get-buffer-tab` and selects it
+  with `tab-bar-select-tab` without the tab prompt; the dispatch prompt
+  for its window may still run.  `display-buffer-in-tab` uses the
+  phrase.
 - **transient menu** — the menu a transient prefix command shows; its
   keys are bound to transient suffix commands.
 - **transient prefix command** — the command that shows a transient
