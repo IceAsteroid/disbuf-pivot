@@ -406,7 +406,49 @@ same faces.
   Below-selected and at-bottom use their own functions for the intended
   choice.  Side windows are left as-is.
 - The four package prefix commands are remapped: same-window,
-  other-window, other-tab, and other-frame.
+  other-window, other-tab, and other-frame.  The next subsection gives
+  their placement paths and intended choices.
+
+### The package prefix commands
+
+A package prefix command is user intent, not caller intent: it sets the
+target for the next command, and the caller's ACTION is not the
+intended choice.
+
+| Prefix | Tab or frame prompt | Dispatch prompt | Intended choice |
+|---|---|---|---|
+| same-window | None | Only when the selected window cannot display | None; the selected window is used when no prompt runs; the dispatch prompt has no intended choice |
+| other-window | None | Yes | The prefix's other-window request |
+| other-tab | The tab prompt | An existing tab: yes; a new tab: no, its selected window | The window that displays the buffer in the tab, else the tab's selected window |
+| other-frame | The frame prompt; the tab prompt when needed for an existing frame | An existing frame: yes; a new frame: no, its selected window | The window that displays the buffer in the target, else the target's selected window |
+
+For the same-window prefix, use the selected window when it can
+display.  When it cannot, show the dispatch prompt, make the selected
+window's label ineligible when it is in that tab or frame, and leave
+the prompt without an intended choice; its split actions and cancel key
+remain.
+
+For the other-window prefix, show the dispatch prompt, label every
+window in the selected tab or frame, and make the selected window's
+label ineligible when it is in that tab or frame.  Split actions are
+prompt choices, not automatic.  The intended choice is the prefix's
+other-window request, not "Use caller intent"; the caller's ACTION may
+still appear in the Caller intent group when it can run.  The info line
+states the user's request, not the caller's ACTION.  The prefix follows
+`reusable-frames` and ignores the selected window for the display.
+Selection follows `disbuf-pivot-other-window-prefix-select`.
+
+The other-tab and other-frame prefixes follow the tab or frame action
+placement path: an existing target shows the dispatch prompt; a new
+target uses its selected window.  An existing target that already
+displays the buffer still shows the dispatch prompt, with that window
+as the intended choice.  Failure after the choice follows section 9.
+Selection after a dispatch prompt follows `disbuf-pivot-action-select`;
+a prefix that shows no dispatch prompt leaves selection to the caller.
+
+When the selected frame is a child frame, the prefix commands use the
+parent frame for the dispatch prompt.  Child frames are not targets;
+the frame prompt offers top-level frames only.
 
 ## 7. Action function checklist
 
@@ -663,6 +705,14 @@ Every rule needs a Buttercup test.  Combine:
   `window-height`, `window-width`, `window-size`; a window-setting
   toggle removes and restores one key's associations while the prompt
   stays open, and leaves `body-function` and the other entries;
+- prefix command: same-window with the selected window displayable and
+  not; other-window's dispatch prompt with the selected window
+  ineligible, no automatic split, and the prefix's other-window request
+  as the intended choice; other-tab existing and new; other-frame
+  existing and new; a child frame uses the parent frame for the dispatch
+  prompt; an existing target that displays the buffer shows the
+  dispatch prompt with the display window as the intended choice;
+  failure and selection;
 - option: each value of `disbuf-pivot-reuse`,
   `disbuf-pivot-same-window-conflict`, `disbuf-pivot-caller-intent-info`,
   `disbuf-pivot-exclude-conditions`, `disbuf-pivot-action-select`, and

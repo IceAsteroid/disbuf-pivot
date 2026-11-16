@@ -20,6 +20,12 @@
 
 ### Internal Changes
 
+- Docs: add the four package prefix command rules: same-window prompts
+  only when the selected window cannot display and uses the parent frame
+  for a child frame; other-window shows the dispatch prompt and makes
+  the prefix's other-window request the intended choice; other-tab and
+  other-frame prompt for an existing target and use a new target's
+  selected window.
 - Docs: make the dispatch prompt the package's menu, not a transient
   menu: the action function reads its keys and does not return until the
   user chooses; a transient prefix command returns before the choice and
