@@ -13,9 +13,11 @@ repository.
 Emacs's terms and common technical terms are used as they are.  The
 entries below are this package's terms.
 
-- **pivot** — the point at which the package either respects the
-  caller's intent or replaces that intent with the user's explicit
-  choice.  The package name uses the word.
+- **pivot**, **outside the pivot** — the pivot is the point at which
+  the package either respects the caller's intent or replaces that
+  intent with the user's explicit choice.  A tab prompt is outside the
+  pivot when neither the package's `display-buffer-alist` entry nor a
+  package prefix command shows it.  The package name uses the word.
 - **target**, **placement path** — a target is a frame, tab, or window
   that the caller's intent names or the user chooses through a prompt.
   A frame or tab target is a container; a window target is the window
