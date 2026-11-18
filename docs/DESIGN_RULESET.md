@@ -92,7 +92,12 @@ The package distinguishes these classes:
   or frame choice: prompt with the tab prompt or frame prompt.  An
   existing-target action preselects an existing tab or frame; a
   new-target action starts a new one and does not select an existing
-  target.
+  target.  The tab prompt offers the tabs of its scope (section 6); a
+  tab action that reads `reusable-frames` adds every tab in the frames
+  it names that already displays the buffer as a candidate, and does
+  not add the other tabs of those frames.  A reusable tab is a
+  candidate, not a silent selection.  Child frames are not targets; the
+  tab prompt does not offer them.
 - **names a relative placement** -- `display-buffer-in-direction`
   (`direction`, `window`), `display-buffer-below-selected`, and
   `display-buffer-at-bottom`.  Regulate like direction: show caller
@@ -268,6 +273,13 @@ no window labels.
 - `disbuf-pivot-other-window-prefix-select` -- `auto` (default), `t`,
   or `nil`.  It has the same values and effects after the other-window
   prefix.
+- `disbuf-pivot-tab-prompt-scope` -- nil (default), `t`, `visible`, or
+  `0`.  The standalone default for the tab prompt scope: nil for the
+  selected frame, `t` for all existing frames, `visible` for the visible
+  frames, and `0` for all frames on the current terminal.  The reader
+  argument also accepts a frame.  The tab prompt uses the option when
+  its caller supplies no scope; the pivot uses the selected frame and
+  does not read the option.
 
 C-g always aborts; there is no option for it.
 
@@ -389,11 +401,33 @@ same faces.
   selected window.  A new frame uses its selected window.  Skip the tab
   prompt for a new frame, and for a frame with one tab unless
   `tab-bar-mode` is active.
+- The tab prompt offers the tabs of its scope: nil for the selected
+  frame, `t` for all existing frames, `visible` for the visible frames,
+  `0` for all frames on the current terminal, or a frame for that frame.
+  Child frames are not offered.  The reader takes an optional scope; a
+  caller that supplies none uses `disbuf-pivot-tab-prompt-scope`; the
+  pivot supplies the selected frame and does not read the option.  The
+  prompt string is "Switch or create tab:"; when the scope is not the
+  selected frame, it states the scope.
+- A tab action that reads `reusable-frames` adds every tab in the
+  frames it names that already displays the buffer to the tab prompt as
+  a candidate.  It does not add the other tabs of those frames.
+  Choosing the candidate selects its frame and the tab; no frame prompt
+  runs for the choice.  When several tabs display the buffer, all are
+  candidates; the intended choice is the tab the caller's function
+  would select, following `ignore-current-tab`.
+- The tab candidate annotation shows the frame when the prompt offers
+  tabs in more than one frame.  A name that matches no tab the prompt
+  offers is a tab history candidate.  The package supplies the
+  annotation, not Marginalia.
+- A candidate whose tab is outside the selected frame has no preview;
+  the consult reader does not switch frames during completion.  The
+  buffer column of its tab candidate annotation shows its buffers.
 - When the package selects or makes a tab, it enables `tab-bar-mode` if
   `tab-bar-show` is non-nil and the mode is off; it does not enable it
   when `tab-bar-show` is nil.  This applies to the other-tab prefix, a
   caller's tab action, the frame prompt's tab step, and a reusable tab
-  selected without the tab prompt.  `tab-bar-new-tab` already enables
+  chosen in the tab prompt.  `tab-bar-new-tab` already enables
   the mode for a new tab (`tab-bar.el:2144–2148`); the package does the
   same for an existing tab, so the layout switch shows the tab bar.
   Once the mode is on, the frame prompt's tab step runs for an existing
@@ -485,6 +519,12 @@ after the choice follows section 9.  Selection after a dispatch prompt
 follows `disbuf-pivot-action-select`; a prefix that shows no dispatch
 prompt leaves selection to the caller.
 
+The other-tab prefix uses the selected frame as the tab prompt scope;
+the other-frame prefix's tab step uses the chosen frame.  Neither
+prefix reads `disbuf-pivot-tab-prompt-scope`.  A next command's tab
+action that reads `reusable-frames` adds its reusable tabs to the
+prompt.
+
 When the selected frame is a child frame, the prefix commands use the
 parent frame for the dispatch prompt.  Child frames are not targets;
 the frame prompt offers top-level frames only.
@@ -528,7 +568,7 @@ the chosen window after the choice.
 | `display-buffer-full-frame` | Regulate.  Show caller intent info; the dispatch prompt's intended choice is "Display full frame"; a window label displays normally; split, tab, and frame actions override; the cancel key returns nil | Delegates to `display-buffer-reuse-window`, `display-buffer-same-window`, `display-buffer-pop-up-window`, and `display-buffer-use-some-window`; their entries apply |
 | `display-buffer-pop-up-frame` | Regulate for a new frame.  Ask for a new frame name; do not offer existing frames.  Use `pop-up-frame-parameters`; the new frame is top-level unless that entry sets `parent-frame`.  `pop-up-frames` selects the frame strategy but this function does not read it. | `pop-up-frame-parameters`, `inhibit-switch-frame` |
 | `display-buffer-use-some-frame` | Regulate for an existing frame; `frame-predicate` filters the candidates. | `frame-predicate`, `inhibit-same-window`, `inhibit-switch-frame` |
-| `display-buffer-in-tab` | Regulate; preselect an existing or reusable tab; a new tab starts without an existing-tab preselect. | `reusable-frames` (nil differs), `ignore-current-tab`, `tab-name`, `tab-group` |
+| `display-buffer-in-tab` | Regulate.  The tab prompt offers the selected frame's tabs and every tab in the `reusable-frames` scope that displays the buffer; other tabs of those frames are not candidates.  Preselect the tab the function would select (the current tab first unless `ignore-current-tab`); a new tab starts without an existing-tab preselect. | `reusable-frames` (nil differs), `ignore-current-tab`, `tab-name`, `tab-group` |
 | `display-buffer-in-new-tab` | Regulate; ask for a new tab name; do not select an existing tab with the same name. | `tab-name`, `tab-group` |
 | `display-buffer-no-window` | Regulate: leave undisplayed; only with `allow-no-window`. | `allow-no-window` |
 | `display-buffer-in-child-frame` | Respect. | `child-frame-parameters` (including a `parent-frame` entry naming a top-level or child frame), `inhibit-switch-frame` |
@@ -559,7 +599,7 @@ function, not a window-setting entry; the package preserves it.
 | `previous-window` | Show the named window as the preferred candidate when it is displayable; do not force it.  Without a usable entry, mark the windows that previously showed the buffer. |
 | `mode` | Pass to `display-buffer-reuse-mode-window` when reuse is regulated with a mode. |
 | `frame-predicate` | Frame candidates; honor. |
-| `reusable-frames` | Reuse and tab scope; honor.  The tab meaning of nil differs. |
+| `reusable-frames` | Reuse and tab scope; honor.  The tab meaning of nil differs.  For a tab action, the frames are searched for a tab that displays the buffer; they do not add those frames' other tabs to the tab prompt. |
 | `window-min-width`, `window-min-height` | Eligibility constraints; honor when choosing a window. |
 | `some-window`, `lru-frames`, `lru-time` | Pass to `display-buffer-use-some-window` or `display-buffer-use-least-recent-window` when the package calls it; otherwise leave in the alist.  Do not apply them to the chosen window. |
 | `reuse-indirect` | Pass to `display-buffer-reuse-window`. |
@@ -684,10 +724,16 @@ prompt runs; the action returns nil.
     choice is "Display full frame"; add the tab and frame actions to
     the Other group.  A window label displays normally; "Display full
     frame" deletes the other windows; the cancel key returns nil.
-13. Add tests for every rule in section 4, every action function in
+13. Add the tab prompt scope: the scope option and reader argument;
+    the scope values and child-frame exclusion; the reusable tabs from
+    `reusable-frames` as added candidates; the frame-aware selection;
+    the frame column in the tab candidate annotation; the
+    scope-relative tab history candidate; and no preview for a
+    candidate outside the selected frame.
+14. Add tests for every rule in section 4, every action function in
     section 7, every action alist entry in section 8, and every context
     in section 9.
-14. Update `README.md` and `CHANGELOG.md` after the behavior is
+15. Update `README.md` and `CHANGELOG.md` after the behavior is
     implemented.
 
 ## 11. Test matrix
@@ -714,6 +760,21 @@ Every rule needs a Buttercup test.  Combine:
   existing tab or frame; a new-target action starts a new one and does
   not select an existing one; the prompt string states the caller's
   intention;
+- tab prompt scope: nil, `t`, `visible`, `0`, and a frame; child frames
+  are excluded; the prompt string states the scope; a standalone caller
+  uses `disbuf-pivot-tab-prompt-scope`; the pivot uses the selected
+  frame and does not read the option;
+- reusable tab: a tab in another frame is a candidate; that frame's
+  other tabs are not; several matching tabs are candidates, with the
+  function's choice as the intended choice; choosing the candidate
+  selects its frame and the tab; no frame prompt runs;
+- tab candidate annotation: the frame column appears when the prompt
+  offers tabs in more than one frame; a name matching no offered tab is
+  a tab history candidate; the package supplies the annotation, not
+  Marginalia;
+- tab preview: a candidate in the selected frame keeps the layout
+  preview; a candidate in another frame has no preview; the buffer
+  column shows its buffers;
 - window state: selected window eligible, dedicated to another buffer,
   dedicated to this buffer, side, minibuffer, and dead; window already
   displaying the buffer or not;
@@ -760,7 +821,8 @@ Every rule needs a Buttercup test.  Combine:
   the mode is enabled;
 - option: each value of `disbuf-pivot-reuse`,
   `disbuf-pivot-same-window-conflict`, `disbuf-pivot-caller-intent-info`,
-  `disbuf-pivot-exclude-conditions`, `disbuf-pivot-action-select`, and
+  `disbuf-pivot-exclude-conditions`, `disbuf-pivot-tab-prompt-scope`,
+  `disbuf-pivot-action-select`, and
   `disbuf-pivot-other-window-prefix-select`; the default and a
   reordered `disbuf-pivot-action-functions`;
 - context: batch, active minibuffer, timer, process filter, keyboard

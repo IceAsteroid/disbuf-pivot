@@ -78,12 +78,12 @@ entries below are this package's terms.
   the state, the frame, the window count, the group, or the buffer.  The
   state is a tab index or a tab history candidate.  The package supplies
   the annotation, not Marginalia.
-- **tab history candidate** — a tab prompt candidate whose name matches
-  no tab in the tab prompt scope; the name comes from the tab history.
-  A name can be a tab history candidate in one scope and name a tab in
-  another, so the state is scope-relative.  The current source marks
-  such a candidate `(closed)`; the design does not call it a closed
-  tab.
+- **tab history candidate** — a tab prompt candidate whose name comes
+  from the tab history and names no tab the tab prompt offers: no tab
+  in its scope and no added reusable tab.  A name can be a tab history
+  candidate in one prompt and name a tab in another, so the state is
+  scope-relative.  The current source marks such a candidate `(closed)`;
+  the design does not call it a closed tab.
 - **failure after the choice** — a failure after the user chooses a
   window, tab, frame, or dispatch action from a prompt: the chosen
   window is undisplayable, its frame or tab is gone, or the display
@@ -179,10 +179,10 @@ entries below are this package's terms.
   separate desktop window.
 - **reusable tab** — a tab in one of the frames named by a non-nil
   `reusable-frames` entry that already displays the buffer.  A tab or
-  frame action finds it with `tab-bar-get-buffer-tab` and selects it
-  with `tab-bar-select-tab` without the tab prompt; the dispatch prompt
-  for its window may still run.  `display-buffer-in-tab` uses the
-  phrase.
+  frame action finds it with `tab-bar-get-buffer-tab`; the tab prompt
+  offers it as a candidate, and choosing it selects its frame and the
+  tab.  The dispatch prompt for its window may still run.
+  `display-buffer-in-tab` uses the phrase.
 - **transient menu** — the menu a transient prefix command shows; its
   keys are bound to transient suffix commands.
 - **transient prefix command** — the command that shows a transient

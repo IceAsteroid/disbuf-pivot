@@ -20,6 +20,13 @@
 
 ### Internal Changes
 
+- Docs: give the tab prompt a scope and make the reusable tab a tab
+  prompt candidate.  The tab prompt offers the tabs of its scope and,
+  for a tab action that reads `reusable-frames`, every tab in those
+  frames that displays the buffer; the other tabs of those frames are
+  not candidates.  A candidate outside the selected frame has no
+  preview.  Update the reusable tab and tab history candidate
+  definitions.
 - Docs: define the tab prompt scope, tab candidate annotation, tab
   annotation column, and tab history candidate terms; the scope names
   the frames whose tabs the tab prompt offers, the package supplies the
