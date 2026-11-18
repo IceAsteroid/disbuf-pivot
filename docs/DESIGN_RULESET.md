@@ -278,8 +278,10 @@ no window labels.
   the selected frame, `t` for all existing frames, `visible` for the
   visible frames, and `0` for all frames on the current terminal.  The
   reader's scope argument also accepts a frame.  Outside the pivot, the
-  tab prompt uses the option as its default; at the pivot, its scope is
-  the selected frame.  The option applies only outside the pivot.
+  tab prompt uses the user option as its default; at the pivot, its
+  scope is the selected frame, and the reusable tabs from other frames
+  are candidates, not part of the scope.  The user option applies only
+  outside the pivot.
 
 C-g always aborts; there is no option for it.
 
@@ -407,9 +409,10 @@ same faces.
   Child frames are not offered.  The reader takes an optional scope;
   outside the pivot, the tab prompt uses
   `disbuf-pivot-tab-prompt-scope` as its default; at the pivot, its
-  scope is the selected frame.  The option applies only outside the
-  pivot.  The prompt string is "Switch or create tab:" for the
-  selected frame; for another scope it appends the scope before the
+  scope is the selected frame, and the reusable tabs from other frames
+  are candidates, not part of the scope.  The user option applies only
+  outside the pivot.  The prompt string is "Switch or create tab:" for
+  the selected frame; for another scope it appends the scope before the
   colon: "(all frames)" for `t`, "(visible frames)" for `visible`,
   "(current terminal)" for `0`, and "(frame NAME)" for a frame.
 - `display-buffer-in-tab` adds every tab in the frames named by
@@ -769,7 +772,7 @@ Every rule needs a Buttercup test.  Combine:
   are excluded; the prompt string appends the scope suffix for `t`,
   `visible`, `0`, and a frame; outside the pivot, the tab prompt uses
   `disbuf-pivot-tab-prompt-scope`; at the pivot, its scope is the
-  selected frame and the option is not read;
+  selected frame and the user option is not read;
 - reusable tab: a tab in another frame is a candidate; that frame's
   other tabs are not; several matching tabs are candidates, with the
   function's choice as the intended choice; choosing the candidate
