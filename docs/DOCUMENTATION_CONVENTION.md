@@ -13,9 +13,11 @@ repository.
 Emacs's terms and common technical terms are used as they are.  The
 entries below are this package's terms.
 
-- **pivot** — the point at which the package either respects the
-  caller's intent or replaces that intent with the user's explicit
-  choice.  The package name uses the word.
+- **pivot**, **outside the pivot** — the pivot is the point at which
+  the package either respects the caller's intent or replaces that
+  intent with the user's explicit choice.  A tab prompt is outside the
+  pivot when neither the package's `display-buffer-alist` entry nor a
+  package prefix command shows it.  The package name uses the word.
 - **target**, **placement path** — a target is a frame, tab, or window
   that the caller's intent names or the user chooses through a prompt.
   A frame or tab target is a container; a window target is the window
@@ -92,9 +94,10 @@ entries below are this package's terms.
   history whose name matches no existing tab the prompt offers: no tab
   in the tab prompt scope and no added reusable tab.  The same name can
   be a tab history candidate in one prompt and a tab candidate in
-  another, so the state is relative to the prompt.  The current
-  implementation marks such a candidate `(closed)`; the design does not
-  call it a closed tab.
+  another, so the state is relative to the prompt.  The prompt marks
+  such a candidate `(closed)`; the marker is relative to the tab prompt
+  scope, which the prompt string states when it is not the selected
+  frame.
 - **failure after the choice** — a failure after the user chooses a
   window, tab, frame, or dispatch action from a prompt: the chosen
   window is undisplayable, its frame or tab is gone, or the display

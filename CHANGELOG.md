@@ -20,6 +20,14 @@
 
 ### Internal Changes
 
+- Docs: define outside the pivot in the pivot term: a tab prompt that
+  neither the package's `display-buffer-alist` entry nor a package
+  prefix command shows.  The user option applies only outside the
+  pivot.
+- Docs: state the exact tab prompt scope suffixes: "(all frames)",
+  "(visible frames)", "(current terminal)", and "(frame NAME)"; the
+  selected frame has no suffix.  Record `(closed)` as the marker of a
+  tab history candidate, relative to the tab prompt scope.
 - Docs: define the plain tab reader and the consult tab reader terms;
   the plain tab reader is the built-in `completing-read` reader, and the
   consult tab reader is the optional reader from

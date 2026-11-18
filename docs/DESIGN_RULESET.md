@@ -278,8 +278,10 @@ no window labels.
   the selected frame, `t` for all existing frames, `visible` for the
   visible frames, and `0` for all frames on the current terminal.  The
   reader's scope argument also accepts a frame.  Outside the pivot, the
-  tab prompt uses the option; the pivot uses the selected frame and
-  does not read the option.
+  tab prompt uses the user option as its default; at the pivot, its
+  scope is the selected frame, and the reusable tabs from other frames
+  are candidates, not part of the scope.  The user option applies only
+  outside the pivot.
 
 C-g always aborts; there is no option for it.
 
@@ -406,10 +408,13 @@ same faces.
   `0` for all frames on the current terminal, or a frame for that frame.
   Child frames are not offered.  The reader takes an optional scope;
   outside the pivot, the tab prompt uses
-  `disbuf-pivot-tab-prompt-scope` as its default; the pivot supplies
-  the selected frame and does not read the option.  The prompt string
-  is "Switch or create tab:"; when the scope is not the selected frame,
-  it states the scope.
+  `disbuf-pivot-tab-prompt-scope` as its default; at the pivot, its
+  scope is the selected frame, and the reusable tabs from other frames
+  are candidates, not part of the scope.  The user option applies only
+  outside the pivot.  The prompt string is "Switch or create tab:" for
+  the selected frame; for another scope it appends the scope before the
+  colon: "(all frames)" for `t`, "(visible frames)" for `visible`,
+  "(current terminal)" for `0`, and "(frame NAME)" for a frame.
 - `display-buffer-in-tab` adds every tab in the frames named by
   `reusable-frames` that already displays the buffer to the tab prompt
   as a candidate.  It does not add the other tabs of those frames.
@@ -419,8 +424,8 @@ same faces.
   would select, following `ignore-current-tab`.
 - The tab candidate annotation shows the frame when the prompt offers
   tabs in more than one frame.  A name that matches no tab the prompt
-  offers is a tab history candidate.  The package supplies the
-  annotation, not Marginalia.
+  offers is a tab history candidate; the prompt marks it `(closed)`.
+  The package supplies the annotation, not Marginalia.
 - The consult tab reader does not preview a candidate whose tab is
   outside the selected frame and does not switch frames during
   completion.  The plain tab reader has no preview.  The buffer column
@@ -764,17 +769,18 @@ Every rule needs a Buttercup test.  Combine:
   not select an existing one; the prompt string states the caller's
   intention;
 - tab prompt scope: nil, `t`, `visible`, `0`, and a frame; child frames
-  are excluded; the prompt string states the scope; outside the pivot,
-  the tab prompt uses `disbuf-pivot-tab-prompt-scope`; the pivot uses
-  the selected frame and does not read the option;
+  are excluded; the prompt string appends the scope suffix for `t`,
+  `visible`, `0`, and a frame; outside the pivot, the tab prompt uses
+  `disbuf-pivot-tab-prompt-scope`; at the pivot, its scope is the
+  selected frame and the user option is not read;
 - reusable tab: a tab in another frame is a candidate; that frame's
   other tabs are not; several matching tabs are candidates, with the
   function's choice as the intended choice; choosing the candidate
   selects its frame and the tab; no frame prompt runs;
 - tab candidate annotation: the frame column appears when the prompt
   offers tabs in more than one frame; a name matching no offered tab is
-  a tab history candidate; the package supplies the annotation, not
-  Marginalia;
+  a tab history candidate, marked `(closed)`; the package supplies the
+  annotation, not Marginalia;
 - tab preview: with the consult tab reader, a candidate in the selected
   frame is previewed by selecting its tab, and a candidate in another
   frame has no preview; the plain tab reader has no preview; the buffer
