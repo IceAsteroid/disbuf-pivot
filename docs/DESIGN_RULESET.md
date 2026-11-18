@@ -274,13 +274,12 @@ no window labels.
   or `nil`.  It has the same values and effects after the other-window
   prefix.
 - `disbuf-pivot-tab-prompt-scope` -- nil (default), `t`, `visible`, or
-  `0`.  The default for a command that shows the tab prompt outside the
-  pivot: nil for the selected frame, `t` for all existing frames,
-  `visible` for the visible frames, and `0` for all frames on the
-  current terminal.  The reader's scope argument also accepts a frame.
-  A command that shows the tab prompt outside the pivot uses the
-  option; the pivot uses the selected frame and does not read the
-  option.
+  `0`.  The default for the tab prompt scope outside the pivot: nil for
+  the selected frame, `t` for all existing frames, `visible` for the
+  visible frames, and `0` for all frames on the current terminal.  The
+  reader's scope argument also accepts a frame.  Outside the pivot, the
+  tab prompt uses the option; the pivot uses the selected frame and
+  does not read the option.
 
 C-g always aborts; there is no option for it.
 
@@ -405,8 +404,8 @@ same faces.
 - The tab prompt offers the tabs of its scope: nil for the selected
   frame, `t` for all existing frames, `visible` for the visible frames,
   `0` for all frames on the current terminal, or a frame for that frame.
-  Child frames are not offered.  The reader takes an optional scope; a
-  command that shows the tab prompt outside the pivot uses
+  Child frames are not offered.  The reader takes an optional scope;
+  outside the pivot, the tab prompt uses
   `disbuf-pivot-tab-prompt-scope` as its default; the pivot supplies
   the selected frame and does not read the option.  The prompt string
   is "Switch or create tab:"; when the scope is not the selected frame,
@@ -422,10 +421,10 @@ same faces.
   tabs in more than one frame.  A name that matches no tab the prompt
   offers is a tab history candidate.  The package supplies the
   annotation, not Marginalia.
-- When the consult reader is active, a candidate whose tab is outside
-  the selected frame has no preview; the consult reader does not switch
-  frames during completion.  The buffer column of its tab candidate
-  annotation shows its buffers.
+- The consult reader does not preview a candidate whose tab is outside
+  the selected frame and does not switch frames during completion.  The
+  plain reader has no preview.  The buffer column of the tab candidate
+  annotation shows the candidate's buffers.
 - When the package selects or makes a tab, it enables `tab-bar-mode` if
   `tab-bar-show` is non-nil and the mode is off; it does not enable it
   when `tab-bar-show` is nil.  This applies to the other-tab prefix, a
@@ -765,10 +764,9 @@ Every rule needs a Buttercup test.  Combine:
   not select an existing one; the prompt string states the caller's
   intention;
 - tab prompt scope: nil, `t`, `visible`, `0`, and a frame; child frames
-  are excluded; the prompt string states the scope; a command that
-  shows the tab prompt outside the pivot uses
-  `disbuf-pivot-tab-prompt-scope`; the pivot uses the selected frame
-  and does not read the option;
+  are excluded; the prompt string states the scope; outside the pivot,
+  the tab prompt uses `disbuf-pivot-tab-prompt-scope`; the pivot uses
+  the selected frame and does not read the option;
 - reusable tab: a tab in another frame is a candidate; that frame's
   other tabs are not; several matching tabs are candidates, with the
   function's choice as the intended choice; choosing the candidate
@@ -777,9 +775,10 @@ Every rule needs a Buttercup test.  Combine:
   offers tabs in more than one frame; a name matching no offered tab is
   a tab history candidate; the package supplies the annotation, not
   Marginalia;
-- tab preview, with the consult reader active: a candidate in the
-  selected frame is previewed by selecting its tab; a candidate in
-  another frame has no preview; the buffer column shows its buffers;
+- tab preview: with the consult reader, a candidate in the selected
+  frame is previewed by selecting its tab, and a candidate in another
+  frame has no preview; the plain reader has no preview; the buffer
+  column shows its buffers;
 - window state: selected window eligible, dedicated to another buffer,
   dedicated to this buffer, side, minibuffer, and dead; window already
   displaying the buffer or not;

@@ -70,8 +70,9 @@ entries below are this package's terms.
 - **tab prompt scope** — the frames whose tabs the tab prompt offers:
   nil for the selected frame, `t` for all existing frames, `visible`
   for the visible frames, `0` for all frames on the current terminal,
-  or a frame, for that frame alone.  `display-buffer-in-tab` uses nil
-  for no reusable search, so the nil meanings differ.
+  or a frame, for that frame alone.  The `reusable-frames` entry of
+  `display-buffer-in-tab` uses nil for no reusable search, so the nil
+  meanings differ.
 - **tab candidate annotation**, **tab annotation column** — the tab
   candidate annotation is the text the tab prompt appends to a
   candidate's name.  A tab annotation column is one field in that text:
@@ -99,8 +100,8 @@ entries below are this package's terms.
   not an abort.
 - **caller**, **caller's ACTION**, **caller intent**, **caller intent
   info** — the caller is the code that calls `display-buffer`; do not
-  use the word for a command that shows the tab prompt.  The caller's
-  ACTION is the ACTION argument of the `display-buffer` call: a
+  use the word for code that shows the tab prompt.  The caller's ACTION
+  is the ACTION argument of the `display-buffer` call: a
   `(FUNCTIONS . ALIST)` pair.  Its first function is the caller's
   primary intent; its alist is part of the combined action alist.  An
   ACTION with no function is no preference; ACTION `t` is an

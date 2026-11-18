@@ -25,8 +25,9 @@
   for `display-buffer-in-tab`, every tab in the frames named by
   `reusable-frames` that displays the buffer; the other tabs of those
   frames are not candidates.  With the consult reader, a candidate
-  outside the selected frame has no preview.  Update the reusable tab
-  and tab history candidate definitions.
+  outside the selected frame has no preview; the plain reader has no
+  preview.  Update the reusable tab and tab history candidate
+  definitions.
 - Docs: define the tab prompt scope, tab candidate annotation, tab
   annotation column, and tab history candidate terms; the scope names
   the frames whose tabs the tab prompt offers, the package supplies the
