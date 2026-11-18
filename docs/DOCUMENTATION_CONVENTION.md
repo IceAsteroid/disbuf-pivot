@@ -70,20 +70,21 @@ entries below are this package's terms.
 - **tab prompt scope** — the frames whose tabs the tab prompt offers:
   nil for the selected frame, `t` for all existing frames, `visible`
   for the visible frames, `0` for all frames on the current terminal,
-  or a frame, for that frame alone.  The tab action's `reusable-frames`
-  entry uses nil for no reusable search, so the nil meanings differ.
+  or a frame, for that frame alone.  `display-buffer-in-tab` uses nil
+  for no reusable search, so the nil meanings differ.
 - **tab candidate annotation**, **tab annotation column** — the tab
   candidate annotation is the text the tab prompt appends to a
   candidate's name.  A tab annotation column is one field in that text:
   the state, the frame, the window count, the group, or the buffer.  The
   state is a tab index or a tab history candidate.  The package supplies
   the annotation, not Marginalia.
-- **tab history candidate** — a tab prompt candidate whose name comes
-  from the tab history and names no tab the tab prompt offers: no tab
-  in its scope and no added reusable tab.  A name can be a tab history
-  candidate in one prompt and name a tab in another, so the state is
-  scope-relative.  The current source marks such a candidate `(closed)`;
-  the design does not call it a closed tab.
+- **tab history candidate** — a tab prompt candidate from the tab
+  history whose name matches no existing tab the prompt offers: no tab
+  in the tab prompt scope and no added reusable tab.  The same name can
+  be a tab history candidate in one prompt and a tab candidate in
+  another, so the state is relative to the prompt.  The current
+  implementation marks such a candidate `(closed)`; the design does not
+  call it a closed tab.
 - **failure after the choice** — a failure after the user chooses a
   window, tab, frame, or dispatch action from a prompt: the chosen
   window is undisplayable, its frame or tab is gone, or the display
@@ -96,8 +97,10 @@ entries below are this package's terms.
   nil, and the later functions in Emacs's combined function list run.
   The dispatch prompt's cancel key makes a nil choice.  A nil choice is
   not an abort.
-- **caller's ACTION**, **caller intent**, **caller intent info** — the
-  caller's ACTION is the ACTION argument of the `display-buffer` call: a
+- **caller**, **caller's ACTION**, **caller intent**, **caller intent
+  info** — the caller is the code that calls `display-buffer`; do not
+  use the word for a command that shows the tab prompt.  The caller's
+  ACTION is the ACTION argument of the `display-buffer` call: a
   `(FUNCTIONS . ALIST)` pair.  Its first function is the caller's
   primary intent; its alist is part of the combined action alist.  An
   ACTION with no function is no preference; ACTION `t` is an
