@@ -92,9 +92,10 @@ entries below are this package's terms.
   history whose name matches no existing tab the prompt offers: no tab
   in the tab prompt scope and no added reusable tab.  The same name can
   be a tab history candidate in one prompt and a tab candidate in
-  another, so the state is relative to the prompt.  The current
-  implementation marks such a candidate `(closed)`; the design does not
-  call it a closed tab.
+  another, so the state is relative to the prompt.  The prompt marks
+  such a candidate `(closed)`; the marker is relative to the tab prompt
+  scope, which the prompt string states when it is not the selected
+  frame.
 - **failure after the choice** — a failure after the user chooses a
   window, tab, frame, or dispatch action from a prompt: the chosen
   window is undisplayable, its frame or tab is gone, or the display
