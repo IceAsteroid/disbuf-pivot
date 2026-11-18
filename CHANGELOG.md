@@ -10,7 +10,7 @@
 - Add: `disbuf-pivot-mode-line-help`; nil by default hides the
   dispatch hint in the mode line, non-nil shows it.  It does not affect
   the echo-area dispatch hint or `ace-window-display-mode` labels.
-- Doc: describe the consult reader's child-frame cleanup and
+- Doc: describe the consult tab reader's child-frame cleanup and
   minibuffer-height preservation separately; state the existing-frame
   condition in the frame prefix; qualify the `aw-select` prompt feedback;
   define the window prompt without limiting it to a tab or frame; tighten
@@ -20,13 +20,18 @@
 
 ### Internal Changes
 
+- Docs: define the plain tab reader and the consult tab reader terms;
+  the plain tab reader is the built-in `completing-read` reader, and the
+  consult tab reader is the optional reader from
+  `disbuf-pivot-tab-bar-consult.el`.  Use the qualified terms in the
+  README, CONTRIBUTING, design rules, and matrix.
 - Docs: give the tab prompt a scope and make the reusable tab a tab
   prompt candidate.  The tab prompt offers the tabs of its scope and,
   for `display-buffer-in-tab`, every tab in the frames named by
   `reusable-frames` that displays the buffer; the other tabs of those
-  frames are not candidates.  With the consult reader, a candidate
-  outside the selected frame has no preview; the plain reader has no
-  preview.  Update the reusable tab and tab history candidate
+  frames are not candidates.  With the consult tab reader, a candidate
+  outside the selected frame has no preview; the plain tab reader has
+  no preview.  Update the reusable tab and tab history candidate
   definitions.
 - Docs: define the tab prompt scope, tab candidate annotation, tab
   annotation column, and tab history candidate terms; the scope names
@@ -74,10 +79,8 @@
 - Docs: rename the tab reader term to tab prompt and add the frame
   prompt; make the two prompts a standalone entry, separate from the
   tab or frame action and child-frame action terms; replace the stale
-  "frame readers" wording with "frame prompt"; the tab reader remains
-  the implementation function and replaceable reader, not the prompt
-  term.  The current source and README still use the tab reader
-  wording.
+  "frame readers" wording with "frame prompt"; the reader remains the
+  implementation function and replaceable reader, not the prompt term.
 - Docs: replace the two-prompt rule with the transient dispatch prompt;
   define the intended choice, the window-setting toggle, and the
   ineligible window; add the eligible and ineligible label faces; drop

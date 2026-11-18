@@ -67,7 +67,7 @@ previous-buffer window is not visible to the user.
 Regulate: they are relative placements; the prompt offers the caller's
 function as the "use caller intent" action.
 
-The tab or frame actions are Regulate: the tab reader or frame prompt
+The tab or frame actions are Regulate: the tab prompt or frame prompt
 preselects an existing tab or frame; a new one starts without an
 existing preselect.  The child-frame action,
 `display-buffer-in-child-frame`, remains Respect.

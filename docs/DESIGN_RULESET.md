@@ -421,10 +421,10 @@ same faces.
   tabs in more than one frame.  A name that matches no tab the prompt
   offers is a tab history candidate.  The package supplies the
   annotation, not Marginalia.
-- The consult reader does not preview a candidate whose tab is outside
-  the selected frame and does not switch frames during completion.  The
-  plain reader has no preview.  The buffer column of the tab candidate
-  annotation shows the candidate's buffers.
+- The consult tab reader does not preview a candidate whose tab is
+  outside the selected frame and does not switch frames during
+  completion.  The plain tab reader has no preview.  The buffer column
+  of the tab candidate annotation shows the candidate's buffers.
 - When the package selects or makes a tab, it enables `tab-bar-mode` if
   `tab-bar-show` is non-nil and the mode is off; it does not enable it
   when `tab-bar-show` is nil.  This applies to the other-tab prefix, a
@@ -775,9 +775,9 @@ Every rule needs a Buttercup test.  Combine:
   offers tabs in more than one frame; a name matching no offered tab is
   a tab history candidate; the package supplies the annotation, not
   Marginalia;
-- tab preview: with the consult reader, a candidate in the selected
+- tab preview: with the consult tab reader, a candidate in the selected
   frame is previewed by selecting its tab, and a candidate in another
-  frame has no preview; the plain reader has no preview; the buffer
+  frame has no preview; the plain tab reader has no preview; the buffer
   column shows its buffers;
 - window state: selected window eligible, dedicated to another buffer,
   dedicated to this buffer, side, minibuffer, and dead; window already

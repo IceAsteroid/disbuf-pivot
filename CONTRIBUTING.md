@@ -21,8 +21,8 @@ it does not advise `display-buffer`.
 `disbuf-pivot-tab-bar.el` holds the tab candidates, history, tab
 selection, and the plain tab reader.
 
-`disbuf-pivot-tab-bar-consult.el` holds the optional consult reader and
-the mode that installs it.
+`disbuf-pivot-tab-bar-consult.el` holds the consult tab reader and the
+mode that installs it.
 
 `test/` holds the Buttercup tests.  `README.md` describes use;
 `CHANGELOG.md` records the incremental changes.  `Makefile`, `Eldev`,

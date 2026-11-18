@@ -61,12 +61,21 @@ entries below are this package's terms.
   child-frame action is `display-buffer-in-child-frame`.
 - **tab prompt**, **frame prompt** — the tab prompt reads a tab name;
   `disbuf-pivot-tab-bar-read-tab-name` implements it.
-  `disbuf-pivot-tab-bar-read-function` can replace its reader, and the
-  optional consult library supplies another reader.  The frame prompt
-  reads a frame name from the live visible top-level frames, filtered by
-  `frame-predicate`; `dp-action--frame` implements it.  An existing name
-  selects the frame, a new name makes a new frame, and an empty name
-  makes a new frame with the default name.
+  `disbuf-pivot-tab-bar-read-function` can replace the plain tab
+  reader, and the optional consult library supplies the consult tab
+  reader.  The frame prompt reads a frame name from the live visible
+  top-level frames, filtered by `frame-predicate`; `dp-action--frame`
+  implements it.  An existing name selects the frame, a new name makes
+  a new frame, and an empty name makes a new frame with the default
+  name.
+- **plain tab reader**, **consult tab reader** — the plain tab reader is
+  the tab prompt's built-in reader:
+  `disbuf-pivot-tab-bar-read-tab-name` uses `completing-read` when
+  `disbuf-pivot-tab-bar-read-function` is nil.  The consult tab reader
+  is the optional reader in `disbuf-pivot-tab-bar-consult.el`;
+  `disbuf-pivot-tab-bar-consult-mode` installs it in
+  `disbuf-pivot-tab-bar-read-function`, and it uses `consult` and
+  supplies previews.
 - **tab prompt scope** — the frames whose tabs the tab prompt offers:
   nil for the selected frame, `t` for all existing frames, `visible`
   for the visible frames, `0` for all frames on the current terminal,
@@ -239,10 +248,9 @@ prose.
   action function.
 - the opt-out, window-settings opt-out — use **window-setting toggle**,
   or name the toggle.
-- tab reader — use **tab prompt**; name
-  `disbuf-pivot-tab-bar-read-tab-name` or the replaceable reader when
-  the implementation is meant.  The current source and README still use
-  the term.
+- tab reader — for the tab prompt, use **tab prompt**; for the reader,
+  use **plain tab reader** or **consult tab reader**.  The current
+  source still uses the unqualified term for the reader.
 - frame reader — use **frame prompt**; the frame prompt is a
   `completing-read` prompt, not a replaceable reader.
 - split rule — name `disbuf-pivot-window-utility-split-p` and its

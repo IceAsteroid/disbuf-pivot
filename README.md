@@ -85,16 +85,16 @@ frame is selected, when the selected window cannot display a buffer.
   window.  A new frame name makes a new frame with that name; an empty
   name makes a new frame with the default name.
 
-## The tab reader
+## Reading a tab name
 
 `disbuf-pivot-tab-bar-read-tab-name` reads a tab name from the tabs on
 the tab bar, the closed-tab history, the configured sort and the
-annotations.  `disbuf-pivot-tab-bar-read-function` can replace the plain
-`completing-read` reader.  The optional
-`disbuf-pivot-tab-bar-consult` library supplies a consult reader with
-previews and the mode that installs it.
+annotations.  `disbuf-pivot-tab-bar-read-function` can replace the
+plain tab reader.  The optional `disbuf-pivot-tab-bar-consult` library
+supplies the consult tab reader with previews and the mode that
+installs it.
 
-The consult reader deletes child frames before it saves the window
+The consult tab reader deletes child frames before it saves the window
 configuration, because the PGTK build of Emacs deadlocks when that
 configuration contains invisible Corfu frames.  It also preserves the
 minibuffer height while a preview selects a tab.  The `emacs-utils`
@@ -105,7 +105,7 @@ and overrides.
 
 Emacs 31.1 is the tested version.  `ace-window` is required; `avy` is
 required by `ace-window`.  Consult is optional and needed only by the
-consult reader.  `tab-bar-mode` is needed for tab targets.
+consult tab reader.  `tab-bar-mode` is needed for tab targets.
 
 Add the repository root to `load-path`, or install the package, then
 require the libraries and enable the modes:
@@ -120,8 +120,8 @@ require the libraries and enable the modes:
 The commands are `disbuf-pivot-same-window-prefix`,
 `disbuf-pivot-other-window-prefix`,
 `disbuf-pivot-other-tab-prefix`, and
-`disbuf-pivot-other-frame-prefix`.  The optional consult reader is a
-separate library:
+`disbuf-pivot-other-frame-prefix`.  The optional consult tab reader is
+a separate library:
 
 ```elisp
 (require 'disbuf-pivot-tab-bar-consult)
@@ -136,9 +136,9 @@ separate library:
   options, and the window prompt.
 - `disbuf-pivot-prefix` holds the prefix commands and the prefix mode.
 - `disbuf-pivot-tab-bar` holds the tab candidates, history, selection
-  and plain reader.
-- `disbuf-pivot-tab-bar-consult` holds the optional consult reader and
-  the mode that installs it.
+  and the plain tab reader.
+- `disbuf-pivot-tab-bar-consult` holds the consult tab reader and the
+  mode that installs it.
 
 `disbuf-pivot.el` is the package main file and carries the package
 `Package-Requires`; the optional consult library names `consult` in its
@@ -168,7 +168,7 @@ Commentary.  The source files use `dp-` as a shorthand for
 - When no other window can display the buffer, the other-window prefix
   can use the selected window rather than fail.
 - The tests cover the action, the prefix commands, the tab and frame
-  targets, and the tab reader.  The consult preview is checked by
+  targets, and the plain tab reader.  The consult preview is checked by
   compilation and checkdoc, not by a full preview test.
 
 ## Development
