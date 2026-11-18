@@ -20,6 +20,10 @@
 
 ### Internal Changes
 
+- Docs: define the tab prompt scope, tab candidate annotation, tab
+  annotation column, and tab history candidate terms; the scope names
+  the frames whose tabs the tab prompt offers, the package supplies the
+  annotation, and a tab history candidate is relative to the scope.
 - Docs: explain accepting the intended choice: press the key the
   dispatch prompt shows for it instead of choosing another window
   label, another dispatch action, or the cancel key; the key is the

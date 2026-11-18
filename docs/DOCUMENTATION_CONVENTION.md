@@ -67,6 +67,23 @@ entries below are this package's terms.
   `frame-predicate`; `dp-action--frame` implements it.  An existing name
   selects the frame, a new name makes a new frame, and an empty name
   makes a new frame with the default name.
+- **tab prompt scope** — the frames whose tabs the tab prompt offers:
+  nil for the selected frame, `t` for all existing frames, `visible`
+  for the visible frames, `0` for all frames on the current terminal,
+  or a frame, for that frame alone.  The tab action's `reusable-frames`
+  entry uses nil for no reusable search, so the nil meanings differ.
+- **tab candidate annotation**, **tab annotation column** — the tab
+  candidate annotation is the text the tab prompt appends to a
+  candidate's name.  A tab annotation column is one field in that text:
+  the state, the frame, the window count, the group, or the buffer.  The
+  state is a tab index or a tab history candidate.  The package supplies
+  the annotation, not Marginalia.
+- **tab history candidate** — a tab prompt candidate whose name matches
+  no tab in the tab prompt scope; the name comes from the tab history.
+  A name can be a tab history candidate in one scope and name a tab in
+  another, so the state is scope-relative.  The current source marks
+  such a candidate `(closed)`; the design does not call it a closed
+  tab.
 - **failure after the choice** — a failure after the user chooses a
   window, tab, frame, or dispatch action from a prompt: the chosen
   window is undisplayable, its frame or tab is gone, or the display
