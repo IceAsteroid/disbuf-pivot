@@ -100,7 +100,7 @@ entries below are this package's terms.
   frame.
 - **failure after the choice** — a failure after the user chooses a
   window, tab, frame, or dispatch action from a prompt: the chosen
-  window is undisplayable, its frame or tab is gone, or the display
+  window is undisplayable, its frame or tab is gone, or the action
   function returns nil or errors.  The design rules list the responses.
 - **abort**, **nil choice** — an abort ends the display instead of
   prompting again or returning nil, and does not run the later functions
@@ -180,13 +180,24 @@ entries below are this package's terms.
 
 - **action alist entry** — an association in an action alist.  A
   `display-buffer-alist` element is not an action alist entry.
-- **combined action alist** — the action alist `display-buffer` builds
-  by combining, in order, the alists from
-  `display-buffer-overriding-action`, the matching
+- **action function** — a function that accepts the buffer and an
+  action alist, tries to display the buffer, and returns the window or
+  nil; `display-buffer` calls it.  Examples are
+  `display-buffer-same-window`, `display-buffer-reuse-window`, and
+  `display-buffer-pop-up-frame`.  A tab or frame action is an action
+  function; a dispatch action is not.
+- **combined action alist**, **combined function list** — the two
+  products of the same combination.  The combined action alist is the
+  action alist `display-buffer` builds by combining, in order, the
+  alists from `display-buffer-overriding-action`, the matching
   `display-buffer-alist` entry, the special action, the caller's ACTION,
   the extra action (the old-style ACTION and the FRAME argument),
-  `display-buffer-base-action`, and `display-buffer-fallback-action`.
-  The first association of a key wins.
+  `display-buffer-base-action`, and `display-buffer-fallback-action`;
+  the first association of a key wins.  The combined function list is
+  the list of action functions built from the function lists of the
+  same sources; `display-buffer` calls them in turn, passing each the
+  combined action alist, until one returns non-nil, and does not remove
+  duplicates.  The list is not an action alist.
 - **top-level frame** — an Emacs frame whose `parent-frame` parameter
   is nil.  On a graphical display it is a separate desktop window
   managed by the graphical environment's window manager; on a text
@@ -227,8 +238,10 @@ prose.
 - physical / physically, for an undisplayable window — say
   **undisplayable window** or cannot display, and name the condition.
 - failed interactive display — name the failure: the chosen window is
-  undisplayable, its frame or tab is gone, or the display function
+  undisplayable, its frame or tab is gone, or the action function
   errors.
+- display function, display action function — use **action function**,
+  or name the function.
 - display action, for the package's entry — say **the package's
   `display-buffer-alist` entry**, or name the condition and action
   function.

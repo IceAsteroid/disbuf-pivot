@@ -118,7 +118,7 @@ A constraint or a window-setting entry is an action alist entry the
 rule reads, not a class.  `reusable-frames`, `previous-window`,
 `frame-predicate`, `window-min-width`, and `window-min-height` are
 constraints; honor them.  `inhibit-switch-frame` is honored where the
-display function reads it; it does not limit the candidate windows.
+action function reads it; it does not limit the candidate windows.
 `allow-no-window` permits the leave-undisplayed outcome (section 4).
 
 `display-buffer-in-child-frame` takes `parent-frame` from
@@ -665,9 +665,9 @@ prompt runs; the action returns nil.
 - Failure after the choice: if the chosen window is undisplayable
   because it is dead, show the dispatch prompt again; if it is
   undisplayable because its frame or tab is gone, prompt again with the
-  frame prompt or tab prompt.  If the display function returns nil,
-  report it with `message` and return `fail`; if it signals an error,
-  propagate or re-signal it.  A split action failure is separate:
+  frame prompt or tab prompt.  If the action function it calls returns
+  nil, report it with `message` and return `fail`; if it signals an
+  error, propagate or re-signal it.  A split action failure is separate:
   section 6 shows the error and shows the dispatch prompt again.  A
   `body-function` error is such a failure; it is not a window-setting
   entry and a window-setting toggle does not remove it.  Do not return
@@ -844,7 +844,7 @@ Every rule needs a Buttercup test.  Combine:
   macro, and recursive display.
 
 Also test C-g (quit), a nil choice (returns nil and the caller's ACTION
-functions run), split failure, dead windows, a display function that
+functions run), split failure, dead windows, an action function that
 returns nil (message and `fail`) or signals an error (propagates or is
 re-signaled), a `body-function` error, that selection entries are not
 applied to the chosen window, that `post-command-select-window` is
