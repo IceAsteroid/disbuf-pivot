@@ -20,6 +20,11 @@
 
 ### Internal Changes
 
+- Docs: define action alist entry in the Emacs terms, use it in the
+  selection-entry, window-setting-entry, and caller-intent definitions,
+  qualify the package's `display-buffer-alist` entry references and the
+  action alist checklist opening, and replace the undefined "toggled
+  entry".
 - Docs: define outside the pivot in the pivot term: a tab prompt that
   neither the package's `display-buffer-alist` entry nor a package
   prefix command shows.  The user option applies only outside the

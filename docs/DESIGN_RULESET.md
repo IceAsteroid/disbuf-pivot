@@ -67,8 +67,9 @@ The package reads two inputs:
   and `display-buffer-fallback-action`.  The first association of a key
   wins.
 
-The package's entry condition receives the caller's ACTION; its action
-function receives the combined action alist.
+The condition of the package's `display-buffer-alist` entry receives
+the caller's ACTION; its action function receives the combined action
+alist.
 
 An entry in the combined action alist does not move the call to another
 class by itself.  The first function's rule names the entries it reads.
@@ -113,12 +114,12 @@ The package distinguishes these classes:
   `disbuf-pivot-action-functions`: reuse a window that displays the
   buffer, use the selected window when it can display, then prompt.
 
-A constraint or a window-setting entry is an entry the rule reads, not
-a class.  `reusable-frames`, `previous-window`, `frame-predicate`,
-`window-min-width`, and `window-min-height` are constraints; honor
-them.  `inhibit-switch-frame` is honored where the display function
-reads it; it does not limit the candidate windows.  `allow-no-window`
-permits the leave-undisplayed outcome (section 4).
+A constraint or a window-setting entry is an action alist entry the
+rule reads, not a class.  `reusable-frames`, `previous-window`,
+`frame-predicate`, `window-min-width`, and `window-min-height` are
+constraints; honor them.  `inhibit-switch-frame` is honored where the
+display function reads it; it does not limit the candidate windows.
+`allow-no-window` permits the leave-undisplayed outcome (section 4).
 
 `display-buffer-in-child-frame` takes `parent-frame` from
 `child-frame-parameters`; a top-level `parent-frame` entry is not read.
@@ -150,16 +151,17 @@ When the rule shows the dispatch prompt, the intended choice is "Use
 caller intent" when the caller's ACTION can run; the dispatch prompt
 shows it with a key.  Choosing it runs the caller's whole function list
 in order with the combined action alist, under a guard that prevents
-the package's entry from running again.  The action is in the Caller
-intent group.  The package does not regulate a later function; it
-remains a later function in the caller's ACTION.  If the package cannot
-prompt (section 9), it returns nil and Emacs continues with the later
-functions in its combined function list; the caller's later functions
-are fallbacks.  A failure after the choice while the package can prompt
-is handled by showing the dispatch prompt again or aborting; it does
-not return nil to the caller's ACTION functions.  Emacs calls every
-function in its combined list with the same combined action alist; a
-function that returns nil passes to the next, and an error propagates.
+the package's `display-buffer-alist` entry from running again.  The
+action is in the Caller intent group.  The package does not regulate a
+later function; it remains a later function in the caller's ACTION.
+If the package cannot prompt (section 9), it returns nil and Emacs
+continues with the later functions in its combined function list; the
+caller's later functions are fallbacks.  A failure after the choice
+while the package can prompt is handled by showing the dispatch prompt
+again or aborting; it does not return nil to the caller's ACTION
+functions.  Emacs calls every function in its combined list with the
+same combined action alist; a function that returns nil passes to the
+next, and an error propagates.
 The package's run of the caller's function list for "Use caller intent"
 follows the same nil and error rule.  If every function in that run
 returns nil, the package shows the dispatch prompt again or aborts; it
@@ -249,22 +251,23 @@ no window labels.
   bind `inhibit-same-window` to nil for the display call.  When it
   asks, the dispatch prompt shows the same window as the intended
   choice; choosing it binds `inhibit-same-window` to nil.
-- `disbuf-pivot-action-functions` -- the action functions the entry
-  tries, in order.  The default is `display-buffer-reuse-window`,
-  `display-buffer-same-window`, and `dp-action-choose-window`; it does
-  not include an automatic split.
+- `disbuf-pivot-action-functions` -- the action functions the package's
+  `display-buffer-alist` entry tries, in order.  The default is
+  `display-buffer-reuse-window`, `display-buffer-same-window`, and
+  `dp-action-choose-window`; it does not include an automatic split.
 - `disbuf-pivot-caller-intent-info` -- non-nil (default) shows caller
   intent info in the dispatch prompt.  Silent selected-window defaults
   show no info.  Nil hides caller intent info in the dispatch prompt.
   It names the action that supplies an entry when it is not the
   caller's ACTION.
 - `disbuf-pivot-exclude-conditions` -- nil (default) or a list of
-  `buffer-match-p` conditions.  A matching buffer is not regulated:
-  the entry returns nil and the later functions in Emacs's combined
-  function list run.  A condition can match the buffer name (a regexp),
-  a major mode (`(derived-mode . MODE)` or `(major-mode . MODE)`), a
-  category (`(category . SYMBOL)`), or a predicate function; `not`,
-  `and`, and `or` combine conditions.
+  `buffer-match-p` conditions.  A matching buffer is not regulated: the
+  package's `display-buffer-alist` entry returns nil and the later
+  functions in Emacs's combined function list run.  A condition can
+  match the buffer name (a regexp), a major mode
+  (`(derived-mode . MODE)` or `(major-mode . MODE)`), a category
+  (`(category . SYMBOL)`), or a predicate function; `not`, `and`, and
+  `or` combine conditions.
 - `disbuf-pivot-action-select` -- `auto` (default), `t`, or `nil`.
   `t` selects the chosen window; `auto` leaves selection to the caller;
   `nil` selects nothing and restores the window selected before the
@@ -320,12 +323,13 @@ same faces.
   same labels in a separate group in the menu, with the same keys and
   faces.  It computes the windows before the menu is shown and does not
   label its own window.  The menu's own window is a side window; the
-  package's entry returns nil for its side-window action.  The menu
-  shows caller intent info, the intended choice, the dispatch action
-  list, and the window-setting toggles.  It reads the keys for the
-  window labels, the dispatch actions, and the toggles; the package does
-  not call `aw-select` or a transient prefix command.  A window-setting
-  toggle keeps it open; a label, an action, or the cancel key ends it
+  package's `display-buffer-alist` entry returns nil for its side-window
+  action.  The menu shows caller intent info, the intended choice, the
+  dispatch action list, and the window-setting toggles.  It reads the
+  keys for the window labels, the dispatch actions, and the toggles;
+  the package does not call `aw-select` or a transient prefix command.
+  A window-setting toggle keeps it open; a label, an action, or the
+  cancel key ends it
   and the action function returns; C-g aborts.
 - The dispatch action list groups the actions:
   - **Split**: the split actions from `aw-dispatch-alist`, with their
@@ -381,9 +385,10 @@ same faces.
   cancel key returns nil.  The caller's full-frame action remains part
   of the caller's ACTION: its nil or error is not a failure after the
   choice.
-- The package checks `disbuf-pivot-exclude-conditions` in its entry
-  condition.  A matching buffer returns nil; no prompt runs, and the
-  later functions in Emacs's combined function list run.
+- The package checks `disbuf-pivot-exclude-conditions` in the
+  condition of its `display-buffer-alist` entry.  A matching buffer
+  returns nil; no prompt runs, and the later functions in Emacs's
+  combined function list run.
   `display-buffer-overriding-action` and earlier
   `display-buffer-alist` entries still take precedence.
 - C-g aborts the display; it does not run the caller's fallbacks.  The
@@ -556,7 +561,7 @@ The table applies when the function is the first function in the
 caller's ACTION.  A later function in the same ACTION is a caller
 fallback; section 3 gives the rule for a list of functions.
 
-The "Relevant alists" column lists the action-alist entries the action
+The "Relevant alists" column lists the action alist entries the action
 function reads.  Window-setting entries are shared by every action
 function; section 8 handles them.  A selection entry is not applied to
 the chosen window after the choice.
@@ -585,11 +590,11 @@ the chosen window after the choice.
 
 ## 8. Action alist checklist
 
-The entries have different roles.  The package passes the combined
-action alist to the function it calls.  It does not drop an entry
-silently.  It binds `inhibit-same-window` to nil when the user chooses
-the selected window, and a window-setting toggle removes or restores
-the toggled entry.
+The action alist entries have different roles.  The package passes the
+combined action alist to the function it calls.  It does not drop an
+entry silently.  It binds `inhibit-same-window` to nil when the user
+chooses the selected window, and a window-setting toggle removes or
+restores the window-setting entry it shows.
 
 A **selection entry** limits, orders, or chooses the candidate window,
 frame, tab, or placement, or the display outcome.  The package uses it

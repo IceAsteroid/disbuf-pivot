@@ -120,20 +120,21 @@ entries below are this package's terms.
   other-window request.  The caller intent is what the ACTION asks for;
   the first function names a place, a tab or frame, a relative
   placement, a strategy, no display, or no preference.  A constraint or
-  a window-setting entry is an entry the rule reads, not a class.  The
-  caller intent info is the message that states what the ACTION asks for
-  and the other entries in the combined action alist that the rule
-  reads.  When an entry is not from the caller's ACTION, the message
-  names the action that supplies it.  The dispatch prompt shows it.
+  a window-setting entry is an action alist entry the rule reads, not a
+  class.  The caller intent info is the message that states what the
+  ACTION asks for and the other entries in the combined action alist
+  that the rule reads.  When an entry is not from the caller's ACTION,
+  the message names the action that supplies it.  The dispatch prompt
+  shows it.
 - **caller constraint**, **selection entry**, **window-setting entry**,
-  **window-setting toggle** — a caller constraint is an action-alist
+  **window-setting toggle** — a caller constraint is an action alist
   entry from the caller's ACTION that limits or orders the candidate
   windows; the design rules name the entries; `inhibit-switch-frame` and
   `allow-no-window` are not caller constraints.  A selection entry is an
-  entry in an action alist that limits, orders, or chooses the candidate
+  action alist entry that limits, orders, or chooses the candidate
   window, frame, tab, or placement, or the display outcome.  The package
   uses it during the prompt; it is not applied to the chosen window
-  afterward.  A window-setting entry is an entry in an action alist that
+  afterward.  A window-setting entry is an action alist entry that
   changes the chosen window itself: its dedication, parameters, or
   size.  The design rules name the entries; `body-function` is not a
   window-setting entry.  A window-setting toggle is a key the dispatch
@@ -177,6 +178,8 @@ entries below are this package's terms.
 
 ## Emacs terms used by the design
 
+- **action alist entry** — an association in an action alist.  A
+  `display-buffer-alist` element is not an action alist entry.
 - **combined action alist** — the action alist `display-buffer` builds
   by combining, in order, the alists from
   `display-buffer-overriding-action`, the matching
