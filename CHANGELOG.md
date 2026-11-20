@@ -20,6 +20,10 @@
 
 ### Internal Changes
 
+- Docs: state the root form: a `display-buffer-alist` entry is
+  `(CONDITION . ACTION)`, ACTION is a display action
+  `(FUNCTIONS . ALIST)`, and its parts form the combined function list
+  and combined action alist.
 - Docs: pair combined function list with combined action alist, add the
   action function term, and replace the undefined display function with
   action function.

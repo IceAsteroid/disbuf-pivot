@@ -186,6 +186,14 @@ entries below are this package's terms.
   `display-buffer-same-window`, `display-buffer-reuse-window`, and
   `display-buffer-pop-up-frame`.  A tab or frame action is an action
   function; a dispatch action is not.
+- **`display-buffer-alist` entry**, **display action**, **action alist** —
+  a `display-buffer-alist` entry is an element of `display-buffer-alist`
+  of the form `(CONDITION . ACTION)`.  CONDITION is a
+  `buffer-match-p` condition; ACTION is a display action.  A display
+  action is a cons cell `(FUNCTIONS . ALIST)`: FUNCTIONS is an action
+  function, a list of action functions, or nil (the empty list), and
+  ALIST is an action alist, an association list of action alist
+  entries.  The caller's ACTION uses this form except for `t` and nil.
 - **combined action alist**, **combined function list** — the two
   products of the same combination.  The combined action alist is the
   action alist `display-buffer` builds by combining, in order, the
