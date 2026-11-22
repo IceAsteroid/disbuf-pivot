@@ -55,6 +55,10 @@ entries below are this package's terms.
   same key appears in the Windows group, with the same face; the face
   states whether the window is eligible.  A window label is not a menu
   item.
+- **dispatch prompt key** — a key the dispatch prompt reads: a window
+  label, a dispatch action, a window-setting toggle, the
+  window-settings group toggle, or the cancel key.  The term names the
+  key only; the specific term names its behavior.
 - **dispatch prompt menu** — the menu part of the dispatch prompt,
   shown in the dispatch prompt menu window.  It is not a transient menu:
   the action function reads its keys and does not return to
@@ -293,8 +297,8 @@ prose.
   toggle**; a window label is not a menu item, and an entry without a
   qualifier is an action alist entry.
 - menu group — use **dispatch prompt menu group**.
-- namespace, for a key class — name the keys or the class: window
-  labels, package action keys, or window-setting toggles.
+- namespace, for a key class — name the specific dispatch prompt key:
+  window labels, dispatch actions, or window-setting toggles.
 - utility popup — use **dedicated window**, **side window**, **child
   frame**, or **undisplayable window**, whichever is meant.
 - physical / physically, for an undisplayable window — say

@@ -353,13 +353,15 @@ faces; it does not repeat the reason.
   `aw-dispatch-alist`; the user's other actions are not offered.
 - The keys in `aw-keys` and `aw-dispatch-alist` win.  Window labels use
   the `aw-keys` keys that do not collide with `aw-dispatch-alist`.  The
-  package's dispatch actions use Meta-letter defaults.  Window-setting toggles use fixed Meta-digit
-  defaults: `M-1` dedicated, `M-2` window-parameters, `M-3`
-  preserve-size, `M-4` window-height, `M-5` window-width, `M-6`
-  window-size, and `M-0` for the group.  An absent entry has no toggle,
-  and its key is not reused.  A package key is offered only when it
-  does not collide with a user key, a window label, or another package
-  key; if a default collides, use the next free key of the same kind.
+  package's dispatch actions use Meta-letter defaults.  Window-setting
+  toggles use fixed Meta-digit defaults: `M-1` dedicated, `M-2`
+  window-parameters, `M-3` preserve-size, `M-4` window-height, `M-5`
+  window-width, `M-6` window-size, and `M-0` for the group.  An absent
+  entry has no toggle, and its key is not reused.  A dispatch prompt key
+  the package supplies for a dispatch action or a window-setting toggle
+  is offered only when it does not collide with a key from `aw-keys` or
+  `aw-dispatch-alist`, a window label, or another such key; if a default
+  collides, use the next free key of the same kind.
 - The dispatch prompt menu header is above the three horizontal menu
   groups: the Windows group, the dispatch action group, and the
   window-settings group.  The labels remain visible on the windows, and
@@ -870,6 +872,10 @@ Every rule needs a Buttercup test.  Combine:
   matching `display-buffer-alist` entry supplies no source when the
   prompt shows;
   entries the rule does not read and `body-function` are not named;
+- dispatch prompt key: the keys from `aw-keys` and `aw-dispatch-alist`
+  win; a package-supplied key for a dispatch action or a window-setting
+  toggle is offered only when free; a collision uses the next free key
+  of the same kind;
 - caller constraint: none, `inhibit-same-window`, `reusable-frames`,
   `previous-window`, `frame-predicate`, `window-min-width`,
   `window-min-height`;
