@@ -183,7 +183,7 @@ target window.
 The selected window cannot display a buffer when it is a minibuffer
 window, is dedicated to another buffer, is a side window, or is not
 live.  `inhibit-same-window` is shown in caller intent info; it is not
-one of these conditions.
+one of these eligibility conditions.
 
 When the user chooses the selected window despite
 `inhibit-same-window`, the user's choice wins.  The dispatch prompt's
@@ -249,7 +249,7 @@ no window labels.
   `same-window`.  It applies when the caller asks for the same window
   and sets `inhibit-same-window`.  When it chooses the same window,
   bind `inhibit-same-window` to nil for the display call.  When it
-  asks, the dispatch prompt shows the same window as the intended
+  asks, the dispatch prompt menu shows the same window as the intended
   choice; choosing it binds `inhibit-same-window` to nil.
 - `disbuf-pivot-action-functions` -- the action functions the package's
   `display-buffer-alist` entry tries, in order.  The default is
@@ -297,40 +297,45 @@ with consult remains optional.
 
 The dispatch prompt draws the labels on every window in the selected
 tab or frame.  The label of an eligible window acts; the label of an
-ineligible window states the condition and keeps the prompt open.  The
-prompt draws the label of an eligible window with
+ineligible window states why it is ineligible and keeps the prompt open.
+The prompt draws the label of an eligible window with
 `disbuf-pivot-eligible-label` and the label of an ineligible window with
-`disbuf-pivot-ineligible-label`.  The menu's separate group uses the
-same faces.
+`disbuf-pivot-ineligible-label`.  The Windows group repeats the keys and
+faces; it does not repeat the reason.
 
 ## 6. Interaction rules
 
 - When a rule shows the dispatch prompt, the prompt labels every window
   in the selected tab or frame.  The label of an eligible window acts;
-  the label of an ineligible window states the condition and keeps the
-  prompt open.  The prompt shows the intended choice with a key.  When
-  the rule has no target or action that can run, the prompt has no
-  intended choice; the window labels, the split actions, and the cancel
-  key remain.  A split action splits the selected window; the cancel key
+  the label of an ineligible window states why it is ineligible and
+  keeps the prompt open.  The prompt shows the intended choice with a
+  key.  When the rule has no target or action that can run, the prompt
+  has no intended choice; the window labels, the split actions, and the
+  cancel key remain.  A split action splits the selected window; the cancel key
   returns nil (a nil choice).
-- The dispatch prompt is the package's menu.  It is not a transient
-  menu: the action function reads its keys and does not return to
-  `display-buffer` until the user chooses.  A transient prefix command
-  returns before the choice; the package does not call one.  It draws
-  the labels on every window in the selected tab or frame: the label of
-  an eligible window uses `disbuf-pivot-eligible-label`; the label of an
-  ineligible window uses `disbuf-pivot-ineligible-label`.  It shows the
-  same labels in a separate group in the menu, with the same keys and
-  faces.  It computes the windows before the menu is shown and does not
-  label its own window.  The menu's own window is a side window; the
-  package's `display-buffer-alist` entry returns nil for its side-window
-  action.  The menu shows caller intent info, the intended choice, the
-  dispatch action list, and the window-setting toggles.  It reads the
-  keys for the window labels, the dispatch actions, and the toggles;
-  the package does not call `aw-select` or a transient prefix command.
-  A window-setting toggle keeps it open; a label, an action, or the
-  cancel key ends it
-  and the action function returns; C-g aborts.
+- The dispatch prompt has two parts: the window labels drawn on the
+  windows and the dispatch prompt menu.  The dispatch prompt menu is not
+  a transient menu: the action function reads its keys and does not
+  return to `display-buffer` until the user chooses.  A transient prefix
+  command
+  returns before the choice; the package does not call one.  The
+  dispatch prompt draws the labels on every window in the selected tab
+  or frame: the label of an eligible window uses
+  `disbuf-pivot-eligible-label`; the label of an ineligible window uses
+  `disbuf-pivot-ineligible-label` and states why it is ineligible.  The
+  Windows group repeats the keys and faces; it does not repeat that
+  reason.  The package computes the windows before the dispatch prompt
+  menu is shown and does not label the dispatch prompt menu window.
+  That window is a side window; the package's `display-buffer-alist`
+  entry returns nil for its side-window action.  The dispatch prompt
+  menu shows a window-setting toggle for each entry present in the
+  combined action alist, and the window-settings group toggle when at
+  least one entry is present.  The action function reads the keys for
+  the window labels, the dispatch actions, and the toggles; the package
+  does not call `aw-select` or a transient prefix command.  A
+  window-setting toggle or the group toggle keeps the dispatch prompt
+  menu open; a label, an action, or the cancel key ends the dispatch
+  prompt menu and the action function returns; C-g aborts.
 - The dispatch action list groups the actions:
   - **Split**: the split actions from `aw-dispatch-alist`, with their
     keys and descriptions.
@@ -340,32 +345,53 @@ same faces.
     function.
   - **Other**: a new frame for a new-window intent; leave undisplayed
     only with `allow-no-window`; the cancel key.
-  The window-setting toggles are not dispatch actions; they are shown
-  with the list.  The window labels are not dispatch actions; they are
-  shown in a separate group with the same keys and faces.
-- The list is generated from `aw-dispatch-alist` and the package's
-  actions; do not hardcode keys.  A package action key and a window
-  label are offered only when they do not collide with
-  `aw-dispatch-alist`.
-- The dispatch prompt shows the window labels in a separate group and
-  the dispatch action list together; the labels remain visible on the
-  windows, and the list is not hidden behind `?`.
-- Caller intent info is one line; the dispatch prompt shows it.  It
-  names the action that supplies an entry when the entry is not from
-  the caller's ACTION.  Detailed information goes in the dispatch
-  action list.
-- When the combined action alist has a window-setting entry, caller
-  intent info names their effects and conditions, not the raw entries:
-  "Caller asks for a dedicated window (new windows only)", "An entry
-  from `display-buffer-base-action` asks for a 20-line window (new
-  windows only)", "An entry from `display-buffer-overriding-action`
-  asks for window parameters".  The dispatch prompt shows a
-  window-setting toggle for each entry; the toggle shows the entry's
-  source and state.  `body-function` is not named; it is a body
-  function, not a window-setting entry.
+  The window-setting toggles and the group toggle are not dispatch
+  actions; they are in the window-settings group.  The window labels
+  are not dispatch actions; they are in the compact Windows group with
+  the same keys and faces.  The list takes only the split actions from
+  `aw-dispatch-alist`; the user's other actions are not offered.
+- The keys in `aw-keys` and `aw-dispatch-alist` win.  Window labels use
+  the `aw-keys` keys that do not collide with `aw-dispatch-alist`.  The
+  package's dispatch actions use Meta-letter defaults.  Window-setting toggles use fixed Meta-digit
+  defaults: `M-1` dedicated, `M-2` window-parameters, `M-3`
+  preserve-size, `M-4` window-height, `M-5` window-width, `M-6`
+  window-size, and `M-0` for the group.  An absent entry has no toggle,
+  and its key is not reused.  A package key is offered only when it
+  does not collide with a user key, a window label, or another package
+  key; if a default collides, use the next free key of the same kind.
+- The dispatch prompt menu header is above the three horizontal menu
+  groups: Windows, Dispatch actions, and the window-settings group.  The labels
+  remain visible on the windows, and the list is not hidden behind `?`.
+- The caller intent info and the intended choice form the dispatch
+  prompt header above the groups.  The info is one line and is a
+  concise summary.  It names
+  the primary intent, the caller's fallback chain, and the combined
+  action alist entries the current rule reads that affect the choice or
+  the chosen window.  It names effects and sources, not raw entries;
+  the window-settings group shows when each entry applies.  It does not
+  name controls, entries the rule does not read, or the combined
+  function list.  `body-function` is not named.
+- The dispatch prompt menu header names the source of an entry that is not
+  from the caller's ACTION.  In the dispatch prompt menu header,
+  `display-buffer-base-action` is "base action",
+  `display-buffer-overriding-action` is "overriding action", and
+  `display-buffer-fallback-action` is "fallback action"; the special
+  action and the extra action are named as they are.  Use the full
+  variable names everywhere else.  The matching `display-buffer-alist`
+  entry supplies no action alist entries when the prompt shows: it is
+  the package's entry, and its action alist is nil.
+- Example: "Caller: direction right, a 20-line window, preserve size;
+  base action: dedicated."  The window-settings group shows when each
+  entry applies: height and dedication are "new windows only"; preserve
+  size has no restriction.
+- The dispatch prompt menu shows a window-setting toggle for each entry
+  present in the combined action alist with the fixed keys above; the
+  toggle shows the entry's source, state, and when it applies.  An
+  absent entry has no toggle.
 - A window-setting toggle removes or restores every association of one
-  window-setting key in the combined action alist for the package's
-  display call and for a run of the caller's function list from that
+  window-setting entry's action alist key in the combined action alist
+  for the package's display call and for a run of the caller's function
+  list from that
   prompt.  The toggle stays available while the dispatch prompt is
   open; toggling it does not close the prompt.  It leaves every
   non-window-setting entry unchanged, including selection entries,
@@ -375,8 +401,15 @@ same faces.
   receive the original combined action alist.  The display call and a
   run of the caller's function list for "Use caller intent" use the
   modified alist.
-- For a full-frame intent, caller intent info says "Caller asks for the
-  full frame; other windows will be deleted."  The dispatch prompt
+- The window-settings group toggle is shown when at least one entry is
+  present.  It removes every window-setting entry if any entry is
+  active; if all are removed, it restores every entry to its value in
+  the combined action alist at prompt start.  Its state is on, off, or
+  mixed; with one entry it has the same effect as that entry's toggle.
+  It keeps the prompt open, and the local-scope rule above applies to
+  it.
+- For a full-frame intent, caller intent info says "Caller: full frame;
+  other windows will be deleted."  The dispatch prompt
   shows "Display full frame" as the intended choice.  Add "Display in
   another or new tab" (when `tab-bar-mode` is active) and "Display in
   another or new frame" to the Other group.  "Display full frame"
@@ -457,7 +490,7 @@ same faces.
   caller's and which entry conflicts, naming the action that supplies
   the entry when it is not the caller's ACTION, then applies
   `disbuf-pivot-same-window-conflict`.  When the option asks, the
-  dispatch prompt's intended choice is the same window; choosing it
+  dispatch prompt menu's intended choice is the same window; choosing it
   binds `inhibit-same-window` to nil.
 - Direction uses `display-buffer-in-direction` for the intended choice.
   Below-selected and at-bottom use their own functions for the intended
@@ -578,7 +611,7 @@ the chosen window after the choice.
 | `display-buffer-in-direction` | Regulate; the intended choice is "Use caller intent" (the caller's ACTION, `display-buffer-in-direction`). | `direction`, `window` |
 | `display-buffer-below-selected` | Regulate; the intended choice is "Use caller intent" (the caller's ACTION).  `window-min-height` is an eligibility constraint. | `window-min-height` |
 | `display-buffer-at-bottom` | Regulate; the intended choice is "Use caller intent" (the caller's ACTION). | None specific |
-| `display-buffer-full-frame` | Regulate.  Show caller intent info; the dispatch prompt's intended choice is "Display full frame"; a window label displays normally; split, tab, and frame actions override; the cancel key returns nil | Delegates to `display-buffer-reuse-window`, `display-buffer-same-window`, `display-buffer-pop-up-window`, and `display-buffer-use-some-window`; their entries apply |
+| `display-buffer-full-frame` | Regulate.  Show caller intent info; the dispatch prompt menu's intended choice is "Display full frame"; a window label displays normally; split, tab, and frame actions override; the cancel key returns nil | Delegates to `display-buffer-reuse-window`, `display-buffer-same-window`, `display-buffer-pop-up-window`, and `display-buffer-use-some-window`; their entries apply |
 | `display-buffer-pop-up-frame` | Regulate for a new frame.  Ask for a new frame name; do not offer existing frames.  Use `pop-up-frame-parameters`; the new frame is top-level unless that entry sets `parent-frame`.  `pop-up-frames` selects the frame strategy but this function does not read it. | `pop-up-frame-parameters`, `inhibit-switch-frame` |
 | `display-buffer-use-some-frame` | Regulate for an existing frame; `frame-predicate` filters the candidates. | `frame-predicate`, `inhibit-same-window`, `inhibit-switch-frame` |
 | `display-buffer-in-tab` | Regulate.  The tab prompt offers the selected frame's tabs and every tab in the `reusable-frames` scope that displays the buffer; other tabs of those frames are not candidates.  Preselect the tab the function would select (the current tab first unless `ignore-current-tab`); a new tab starts without an existing-tab preselect. | `reusable-frames` (nil differs), `ignore-current-tab`, `tab-name`, `tab-group` |
@@ -633,9 +666,11 @@ function, not a window-setting entry; the package preserves it.
 
 | Entry | Treatment |
 |---|---|
-| `dedicated` | Preserve; apply through `window--display-buffer`.  A reused normal window is not dedicated; a new window receives the entry's value; a window already dedicated to this buffer and showing it keeps its flag; a window dedicated to this buffer but not showing it is reset to nil before display; a window dedicated to another buffer is undisplayable; its label is ineligible.  `display-buffer-in-side-window` is Respect and adds `(dedicated . side)` by default unless the alist already has a `dedicated` entry (`window.el:1120–1122`); the prompt labels a side window as ineligible.  Caller intent info says "new windows only" and names the action that supplies the entry when it is not the caller's ACTION.  A window-setting toggle removes the entry. |
-| `window-parameters` | Preserve; apply to the chosen window.  Caller intent info says "window parameters" and names the action that supplies the entry when it is not the caller's ACTION.  A window-setting toggle removes the entry. |
-| `preserve-size`, `window-height`, `window-width`, `window-size` | Preserve; apply only when the window never showed another buffer.  Caller intent info names the effect, says "new windows only", and names the action that supplies the entry when it is not the caller's ACTION.  A window-setting toggle removes the entries. |
+| `dedicated` | Preserve; apply through `window--display-buffer`.  A reused normal window is not dedicated; a new window receives the entry's value; a window already dedicated to this buffer and showing it keeps its flag; a window dedicated to this buffer but not showing it is reset to nil before display; a window dedicated to another buffer is undisplayable; its label is ineligible.  `display-buffer-in-side-window` is Respect and adds `(dedicated . side)` by default unless the alist already has a `dedicated` entry (`window.el:1120–1122`); the prompt labels a side window as ineligible.  Caller intent info names the effect; the window-settings group says "new windows only" and names the source.  A window-setting toggle removes the entry. |
+| `window-parameters` | Preserve; apply to the chosen window.  Caller intent info names the effect "window parameters"; the window-settings group names the source.  A window-setting toggle removes the entry. |
+| `preserve-size` | Preserve the chosen window's size; apply to any chosen window.  Caller intent info names the effect; the window-settings group has no restriction for it.  A window-setting toggle removes the entry. |
+| `window-height`, `window-width` | Preserve; apply only when the window never showed another buffer (a new window on an existing frame).  Caller intent info names the effect; the window-settings group says "new windows only".  A window-setting toggle removes each entry. |
+| `window-size` | Preserve; apply when the window is on a new frame.  Caller intent info names the effect; the window-settings group says "new frame".  A window-setting toggle removes the entry. |
 
 ### Other entries
 
@@ -710,31 +745,43 @@ prompt runs; the action returns nil.
 5. Handle `inhibit-same-window`: show caller intent info, show the
    dispatch prompt, keep the selected window's label eligible, and bind
    the entry to nil when the user chooses it.
-6. Show caller intent info and the intended choice in the dispatch
-   prompt.  The dispatch prompt is the package's menu; the action
-   function reads its keys and does not return until the user chooses.
-   Do not call a transient prefix command.  Remove
+6. Show the dispatch prompt menu header: caller intent info and the intended
+   choice above the groups.  The info is a one-line summary of the
+   primary intent, the fallback chain, and the entries the rule reads
+   that affect the choice or chosen window; it names effects and
+   sources, not when an entry applies; the window-settings group shows
+   when each entry applies.  Use the dispatch prompt menu header source
+   labels.  The dispatch prompt menu is not a transient menu; the
+   action function reads its keys and does not return until the user
+   chooses.  Do not call a transient prefix command.  Remove
    `disbuf-pivot-mode-line-help` and the former one-line hint string.
 7. Make C-g abort.  Remove any option that changes C-g behavior.
 8. Default selection to `auto`; honor `post-command-select-window`;
    keep `t` and `nil` as forcing options.
 9. The dispatch prompt draws the labels on every window in the selected
-   tab or frame and shows them in a separate group in the menu with the
-   same keys and faces; the label of an eligible window acts; the label
-   of an ineligible window states the condition and keeps the prompt
-   open.  The prompt reads the keys for the labels, the dispatch
-   actions, and the toggles; do not call `aw-select`.  Add
-   `disbuf-pivot-eligible-label` and `disbuf-pivot-ineligible-label`.
+   tab or frame and shows them in a compact Windows group with the same
+   keys and faces.  The label of an eligible window acts; the label of an
+   ineligible window states why it is ineligible and keeps the prompt
+   open.  Lay the dispatch prompt menu header and the three menu groups
+   out horizontally: Windows, Dispatch actions, and the window-settings
+   group.  The prompt reads the
+   keys for the labels, the dispatch actions, and the toggles; do not
+   call `aw-select`.  Add `disbuf-pivot-eligible-label` and
+   `disbuf-pivot-ineligible-label`.
 10. Add the context guard from section 9.
-11. Preserve the window-setting entries; name their effects and
-    conditions in caller intent info; show a window-setting toggle for
-    each entry with its source and state; a toggle removes or restores
-    every association of that key for the display call and for a run of
-    the caller's function list from that prompt; leave `body-function`
-    and every other non-window-setting entry unchanged.
+11. Preserve the window-setting entries; name their effects in caller
+    intent info and when each entry applies in the window-settings
+    group; show a window-setting toggle for each present entry with its
+    source, state, and when it applies; show the group toggle when at
+    least one entry is present.  Use the fixed Meta-digit keys and the
+    group key; user keys win.  A toggle removes or restores every association of its key
+    for the display call and for a run of the caller's function list
+    from that prompt; the group toggle does so for every window-setting
+    key.  Leave `body-function` and every other non-window-setting entry
+    unchanged.
 12. Regulate `display-buffer-full-frame` when it is the first caller
-    function.  Show caller intent info; the dispatch prompt's intended
-    choice is "Display full frame"; add the tab and frame actions to
+    function.  Show caller intent info; the dispatch prompt menu's
+    intended choice is "Display full frame"; add the tab and frame actions to
     the Other group.  A window label displays normally; "Display full
     frame" deletes the other windows; the cancel key returns nil.
 13. Add the tab prompt scope: the scope option and reader argument;
@@ -766,9 +813,10 @@ Every rule needs a Buttercup test.  Combine:
   all-Respect, mixed, duplicate, empty, and an inapplicable first
   function;
 - combined action alist: an entry from `display-buffer-base-action`,
-  `display-buffer-overriding-action`, the special action, or the extra
-  action that the rule reads affects eligibility or the info line and
-  is named; an entry the rule does not read does not change the class;
+  `display-buffer-overriding-action`, `display-buffer-fallback-action`,
+  the special action, or the extra action that the rule reads affects
+  eligibility or the info line and is named; an entry the rule does not
+  read does not change the class;
 - tab prompt and frame prompt: an existing-target action preselects an
   existing tab or frame; a new-target action starts a new one and does
   not select an existing one; the prompt string states the caller's
@@ -795,21 +843,36 @@ Every rule needs a Buttercup test.  Combine:
   displaying the buffer or not;
 - target state: existing, new, none;
 - dispatch prompt: draws the labels on every window in the selected tab
-  or frame and shows them in a separate group in the menu with the same
-  keys and faces; the label of an eligible window acts; the label of an
-  ineligible window states the condition and keeps the prompt open; the
-  two faces; the intended choice is shown with a key; the action
-  function does not return before the choice; a transient prefix command
-  is not called; the menu stays open across a window-setting toggle; the
-  menu's own window is not labeled; the separate group is not a dispatch
-  action; the cancel key returns nil; the prompt reads the window-label
-  keys, the dispatch action keys, and the toggle keys; `aw-select` is not
-  called;
+  or frame and shows them in a compact Windows group with the same keys
+  and faces; the label of an eligible window acts; the label of an
+  ineligible window states why it is ineligible and keeps the prompt
+  open; the Windows group does not repeat the reason; the two faces; the
+  dispatch prompt menu header holds caller intent info and the intended
+  choice; the dispatch prompt menu groups are laid out horizontally;
+  the intended choice
+  is shown with a key; the action function does not return before the
+  choice; a transient prefix command is not called; the dispatch prompt
+  menu stays open across a window-setting toggle; the dispatch prompt
+  menu window is not labeled; the Windows group is not a dispatch
+  action; the cancel key returns nil; the action function reads the
+  window-label keys, the dispatch action keys, and the toggle keys;
+  `aw-select` is not called;
+- caller intent info: the dispatch prompt menu header is a one-line summary;
+  it names the primary intent, the fallback chain, and the entries the
+  rule reads that affect the choice or chosen window; it names effects
+  and sources, not when an entry applies; the window-settings group
+  shows when each entry applies; the source labels are "base action",
+  "overriding action",
+  and "fallback action", and the special and extra actions by name; the
+  full variable names are used outside the dispatch prompt menu header; the
+  matching `display-buffer-alist` entry supplies no source when the
+  prompt shows;
+  entries the rule does not read and `body-function` are not named;
 - caller constraint: none, `inhibit-same-window`, `reusable-frames`,
   `previous-window`, `frame-predicate`, `window-min-width`,
   `window-min-height`;
 - other entry: `inhibit-switch-frame`, `allow-no-window`;
-- full frame: the dispatch prompt shows "Display full frame" as the
+- full frame: the dispatch prompt menu shows "Display full frame" as the
   intended choice; a window label displays normally; "Display full
   frame" deletes the other windows; "Display in another or new tab" is
   offered when `tab-bar-mode` is active; the frame action is offered;
@@ -820,8 +883,17 @@ Every rule needs a Buttercup test.  Combine:
   window dedicated to this buffer but not showing it, and a window
   dedicated to another buffer; `window-parameters`; `preserve-size`,
   `window-height`, `window-width`, `window-size`; a window-setting
-  toggle removes and restores one key's associations while the prompt
-  stays open, and leaves `body-function` and the other entries;
+  toggle removes and restores one action alist key's associations while
+  the prompt stays open, and leaves `body-function` and the other
+  entries;
+- window-setting toggle: one per present entry, with the fixed
+  Meta-digit key; user keys win; an absent entry has no toggle; each
+  toggle shows the source, state, and when it applies; `preserve-size` applies
+  to any chosen window; `window-height` and `window-width` are new
+  windows only; `window-size` is a new frame; the group toggle is shown
+  with one or more entries, removes all if any is active, restores all
+  if all are removed, shows on, off, or mixed, and keeps the prompt
+  open; with one entry it matches that entry's toggle;
 - prefix command: same-window with the selected window displayable and
   not; other-window's dispatch prompt with the selected window
   ineligible, no automatic split, and the prefix's other-window request

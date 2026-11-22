@@ -26,7 +26,8 @@ entries below are this package's terms.
   window that displays the buffer.  A target is one step on the path.
 - **intended choice**, **chosen window** — the intended choice is the
   target or dispatch action the package uses if the user accepts
-  without choosing another; the dispatch prompt shows it with a key.
+  without choosing another; the dispatch prompt menu shows it with a
+  key.
   Accepting it means pressing the key the prompt shows for it instead
   of choosing another window label, another dispatch action, or the
   cancel key.  The key is the window label's key when the intended
@@ -37,24 +38,45 @@ entries below are this package's terms.
   prompt or dispatch action.  A window used silently by the default
   policy is not a chosen window.
 - **dispatch prompt**, **dispatch action**, **dispatch action list** —
-  the dispatch prompt is the menu the package shows at the pivot.  It is
-  not a transient menu: the action function reads its keys and does not
-  return to `display-buffer` until the user chooses.  It draws the
-  labels on every window in the selected tab or frame: a label for an
-  eligible window takes one face and acts; a label for an ineligible
-  window takes another face and states the condition.  It shows the same
-  labels in a separate group in the menu, with the same keys and faces.
-  It shows caller intent info, the intended choice, the dispatch action
-  list, and a window-setting toggle for each window-setting entry.  It
-  reads the keys for the window labels, the dispatch actions, and the
-  toggles; the package does not call `aw-select` or a transient prefix
-  command.  It computes the windows before it is shown and does not
-  label its own window.  A dispatch action is a key the dispatch prompt
-  runs instead of a window label; `aw-dispatch-alist` supplies the
-  user's actions; the package supplies its own.  The dispatch action
-  list is the grouped list of actions the prompt offers: the split
-  actions from `aw-dispatch-alist`, the caller intent actions, and the
-  Other actions the package offers, including the cancel key.
+  the dispatch prompt is the package's synchronous interaction at the
+  pivot.  It has two parts: the window labels drawn on the windows and
+  the dispatch prompt menu.  It does not return to `display-buffer`
+  until the user chooses.  It draws the labels on every window in the
+  selected tab or frame: a label for an eligible window takes one face
+  and acts; a label for an ineligible window takes another face and
+  states why it is ineligible.  A dispatch action is a key the dispatch
+  prompt menu runs instead of a window label; `aw-dispatch-alist`
+  supplies the user's split actions; the package supplies its own.  The
+  dispatch action list is the grouped list of actions the menu offers:
+  the split actions from `aw-dispatch-alist`, the caller intent actions,
+  and the Other actions the package offers, including the cancel key.
+- **window label** — a key the dispatch prompt draws on a window; the
+  same key appears in the Windows group, with the same face; the face
+  states whether the window is eligible.  A window label is not a menu
+  item.
+- **dispatch prompt menu** — the menu part of the dispatch prompt,
+  shown in the dispatch prompt menu window.  It is not a transient menu:
+  the action function reads its keys and does not return to
+  `display-buffer` until the user chooses.  The package computes the
+  windows before the dispatch prompt menu is shown.  It does not label
+  the dispatch prompt menu window.  It holds the dispatch prompt menu
+  header and the dispatch prompt menu groups.  It shows the dispatch
+  action list, a window-setting toggle for each entry present in the
+  combined action alist, and the window-settings group toggle when at
+  least one entry is present.  It reads the keys for the window labels, the dispatch
+  actions, and the toggles.  The package does not call `aw-select` or a
+  transient prefix command.
+- **dispatch prompt menu window** — the side window that shows the
+  dispatch prompt menu; the prompt does not label it.
+- **dispatch prompt menu header** — the part of the menu above the
+  groups; it holds the caller intent info and the intended choice.
+- **dispatch prompt menu group**, **Windows group**, **window-settings
+  group** — a dispatch prompt menu group is a visually separated group
+  in the menu.  The Windows group repeats the window labels.  The
+  window-settings group holds the window-setting toggles and the
+  window-settings group toggle; its label is "Window settings".  The
+  dispatch action list is the third top-level group; its Split, Caller
+  intent, and Other groups are subgroups.
 - **split action** — a dispatch action that splits a window and displays
   the buffer in the new window.
 - **tab or frame action**, **child-frame action** — a tab or frame
@@ -108,28 +130,41 @@ entries below are this package's terms.
   mechanism; the leave-undisplayed outcome is not an abort.  A nil
   choice is the prompt returning nil without C-g; the action returns
   nil, and the later functions in Emacs's combined function list run.
-  The dispatch prompt's cancel key makes a nil choice.  A nil choice is
-  not an abort.
+  The dispatch prompt menu's cancel key makes a nil choice.  A nil
+  choice is not an abort.
 - **caller**, **caller's ACTION**, **caller intent**, **caller intent
   info** — the caller is the code that calls `display-buffer`; do not
   use the word for code that shows the tab prompt.  The caller's ACTION
   is the ACTION argument of the `display-buffer` call: a
   `(FUNCTIONS . ALIST)` pair.  Its first function is the caller's
-  primary intent; its alist is part of the combined action alist.  An
-  ACTION with no function is no preference; ACTION `t` is an
-  other-window request.  The caller intent is what the ACTION asks for;
-  the first function names a place, a tab or frame, a relative
-  placement, a strategy, no display, or no preference.  A constraint or
-  a window-setting entry is an action alist entry the rule reads, not a
-  class.  The caller intent info is the message that states what the
-  ACTION asks for and the other entries in the combined action alist
-  that the rule reads.  When an entry is not from the caller's ACTION,
-  the message names the action that supplies it.  The dispatch prompt
-  shows it.
+  primary intent; its FUNCTIONS are the caller's function list, one
+  function or a list, and are included in the combined function list;
+  its ALIST is part of the combined action alist.  An ACTION with no
+  function is no preference; ACTION `t` is an other-window request.
+  The caller intent is what the ACTION asks for; the first function
+  names a place, a tab or frame, a relative placement, a strategy, no
+  display, or no preference.  A constraint or a window-setting entry is
+  an action alist entry the rule reads, not a class.  The caller intent
+  info is the one-line summary in the dispatch prompt menu header.  It
+  names the primary intent, the caller's fallback chain, and the
+  combined action alist entries the current rule reads that affect the
+  choice or the chosen window.  It names effects and sources, not raw
+  entries; the window-settings group shows when each window-setting
+  entry applies: "new windows only", "new frame", or no restriction.
+  When an entry is not from the caller's ACTION, the dispatch prompt
+  menu header labels its source: `display-buffer-base-action` as "base
+  action", `display-buffer-overriding-action` as "overriding action",
+  and `display-buffer-fallback-action` as "fallback action"; the
+  special action and the extra action are named as they are.  Use the
+  full variable names everywhere else.  The info does not name controls,
+  entries the rule does not read, or the combined function list.
+  `body-function` is not named.
 - **caller constraint**, **selection entry**, **window-setting entry**,
-  **window-setting toggle** — a caller constraint is an action alist
-  entry from the caller's ACTION that limits or orders the candidate
-  windows; the design rules name the entries; `inhibit-switch-frame` and
+  **window-setting toggle**, **window-settings group toggle** — an
+  entry in these terms is an action alist entry, never a key in the
+  dispatch prompt.  A caller constraint is an action alist entry from
+  the caller's ACTION that limits or orders the candidate windows; the
+  design rules name the entries; `inhibit-switch-frame` and
   `allow-no-window` are not caller constraints.  A selection entry is an
   action alist entry that limits, orders, or chooses the candidate
   window, frame, tab, or placement, or the display outcome.  The package
@@ -138,17 +173,21 @@ entries below are this package's terms.
   changes the chosen window itself: its dedication, parameters, or
   size.  The design rules name the entries; `body-function` is not a
   window-setting entry.  A window-setting toggle is a key the dispatch
-  prompt shows for a window-setting entry.  It removes or restores every
-  association of that entry's key in the combined action alist for the
+  prompt menu shows for a window-setting entry present in the combined
+  action alist.  It removes or restores every association of that
+  entry's action alist key in the combined action alist for the
   package's display call and for a run of the caller's function list
   from that prompt.  It does not change the caller's ACTION and does not
-  affect later calls.
+  affect later calls.  A window-settings group toggle is a key the
+  dispatch prompt menu shows when at least one window-setting entry is
+  present; it removes every window-setting entry or restores all of
+  them, and keeps the prompt open.
 - **displayable window**, **undisplayable window** — a displayable
   window can display a buffer: it is live, is not a minibuffer window,
   is not dedicated to another buffer, and is not a side window.  An
   undisplayable window is not a displayable window: it is dead, is a
   minibuffer window, is dedicated to another buffer, or is a side
-  window.  The design rules list the conditions.
+  window.  The design rules list the eligibility conditions.
 - **cannot prompt**, **no prompt** — the package cannot prompt when it
   cannot read interactive input: the dispatch prompt, the tab prompt, or
   the frame prompt.  The design rules list the contexts.  No prompt
@@ -241,6 +280,14 @@ These forms are avoided in Commentary, docstrings, `README.md`,
 use instead.  A shell command, an identifier, or a code fragment is not
 prose.
 
+- dispatch prompt's menu — use **dispatch prompt menu**.
+- menu item, menu entry, entry for a key in the dispatch prompt menu —
+  use **window label**, **dispatch action**, or **window-setting
+  toggle**; a window label is not a menu item, and an entry without a
+  qualifier is an action alist entry.
+- menu group — use **dispatch prompt menu group**.
+- namespace, for a key class — name the keys or the class: window
+  labels, package action keys, or window-setting toggles.
 - utility popup — use **dedicated window**, **side window**, **child
   frame**, or **undisplayable window**, whichever is meant.
 - physical / physically, for an undisplayable window — say
@@ -267,14 +314,14 @@ prose.
   dispatch prompt.
 - dispatch hint — use the **dispatch action list**.  The current source
   and README still show the hint; the design shows the list in the
-  dispatch prompt.
-- transient menu, for the dispatch prompt — use **dispatch prompt**;
-  the dispatch prompt is the package's menu, read inside the action
-  function, not a transient menu.
+  dispatch prompt menu.
+- transient menu, for the dispatch prompt — use **dispatch prompt
+  menu**; the menu is read inside the action function, not a transient
+  menu.
 - caller action — say the action from the caller's ACTION, or name the
   action function.
-- the opt-out, window-settings opt-out — use **window-setting toggle**,
-  or name the toggle.
+- the opt-out, window-settings opt-out — use **window-setting toggle** or
+  **window-settings group toggle**, or name the toggle.
 - tab reader — for the tab prompt, use **tab prompt**; for the reader,
   use **plain tab reader** or **consult tab reader**.  The current
   source still uses the unqualified term for the reader.
