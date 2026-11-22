@@ -349,8 +349,9 @@ faces; it does not repeat the reason.
   The window-setting toggles and the group toggle are not dispatch
   actions; they are in the window-settings group.  The window labels
   are not dispatch actions; they are in the compact Windows group with
-  the same keys and faces.  The list takes only the split actions from
-  `aw-dispatch-alist`; the user's other actions are not offered.
+  the same keys and faces.  From `aw-dispatch-alist`, the dispatch action
+  list takes only the split actions; the user's other actions are not
+  offered.
 - The keys in `aw-keys` and `aw-dispatch-alist` win.  Window labels use
   the `aw-keys` keys that do not collide with `aw-dispatch-alist`.  The
   package's dispatch actions use Meta-letter defaults.  Window-setting
@@ -365,7 +366,7 @@ faces; it does not repeat the reason.
 - The dispatch prompt menu header is above the three horizontal menu
   groups: the Windows group, the dispatch action group, and the
   window-settings group.  The labels remain visible on the windows, and
-  the list is not hidden behind `?`.
+  the dispatch action list is not hidden behind `?`.
 - The caller intent info and the intended choice form the
   dispatch prompt menu header above the groups.  The info is one line
   and is a concise summary.  It names the primary intent, the caller's
