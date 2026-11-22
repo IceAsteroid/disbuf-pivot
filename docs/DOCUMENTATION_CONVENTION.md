@@ -42,8 +42,8 @@ entries below are this package's terms.
   pivot.  It has two parts: the window labels drawn on the windows and
   the dispatch prompt menu.  It does not return to `display-buffer`
   until the user chooses.  It draws the labels on every window in the
-  selected tab or frame: a label for an eligible window takes one face
-  and acts; a label for an ineligible window takes another face and
+  window label scope: a label for an eligible window takes one face and
+  acts; a label for an ineligible window takes another face and
   states why it is ineligible.  A dispatch action is a key the dispatch
   prompt menu runs instead of a window label; `aw-dispatch-alist`
   supplies the user's split actions; the package supplies its own.  The
@@ -55,6 +55,10 @@ entries below are this package's terms.
   same key appears in the Windows group, with the same face; the face
   states whether the window is eligible.  A window label is not a menu
   item.
+- **window label scope** — the windows whose labels the dispatch prompt
+  draws: the selected tab's windows when `tab-bar-mode` is active,
+  otherwise the selected frame's windows.  The dispatch prompt menu
+  window is not in the scope.
 - **dispatch prompt key** — a key the dispatch prompt reads: a window
   label, a dispatch action, a window-setting toggle, the
   window-settings group toggle, or the cancel key.  The term names the

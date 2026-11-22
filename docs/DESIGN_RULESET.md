@@ -204,7 +204,7 @@ cell names the intended choice; "no intended choice" means the prompt
 has no default key, so the user chooses a label, an action, or the
 cancel key.
 
-Every dispatch prompt labels every window in the selected tab or frame.
+Every dispatch prompt labels every window in the window label scope.
 When a Behavior cell lists split actions and cancel, the prompt also
 labels the windows.  "No intended choice" does not mean the prompt has
 no window labels.
@@ -295,8 +295,8 @@ options are not consulted by the core behavior.
 Frame preview is not part of the first implementation.  The tab preview
 with consult remains optional.
 
-The dispatch prompt draws the labels on every window in the selected
-tab or frame.  The label of an eligible window acts; the label of an
+The dispatch prompt draws the labels on every window in the window
+label scope.  The label of an eligible window acts; the label of an
 ineligible window states why it is ineligible and keeps the prompt open.
 The prompt draws the label of an eligible window with
 `disbuf-pivot-eligible-label` and the label of an ineligible window with
@@ -306,7 +306,7 @@ faces; it does not repeat the reason.
 ## 6. Interaction rules
 
 - When a rule shows the dispatch prompt, the prompt labels every window
-  in the selected tab or frame.  The label of an eligible window acts;
+  in the window label scope.  The label of an eligible window acts;
   the label of an ineligible window states why it is ineligible and
   keeps the prompt open.  The prompt shows the intended choice with a
   key.  When the rule has no target or action that can run, the prompt
@@ -319,8 +319,8 @@ faces; it does not repeat the reason.
   return to `display-buffer` until the user chooses.  A transient prefix
   command
   returns before the choice; the package does not call one.  The
-  dispatch prompt draws the labels on every window in the selected tab
-  or frame: the label of an eligible window uses
+  dispatch prompt draws the labels on every window in the window label
+  scope: the label of an eligible window uses
   `disbuf-pivot-eligible-label`; the label of an ineligible window uses
   `disbuf-pivot-ineligible-label` and states why it is ineligible.  The
   Windows group repeats the keys and faces; it does not repeat that
@@ -548,13 +548,13 @@ other-frame
 
 For the same-window prefix, use the selected window when it can
 display.  When it cannot, show the dispatch prompt, make the selected
-window's label ineligible when it is in that tab or frame, and leave
-the prompt without an intended choice; its split actions and cancel key
-remain.
+window's label ineligible when it is in the window label scope, and
+leave the prompt without an intended choice; its split actions and
+cancel key remain.
 
 For the other-window prefix, show the dispatch prompt, label every
-window in the selected tab or frame, and make the selected window's
-label ineligible when it is in that tab or frame.  Split actions are
+window in the window label scope, and make the selected window's label
+ineligible when it is in the window label scope.  Split actions are
 prompt choices, not automatic.  The intended choice is the prefix's
 other-window request, not "Use caller intent"; the caller's ACTION may
 still appear in the Caller intent group when it can run.  The info line
@@ -764,8 +764,8 @@ prompt runs; the action returns nil.
 7. Make C-g abort.  Remove any option that changes C-g behavior.
 8. Default selection to `auto`; honor `post-command-select-window`;
    keep `t` and `nil` as forcing options.
-9. The dispatch prompt draws the labels on every window in the selected
-   tab or frame and shows them in a compact Windows group with the same
+9. The dispatch prompt draws the labels on every window in the window
+   label scope and shows them in a compact Windows group with the same
    keys and faces.  The label of an eligible window acts; the label of an
    ineligible window states why it is ineligible and keeps the prompt
    open.  Lay the dispatch prompt menu header and the three menu groups
@@ -849,9 +849,11 @@ Every rule needs a Buttercup test.  Combine:
   dedicated to this buffer, side, minibuffer, and dead; window already
   displaying the buffer or not;
 - target state: existing, new, none;
-- dispatch prompt: draws the labels on every window in the selected tab
-  or frame and shows them in a compact Windows group with the same keys
-  and faces; the label of an eligible window acts; the label of an
+- dispatch prompt: draws the labels on every window in the window label
+  scope and shows them in a compact Windows group with the same keys and
+  faces; the window label scope is the selected tab's windows when
+  `tab-bar-mode` is active and the selected frame's windows otherwise;
+  the label of an eligible window acts; the label of an
   ineligible window states why it is ineligible and keeps the prompt
   open; the Windows group does not repeat the reason; the two faces; the
   dispatch prompt menu header holds caller intent info and the intended

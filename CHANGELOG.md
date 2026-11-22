@@ -20,12 +20,13 @@
 
 ### Internal Changes
 
-- Docs: add the window label, dispatch prompt key, dispatch prompt
-  menu, dispatch prompt menu window, dispatch prompt menu header,
-  dispatch prompt menu group, Windows group, dispatch action group,
-  window-settings group, caller's function list, and window-settings
-  group toggle terms; describe the dispatch prompt menu, its header,
-  its horizontal groups, and the compact Windows group;
+- Docs: add the window label, window label scope, dispatch prompt key,
+  dispatch prompt menu, dispatch prompt menu window, dispatch prompt
+  menu header, dispatch prompt menu group, Windows group, dispatch
+  action group, window-settings group, caller's function list, and
+  window-settings group toggle terms; describe the dispatch prompt
+  menu, its header, its horizontal groups, and the compact Windows
+  group;
   document the caller intent info summary and source labels; put the
   rule for when each window-setting entry applies into the
   window-settings group; add the per-entry and window-settings group
@@ -100,8 +101,8 @@
 - Docs: list "driver" in Terms not used; say that the package reads
   the keys, or name the function that reads them.
 - Docs: state which windows the dispatch prompt labels: every window in
-  the selected tab or frame, drawn on the windows and shown in a
-  separate group in the menu with the same keys and faces.  State that
+  the window label scope, drawn on the windows and shown in a separate
+  group in the menu with the same keys and faces.  State that
   it reads the keys for the window labels, the dispatch actions, and the
   window-setting toggles, and that the package does not call `aw-select`;
   state that when a Behavior cell lists split actions and cancel, the
