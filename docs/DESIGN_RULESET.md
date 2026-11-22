@@ -346,8 +346,8 @@ faces; it does not repeat the reason.
     function.
   - **Other**: a new frame for a new-window intent; leave undisplayed
     only with `allow-no-window`; the cancel key.
-  The window-setting toggles and the group toggle are not dispatch
-  actions; they are in the window-settings group.  The window labels
+  The window-setting toggles and the window-settings group toggle are
+  not dispatch actions; they are in the window-settings group.  The window labels
   are not dispatch actions; they are in the compact Windows group with
   the same keys and faces.  From `aw-dispatch-alist`, the dispatch action
   list takes only the split actions; the user's other actions are not
@@ -777,13 +777,15 @@ prompt runs; the action returns nil.
 11. Preserve the window-setting entries; name their effects in caller
     intent info and when each entry applies in the window-settings
     group; show a window-setting toggle for each present window-setting
-    entry with its source, state, and when it applies; show the group
-    toggle when at least one window-setting entry is present.  Use the
-    fixed Meta-digit keys and the group key; user keys win.  A toggle
-    removes or restores every association of its key for the display
-    call and for a run of the caller's function list from that prompt;
-    the group toggle does so for every window-setting key.  Leave `body-function` and every other non-window-setting entry
-    unchanged.
+    entry with its source, state, and when it applies; show the
+    window-settings group toggle when at least one window-setting entry
+    is present.  Use the fixed Meta-digit keys and `M-0` for the
+    window-settings group toggle; user keys win.  A window-setting
+    toggle removes or restores every association of its action alist key
+    for the display call and for a run of the caller's function list
+    from that prompt; the window-settings group toggle does so for every
+    window-setting entry's action alist key.  Leave `body-function` and
+    every other non-window-setting entry unchanged.
 12. Regulate `display-buffer-full-frame` when it is the first caller
     function.  Show caller intent info; the dispatch prompt menu's
     intended choice is "Display full frame"; add the tab and frame actions to
@@ -898,13 +900,13 @@ Every rule needs a Buttercup test.  Combine:
 - window-setting toggle: one per present window-setting entry, with the
   fixed Meta-digit key; user keys win; an absent entry has no toggle;
   each toggle shows the source, state, and when it applies;
-  `preserve-size` applies
-  to any chosen window; `window-height` and `window-width` are new
-  windows only; `window-size` is a new frame; the group toggle is shown
-  with one or more window-setting entries, removes all if any
-  window-setting entry is active, restores all if all are removed,
-  shows on, off, or mixed, and keeps the prompt open; with one
-  window-setting entry it matches that entry's toggle;
+  `preserve-size` applies to any chosen window; `window-height` and
+  `window-width` are new windows only; `window-size` is a new frame.
+  The window-settings group toggle is shown with one or more
+  window-setting entries, removes all if any window-setting entry is
+  active, restores all if all are removed, shows on, off, or mixed, and
+  keeps the prompt open; with one window-setting entry it matches that
+  entry's toggle;
 - prefix command: same-window with the selected window displayable and
   not; other-window's dispatch prompt with the selected window
   ineligible, no automatic split, and the prefix's other-window request

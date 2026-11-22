@@ -188,8 +188,8 @@ entries below are this package's terms.
   from that prompt.  It does not change the caller's ACTION and does not
   affect later calls.  A window-setting toggle is on while its entry's
   action alist key remains in the combined action alist; it is off while
-  the key is removed.  The group toggle is on, off, or mixed.  A
-  window-settings group toggle is a key the dispatch prompt
+  the key is removed.  The window-settings group toggle is on, off, or
+  mixed.  A window-settings group toggle is a key the dispatch prompt
   menu shows when at least one window-setting entry is present; it
   removes every window-setting entry or restores all of them, and keeps
   the prompt open.
