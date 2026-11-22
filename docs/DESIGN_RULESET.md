@@ -328,9 +328,10 @@ faces; it does not repeat the reason.
   menu is shown and does not label the dispatch prompt menu window.
   That window is a side window; the package's `display-buffer-alist`
   entry returns nil for its side-window action.  The dispatch prompt
-  menu shows a window-setting toggle for each entry present in the
-  combined action alist, and the window-settings group toggle when at
-  least one entry is present.  The action function reads the keys for
+  menu shows a window-setting toggle for each window-setting entry
+  present in the combined action alist, and the window-settings group
+  toggle when at least one entry is present.  The action function reads
+  the keys for
   the window labels, the dispatch actions, and the toggles; the package
   does not call `aw-select` or a transient prefix command.  A
   window-setting toggle or the group toggle keeps the dispatch prompt
@@ -385,10 +386,10 @@ faces; it does not repeat the reason.
   base action: dedicated."  The window-settings group shows when each
   entry applies: height and dedication are "new windows only"; preserve
   size has no restriction.
-- The dispatch prompt menu shows a window-setting toggle for each entry
-  present in the combined action alist with the fixed keys above; the
-  toggle shows the entry's source, state, and when it applies.  An
-  absent entry has no toggle.
+- The dispatch prompt menu shows a window-setting toggle for each
+  window-setting entry present in the combined action alist with the
+  fixed keys above; the toggle shows the entry's source, state, and when
+  it applies.  An absent entry has no toggle.
 - A window-setting toggle removes or restores every association of one
   window-setting entry's action alist key in the combined action alist
   for the package's display call and for a run of the caller's function
@@ -771,9 +772,10 @@ prompt runs; the action returns nil.
 10. Add the context guard from section 9.
 11. Preserve the window-setting entries; name their effects in caller
     intent info and when each entry applies in the window-settings
-    group; show a window-setting toggle for each present entry with its
-    source, state, and when it applies; show the group toggle when at
-    least one entry is present.  Use the fixed Meta-digit keys and the
+    group; show a window-setting toggle for each present window-setting
+    entry with its source, state, and when it applies; show the group
+    toggle when at least one entry is present.  Use the fixed Meta-digit
+    keys and the
     group key; user keys win.  A toggle removes or restores every association of its key
     for the display call and for a run of the caller's function list
     from that prompt; the group toggle does so for every window-setting
@@ -886,9 +888,10 @@ Every rule needs a Buttercup test.  Combine:
   toggle removes and restores one action alist key's associations while
   the prompt stays open, and leaves `body-function` and the other
   entries;
-- window-setting toggle: one per present entry, with the fixed
-  Meta-digit key; user keys win; an absent entry has no toggle; each
-  toggle shows the source, state, and when it applies; `preserve-size` applies
+- window-setting toggle: one per present window-setting entry, with the
+  fixed Meta-digit key; user keys win; an absent entry has no toggle;
+  each toggle shows the source, state, and when it applies;
+  `preserve-size` applies
   to any chosen window; `window-height` and `window-width` are new
   windows only; `window-size` is a new frame; the group toggle is shown
   with one or more entries, removes all if any is active, restores all
