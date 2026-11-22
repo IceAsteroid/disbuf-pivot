@@ -388,7 +388,7 @@ faces; it does not repeat the reason.
 - Example: "Caller: direction right, a 20-line window, preserve size;
   base action: dedicated."  The window-settings group shows when each
   entry applies: height and dedication are "new windows only"; preserve
-  size has no restriction.
+  size applies to any chosen window.
 - The dispatch prompt menu shows a window-setting toggle for each
   window-setting entry present in the combined action alist with the
   fixed keys above; the toggle shows the entry's source, state, and when
@@ -672,11 +672,11 @@ function, not a window-setting entry; the package preserves it.
 
 | Entry | Treatment |
 |---|---|
-| `dedicated` | Preserve; apply through `window--display-buffer`.  A reused normal window is not dedicated; a new window receives the entry's value; a window already dedicated to this buffer and showing it keeps its flag; a window dedicated to this buffer but not showing it is reset to nil before display; a window dedicated to another buffer is undisplayable; its label is ineligible.  `display-buffer-in-side-window` is Respect and adds `(dedicated . side)` by default unless the alist already has a `dedicated` entry (`window.el:1120–1122`); the prompt labels a side window as ineligible.  Caller intent info names the effect; the window-settings group says "new windows only" and names the source.  A window-setting toggle removes the entry. |
+| `dedicated` | Preserve; apply through `window--display-buffer`.  A reused normal window is not dedicated; a new window receives the entry's value; a window already dedicated to this buffer and showing it keeps its flag; a window dedicated to this buffer but not showing it is reset to nil before display; a window dedicated to another buffer is undisplayable; its label is ineligible.  `display-buffer-in-side-window` is Respect and adds `(dedicated . side)` by default unless the alist already has a `dedicated` entry (`window.el:1120–1122`); the prompt labels a side window as ineligible.  Caller intent info names the effect; the window-settings group shows "new windows only" and names the source.  A window-setting toggle removes the entry. |
 | `window-parameters` | Preserve; apply to the chosen window.  Caller intent info names the effect "window parameters"; the window-settings group names the source.  A window-setting toggle removes the entry. |
-| `preserve-size` | Preserve the chosen window's size; apply to any chosen window.  Caller intent info names the effect; the window-settings group has no restriction for it.  A window-setting toggle removes the entry. |
-| `window-height`, `window-width` | Preserve; apply only when the window never showed another buffer (a new window on an existing frame).  Caller intent info names the effect; the window-settings group says "new windows only".  A window-setting toggle removes each entry. |
-| `window-size` | Preserve; apply when the window is on a new frame.  Caller intent info names the effect; the window-settings group says "new frame".  A window-setting toggle removes the entry. |
+| `preserve-size` | Preserve the chosen window's size; apply to any chosen window.  Caller intent info names the effect; the window-settings group shows "any chosen window".  A window-setting toggle removes the entry. |
+| `window-height`, `window-width` | Preserve; apply only when the window never showed another buffer (a new window on an existing frame).  Caller intent info names the effect; the window-settings group shows "new windows only".  A window-setting toggle removes each entry. |
+| `window-size` | Preserve; apply when the window is on a new frame.  Caller intent info names the effect; the window-settings group shows "new frame".  A window-setting toggle removes the entry. |
 
 ### Other entries
 

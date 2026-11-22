@@ -158,7 +158,8 @@ entries below are this package's terms.
   combined action alist entries the current rule reads that affect the
   choice or the chosen window.  It names effects and sources, not raw
   entries; the window-settings group shows when each window-setting
-  entry applies: "new windows only", "new frame", or no restriction.
+  entry applies: "new windows only", "new frame", or "any chosen
+  window".
   The dispatch prompt menu header labels the source when an entry is
   not from the caller's ACTION: `display-buffer-base-action` as "base
   action", `display-buffer-overriding-action` as "overriding action",
