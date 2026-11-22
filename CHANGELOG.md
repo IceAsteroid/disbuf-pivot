@@ -22,9 +22,10 @@
 
 - Docs: add the window label, dispatch prompt menu, dispatch prompt menu
   window, dispatch prompt menu header, dispatch prompt menu group,
-  Windows group, window-settings group, caller's function list, and
-  window-settings group toggle terms; describe the dispatch prompt menu,
-  its header, its horizontal groups, and the compact Windows group;
+  Windows group, dispatch action group, window-settings group, caller's
+  function list, and window-settings group toggle terms; describe the
+  dispatch prompt menu, its header, its horizontal groups, and the
+  compact Windows group;
   state the caller intent info summary and source labels; move when each
   window-setting entry applies into the window-settings group; add the
   per-entry and group toggle keys; correct the preserve-size restriction.

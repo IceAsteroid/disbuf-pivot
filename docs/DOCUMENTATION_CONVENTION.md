@@ -47,9 +47,10 @@ entries below are this package's terms.
   states why it is ineligible.  A dispatch action is a key the dispatch
   prompt menu runs instead of a window label; `aw-dispatch-alist`
   supplies the user's split actions; the package supplies its own.  The
-  dispatch action list is the grouped list of actions the menu offers:
-  the split actions from `aw-dispatch-alist`, the caller intent actions,
-  and the Other actions the package offers, including the cancel key.
+  dispatch action list is the grouped list of actions the dispatch
+  prompt menu offers: the split actions from `aw-dispatch-alist`, the
+  caller intent actions, and the Other actions the package offers,
+  including the cancel key.
 - **window label** — a key the dispatch prompt draws on a window; the
   same key appears in the Windows group, with the same face; the face
   states whether the window is eligible.  A window label is not a menu
@@ -59,24 +60,27 @@ entries below are this package's terms.
   the action function reads its keys and does not return to
   `display-buffer` until the user chooses.  The package computes the
   windows before the dispatch prompt menu is shown.  It does not label
-  the dispatch prompt menu window.  It holds the dispatch prompt menu
-  header and the dispatch prompt menu groups.  It shows the dispatch
-  action list, a window-setting toggle for each entry present in the
-  combined action alist, and the window-settings group toggle when at
-  least one entry is present.  It reads the keys for the window labels, the dispatch
-  actions, and the toggles.  The package does not call `aw-select` or a
-  transient prefix command.
+  the dispatch prompt menu window.  It holds its header and its menu
+  groups.  It shows the dispatch action list, a window-setting toggle
+  for each entry present in the combined action alist, and the
+  window-settings group toggle when at least one entry is present.  It
+  reads the keys for the window labels, the dispatch actions, and the
+  toggles.  The package does not call `aw-select` or a transient prefix
+  command.
 - **dispatch prompt menu window** — the side window that shows the
   dispatch prompt menu; the prompt does not label it.
-- **dispatch prompt menu header** — the part of the menu above the
-  groups; it holds the caller intent info and the intended choice.
-- **dispatch prompt menu group**, **Windows group**, **window-settings
-  group** — a dispatch prompt menu group is a visually separated group
-  in the menu.  The Windows group repeats the window labels.  The
-  window-settings group holds the window-setting toggles and the
-  window-settings group toggle; its label is "Window settings".  The
-  dispatch action list is the third top-level group; its Split, Caller
-  intent, and Other groups are subgroups.
+- **dispatch prompt menu header** — the part of the dispatch prompt menu
+  above the groups; it holds the caller intent info and the intended
+  choice.
+- **dispatch prompt menu group**, **Windows group**,
+  **dispatch action group**, **window-settings group** — a dispatch
+  prompt menu group is a visually separated group in the dispatch
+  prompt menu.  The Windows group repeats the window labels.  The
+  dispatch action group holds the dispatch action list; its label is
+  "Dispatch actions".  The window-settings group holds the
+  window-setting toggles and the window-settings group toggle; its
+  label is "Window settings".  The Split, Caller intent, and Other
+  groups of the dispatch action list are subgroups.
 - **split action** — a dispatch action that splits a window and displays
   the buffer in the new window.
 - **tab or frame action**, **child-frame action** — a tab or frame
@@ -151,8 +155,8 @@ entries below are this package's terms.
   choice or the chosen window.  It names effects and sources, not raw
   entries; the window-settings group shows when each window-setting
   entry applies: "new windows only", "new frame", or no restriction.
-  When an entry is not from the caller's ACTION, the dispatch prompt
-  menu header labels its source: `display-buffer-base-action` as "base
+  The dispatch prompt menu header labels the source when an entry is
+  not from the caller's ACTION: `display-buffer-base-action` as "base
   action", `display-buffer-overriding-action` as "overriding action",
   and `display-buffer-fallback-action` as "fallback action"; the
   special action and the extra action are named as they are.  Use the

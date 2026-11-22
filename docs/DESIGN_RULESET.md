@@ -360,14 +360,15 @@ faces; it does not repeat the reason.
   does not collide with a user key, a window label, or another package
   key; if a default collides, use the next free key of the same kind.
 - The dispatch prompt menu header is above the three horizontal menu
-  groups: Windows, Dispatch actions, and the window-settings group.  The labels
-  remain visible on the windows, and the list is not hidden behind `?`.
-- The caller intent info and the intended choice form the dispatch
-  prompt header above the groups.  The info is one line and is a
-  concise summary.  It names
-  the primary intent, the caller's fallback chain, and the combined
-  action alist entries the current rule reads that affect the choice or
-  the chosen window.  It names effects and sources, not raw entries;
+  groups: the Windows group, the dispatch action group, and the
+  window-settings group.  The labels remain visible on the windows, and
+  the list is not hidden behind `?`.
+- The caller intent info and the intended choice form the
+  dispatch prompt menu header above the groups.  The info is one line
+  and is a concise summary.  It names the primary intent, the caller's
+  fallback chain, and the combined action alist entries the current rule
+  reads that affect the choice or the chosen window.  It names effects
+  and sources, not raw entries;
   the window-settings group shows when each entry applies.  It does not
   name controls, entries the rule does not read, or the combined
   function list.  `body-function` is not named.
@@ -763,11 +764,10 @@ prompt runs; the action returns nil.
    keys and faces.  The label of an eligible window acts; the label of an
    ineligible window states why it is ineligible and keeps the prompt
    open.  Lay the dispatch prompt menu header and the three menu groups
-   out horizontally: Windows, Dispatch actions, and the window-settings
-   group.  The prompt reads the
-   keys for the labels, the dispatch actions, and the toggles; do not
-   call `aw-select`.  Add `disbuf-pivot-eligible-label` and
-   `disbuf-pivot-ineligible-label`.
+   out horizontally: the Windows group, the dispatch action group, and
+   the window-settings group.  The prompt reads the keys for the labels,
+   the dispatch actions, and the toggles; do not call `aw-select`.  Add
+   `disbuf-pivot-eligible-label` and `disbuf-pivot-ineligible-label`.
 10. Add the context guard from section 9.
 11. Preserve the window-setting entries; name their effects in caller
     intent info and when each entry applies in the window-settings
