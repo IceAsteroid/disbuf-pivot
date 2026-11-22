@@ -26,8 +26,8 @@
   function list, and window-settings group toggle terms; describe the
   dispatch prompt menu, its header, its horizontal groups, and the
   compact Windows group;
-  state the caller intent info summary and source labels; move the
-  statement of when each window-setting entry applies into the
+  document the caller intent info summary and source labels; put the
+  rule for when each window-setting entry applies into the
   window-settings group; add the per-entry and group toggle keys;
   correct the preserve-size restriction.
 - Docs: state the root form: a `display-buffer-alist` entry is
@@ -178,10 +178,10 @@
   same combined action alist, a nil return falls through, and an error
   does not; the window-setting toggle's scope is local to the display
   call.
-- Docs: name window-setting effects in caller intent info and state when
-  each entry applies in the window-settings group; add the window-setting and
-  group toggles, which remove every association of each window-setting
-  key for the display call.
+- Docs: name window-setting effects in caller intent info and document
+  when each entry applies in the window-settings group; add the
+  window-setting and group toggles, which remove every association of
+  each window-setting key for the display call.
 - Docs: group action alist entries by role; state the treatments for
   `dedicated`, the size entries, and `body-function`.
 - Docs: define selection entries, window-setting entries, and the

@@ -182,10 +182,13 @@ entries below are this package's terms.
   entry's action alist key in the combined action alist for the
   package's display call and for a run of the caller's function list
   from that prompt.  It does not change the caller's ACTION and does not
-  affect later calls.  A window-settings group toggle is a key the
-  dispatch prompt menu shows when at least one window-setting entry is
-  present; it removes every window-setting entry or restores all of
-  them, and keeps the prompt open.
+  affect later calls.  A window-setting toggle is on while its entry's
+  action alist key remains in the combined action alist; it is off while
+  the key is removed.  The group toggle is on, off, or mixed.  A
+  window-settings group toggle is a key the dispatch prompt
+  menu shows when at least one window-setting entry is present; it
+  removes every window-setting entry or restores all of them, and keeps
+  the prompt open.
 - **displayable window**, **undisplayable window** — a displayable
   window can display a buffer: it is live, is not a minibuffer window,
   is not dedicated to another buffer, and is not a side window.  An
