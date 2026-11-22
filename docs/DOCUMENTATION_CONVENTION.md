@@ -67,10 +67,10 @@ entries below are this package's terms.
   the dispatch prompt menu window.  It holds its header and its menu
   groups.  It shows the dispatch action list, a window-setting toggle
   for each window-setting entry present in the combined action alist,
-  and the window-settings group toggle when at least one entry is
-  present.  It reads the keys for the window labels, the dispatch
-  actions, and the toggles.  The package does not call `aw-select` or
-  a transient prefix command.
+  and the window-settings group toggle when at least one window-setting
+  entry is present.  It reads the keys for the window labels, the
+  dispatch actions, and the toggles.  The package does not call
+  `aw-select` or a transient prefix command.
 - **dispatch prompt menu window** — the side window that shows the
   dispatch prompt menu; the prompt does not label it.
 - **dispatch prompt menu header** — the part of the dispatch prompt menu

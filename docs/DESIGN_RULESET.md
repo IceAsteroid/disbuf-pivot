@@ -330,10 +330,10 @@ faces; it does not repeat the reason.
   entry returns nil for its side-window action.  The dispatch prompt
   menu shows a window-setting toggle for each window-setting entry
   present in the combined action alist, and the window-settings group
-  toggle when at least one entry is present.  The action function reads
-  the keys for
-  the window labels, the dispatch actions, and the toggles; the package
-  does not call `aw-select` or a transient prefix command.  A
+  toggle when at least one window-setting entry is present.  The action
+  function reads the keys for the window labels, the dispatch actions,
+  and the toggles; the package does not call `aw-select` or a transient
+  prefix command.  A
   window-setting toggle or the group toggle keeps the dispatch prompt
   menu open; a label, an action, or the cancel key ends the dispatch
   prompt menu and the action function returns; C-g aborts.
@@ -406,13 +406,14 @@ faces; it does not repeat the reason.
   receive the original combined action alist.  The display call and a
   run of the caller's function list for "Use caller intent" use the
   modified alist.
-- The window-settings group toggle is shown when at least one entry is
-  present.  It removes every window-setting entry if any entry is
-  active; if all are removed, it restores every entry to its value in
-  the combined action alist at prompt start.  Its state is on, off, or
-  mixed; with one entry it has the same effect as that entry's toggle.
-  It keeps the prompt open, and the local-scope rule above applies to
-  it.
+- The window-settings group toggle is shown when at least one
+  window-setting entry is present.  It removes every window-setting
+  entry if any window-setting entry is active; if all are removed, it
+  restores every window-setting entry to its value in the combined
+  action alist at prompt start.  Its state is on, off, or mixed; with
+  one window-setting entry it has the same effect as that entry's
+  toggle.  It keeps the prompt open, and the local-scope rule above
+  applies to it.
 - For a full-frame intent, caller intent info says "Caller: full frame;
   other windows will be deleted."  The dispatch prompt
   shows "Display full frame" as the intended choice.  Add "Display in
@@ -777,12 +778,11 @@ prompt runs; the action returns nil.
     intent info and when each entry applies in the window-settings
     group; show a window-setting toggle for each present window-setting
     entry with its source, state, and when it applies; show the group
-    toggle when at least one entry is present.  Use the fixed Meta-digit
-    keys and the
-    group key; user keys win.  A toggle removes or restores every association of its key
-    for the display call and for a run of the caller's function list
-    from that prompt; the group toggle does so for every window-setting
-    key.  Leave `body-function` and every other non-window-setting entry
+    toggle when at least one window-setting entry is present.  Use the
+    fixed Meta-digit keys and the group key; user keys win.  A toggle
+    removes or restores every association of its key for the display
+    call and for a run of the caller's function list from that prompt;
+    the group toggle does so for every window-setting key.  Leave `body-function` and every other non-window-setting entry
     unchanged.
 12. Regulate `display-buffer-full-frame` when it is the first caller
     function.  Show caller intent info; the dispatch prompt menu's
@@ -901,9 +901,10 @@ Every rule needs a Buttercup test.  Combine:
   `preserve-size` applies
   to any chosen window; `window-height` and `window-width` are new
   windows only; `window-size` is a new frame; the group toggle is shown
-  with one or more entries, removes all if any is active, restores all
-  if all are removed, shows on, off, or mixed, and keeps the prompt
-  open; with one entry it matches that entry's toggle;
+  with one or more window-setting entries, removes all if any
+  window-setting entry is active, restores all if all are removed,
+  shows on, off, or mixed, and keeps the prompt open; with one
+  window-setting entry it matches that entry's toggle;
 - prefix command: same-window with the selected window displayable and
   not; other-window's dispatch prompt with the selected window
   ineligible, no automatic split, and the prefix's other-window request
