@@ -23,8 +23,9 @@
 - Docs: add the window label, window label scope, dispatch prompt key,
   dispatch prompt menu, dispatch prompt menu window, dispatch prompt
   menu header, dispatch prompt menu group, Windows group, dispatch
-  action group, window-settings group, caller's function list, and
-  window-settings group toggle terms; describe the dispatch prompt
+  action group, window-settings group, caller's function list,
+  window-settings group toggle, and intent class terms; describe the
+  dispatch prompt
   menu, its header, its horizontal groups, and the compact Windows
   group;
   document the caller intent info summary and source labels; put the

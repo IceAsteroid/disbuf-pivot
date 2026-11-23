@@ -156,7 +156,7 @@ entries below are this package's terms.
   The caller intent is what the ACTION asks for; the first function
   names a place, a tab or frame, a relative placement, a strategy, no
   display, or no preference.  A constraint or a window-setting entry is
-  an action alist entry the rule reads, not a class.  The caller intent
+  an action alist entry the rule reads, not an intent class.  The caller intent
   info is the one-line summary in the dispatch prompt menu header.  It
   names the primary intent, the caller's fallback chain, and the
   combined action alist entries the current rule reads that affect the
@@ -172,6 +172,13 @@ entries below are this package's terms.
   full variable names everywhere else.  The info does not name controls,
   entries the rule does not read, or the combined function list.
   `body-function` is not named.
+- **intent class** — the classification of the caller's ACTION by its
+  first function: names a place, names a tab or frame, names a relative
+  placement, names a strategy, no display, or no preference.  A caller's
+  ACTION has one intent class: the first function names it; an ACTION
+  with no function is no preference; ACTION `t` is the special
+  other-window request, not an intent class.  Later functions are
+  fallbacks, and an action alist entry does not change the intent class.
 - **caller constraint**, **selection entry**, **window-setting entry**,
   **window-setting toggle**, **window-settings group toggle** — an
   entry in these terms is an action alist entry, never a key in the

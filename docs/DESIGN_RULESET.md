@@ -57,8 +57,8 @@ are.
 
 The package reads two inputs:
 
-- the caller's ACTION: its first function is the intent class; its later
-  functions are the caller's fallbacks;
+- the caller's ACTION: its first function names the intent class; its
+  later functions are the caller's fallbacks;
 - the combined action alist: the entries the first function's rule
   reads, the eligibility constraints, and the window settings.  The
   combined action alist includes the caller's ACTION alist and entries
@@ -72,13 +72,14 @@ the caller's ACTION; its action function receives the combined action
 alist.
 
 An entry in the combined action alist does not move the call to another
-class by itself.  The first function's rule names the entries it reads.
+intent class by itself.  The first function's rule names the entries it
+reads.
 For example, `display-buffer-reuse-window` reads `pop-up-frames` as a
 frame scope, not as a frame target; a top-level `parent-frame` is not
 read by `display-buffer-pop-up-frame` or `display-buffer-in-child-frame`
 (the latter reads `parent-frame` inside `child-frame-parameters`).
 
-The package distinguishes these classes:
+The package distinguishes these intent classes:
 
 - **names a place** -- a first function whose rule reads an entry as a
   fixed place: `display-buffer-in-side-window` (`side`, `slot`),
@@ -115,7 +116,7 @@ The package distinguishes these classes:
   buffer, use the selected window when it can display, then prompt.
 
 A constraint or a window-setting entry is an action alist entry the
-rule reads, not a class.  `reusable-frames`, `previous-window`,
+rule reads, not an intent class.  `reusable-frames`, `previous-window`,
 `frame-predicate`, `window-min-width`, and `window-min-height` are
 constraints; honor them.  `inhibit-switch-frame` is honored where the
 action function reads it; it does not limit the candidate windows.
@@ -135,11 +136,13 @@ The package decides in this order:
    function is no preference; ACTION `t` is an other-window request
    (section 4).  A first function that is `Respect` or not covered
    returns nil; the later functions in Emacs's combined function list
-   run.  A first function that is `Regulate` uses its class rule.
-4. The class rule reads the entries it names from the combined action
-   alist.  An entry it does not name does not change the class.
-5. The class rule shows the dispatch prompt when it says so and
-   displays the buffer; the prompt follows section 6.  A nil choice, a
+   run.  A first function that is `Regulate` uses the rule for its
+   intent class.
+4. The rule for the intent class reads the entries it names from the
+   combined action alist.  An entry it does not name does not change the
+   intent class.
+5. The rule for the intent class shows the dispatch prompt when it says
+   so and displays the buffer; the prompt follows section 6.  A nil choice, a
    failure after the choice, and C-g follow section 9.
 
 A caller's ACTION may name several functions.  The first function is
@@ -194,8 +197,8 @@ caller's ACTION.
 
 ## 4. Rules
 
-Section 6 gives the rule.  The class rows are keyed by the caller's
-first function; no function is no preference.  An entry the rule reads,
+Section 6 gives the rule.  The intent class rows are keyed by the
+caller's first function; no function is no preference.  An entry the rule reads,
 such as `inhibit-same-window` or a window-setting entry, follows
 section 8 in addition to the row.  The no-preference rows follow the
 default order of `disbuf-pivot-action-functions`; a reordered list
@@ -729,7 +732,8 @@ prompt runs; the action returns nil.
    with `dp-action-choose-window`; split actions are prompt choices
    only.
 3. Classify the first function in the caller's ACTION; later functions
-   are the caller's fallbacks.  Respect the classes in section 3; return
+   are the caller's fallbacks.  Respect the intent classes in section 3;
+   return
    nil for anything the package does not regulate.  The intended choice
    is "Use caller intent" when the caller's ACTION can run; it runs the
    caller's whole function list in order when the user chooses it.  A
@@ -823,7 +827,7 @@ Every rule needs a Buttercup test.  Combine:
   `display-buffer-overriding-action`, `display-buffer-fallback-action`,
   the special action, or the extra action that the rule reads affects
   eligibility or the info line and is named; an entry the rule does not
-  read does not change the class;
+  read does not change the intent class;
 - tab prompt and frame prompt: an existing-target action preselects an
   existing tab or frame; a new-target action starts a new one and does
   not select an existing one; the prompt string states the caller's
