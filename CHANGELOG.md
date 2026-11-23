@@ -20,6 +20,10 @@
 
 ### Internal Changes
 
+- Docs: rename the intended choice to the dispatch prompt default, and
+  add the tab prompt default and the frame prompt default; define the
+  default each prompt offers and how it is accepted; fix the tab prompt
+  reference; move the old term to Terms not used.
 - Docs: add the window label, window label scope, dispatch prompt key,
   dispatch prompt menu, dispatch prompt menu window, dispatch prompt
   menu header, dispatch prompt menu group, Windows group, dispatch
@@ -70,8 +74,8 @@
   annotation column, and tab history candidate terms; the scope names
   the frames whose tabs the tab prompt offers, the package supplies the
   annotation, and a tab history candidate is relative to the scope.
-- Docs: explain accepting the intended choice: press the key the
-  dispatch prompt shows for it instead of choosing another window
+- Docs: explain accepting the dispatch prompt default: press the key
+  the dispatch prompt shows for it instead of choosing another window
   label, another dispatch action, or the cancel key; the key is the
   window label's key or the dispatch action's key.
 - Docs: state that selecting or making a tab enables `tab-bar-mode`
@@ -88,9 +92,9 @@
 - Docs: add the four package prefix command rules: same-window prompts
   only when the selected window cannot display and uses the parent frame
   for a child frame; other-window shows the dispatch prompt and makes
-  the prefix's other-window request the intended choice; other-tab and
-  other-frame prompt for an existing target and use a new target's
-  selected window.
+  the prefix's other-window request the dispatch prompt default;
+  other-tab and other-frame prompt for an existing target and use a new
+  target's selected window.
 - Docs: make the dispatch prompt the package's menu, not a transient
   menu: the action function reads its keys and does not return until the
   user chooses; a transient prefix command returns before the choice and
@@ -115,7 +119,7 @@
   "frame readers" wording with "frame prompt"; the reader remains the
   implementation function and replaceable reader, not the prompt term.
 - Docs: replace the two-prompt rule with the transient dispatch prompt;
-  define the intended choice, the window-setting toggle, and the
+  define the dispatch prompt default, the window-setting toggle, and the
   ineligible window; add the eligible and ineligible label faces; drop
   the window prompt, the dispatch hint, and the window-settings opt-out
   from the design terms; merge related core terms into single entries;

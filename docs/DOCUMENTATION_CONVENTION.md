@@ -24,17 +24,27 @@ entries below are this package's terms.
   that displays the buffer.  The placement path is the sequence frame,
   then tab, then window; tab, then window; or window, ending at the
   window that displays the buffer.  A target is one step on the path.
-- **intended choice**, **chosen window** — the intended choice is the
+- **dispatch prompt default**, **tab prompt default**, **frame prompt
+  default**, **chosen window** — the dispatch prompt default is the
   target or dispatch action the package uses if the user accepts
   without choosing another; the dispatch prompt menu shows it with a
   key.
   Accepting it means pressing the key the prompt shows for it instead
   of choosing another window label, another dispatch action, or the
-  cancel key.  The key is the window label's key when the intended
-  choice is a window, or the dispatch action's key when it is an action.
-  An intended window is not a chosen window until the user accepts;
-  when no target or action can run, the prompt has no intended choice.
-  The chosen window is the window the user chooses through the package's
+  cancel key.  The key is the window label's key when the dispatch
+  prompt default is a window, or the dispatch action's key when it is
+  an action.  It is not the caller's intent; the caller intent is what
+  the ACTION asks for.  When no target or action can run, the dispatch
+  prompt has no default.
+  The tab prompt default is the preselected tab, when the tab prompt
+  preselects one; in `display-buffer-in-tab` it is the tab the caller's
+  function would select.  The frame prompt default is the frame the
+  frame prompt uses if the user accepts without choosing another: the
+  preselected existing frame, or a new frame with the default name.
+  Accepting the tab or frame prompt default means completing the prompt
+  with the preselection or the default name instead of entering another
+  name.  A prompt default is not chosen until the user accepts.  The
+  chosen window is the window the user chooses through the package's
   prompt or dispatch action.  A window used silently by the default
   policy is not a chosen window.
 - **dispatch prompt**, **dispatch action**, **dispatch action list** —
@@ -78,8 +88,8 @@ entries below are this package's terms.
 - **dispatch prompt menu window** — the side window that shows the
   dispatch prompt menu; the prompt does not label it.
 - **dispatch prompt menu header** — the part of the dispatch prompt menu
-  above the groups; it holds the caller intent info and the intended
-  choice.
+  above the groups; it holds the caller intent info and the dispatch
+  prompt default.
 - **dispatch prompt menu group**, **Windows group**,
   **dispatch action group**, **window-settings group** — a dispatch
   prompt menu group is a visually separated group in the dispatch
@@ -330,8 +340,10 @@ prose.
   chooses.
 - placement entry — say **the entry that names a place**, or name the
   entry.
-- fallback line — say the key for the intended choice, or name the
-  cancel key.
+- fallback line — say the key for the dispatch prompt default, or name
+  the cancel key.
+- intended choice — use **dispatch prompt default** for the dispatch
+  prompt, **tab prompt default**, or **frame prompt default**.
 - window prompt — use **dispatch prompt**.  The current source and
   README still have a separate window prompt; the design uses the
   dispatch prompt.
