@@ -162,24 +162,26 @@ shows it with a key.  Choosing it runs the caller's whole function list
 in order with the combined action alist, under a guard that prevents
 the package's `display-buffer-alist` entry from running again.  The
 action is in the Caller intent group.  The package does not regulate a
-later function; it remains a later function in the caller's ACTION.
+later function; it remains a later function in the caller's function
+list.
 If the package cannot prompt (section 9), it returns nil and Emacs
 continues with the later functions in its combined function list; the
 caller's later functions are fallbacks.  A failure after the choice
 while the package can prompt is handled by showing the dispatch prompt
-again or aborting; it does not return nil to the caller's ACTION
+again or aborting; it does not return nil to the caller's action
 functions.  Emacs calls every function in its combined list with the
 same combined action alist; a function that returns nil passes to the
 next, and an error propagates.
 The package's run of the caller's function list for "Use caller intent"
 follows the same nil and error rule.  If every function in that run
 returns nil, the package shows the dispatch prompt again or aborts; it
-does not return nil to the caller's ACTION functions.  A window-setting toggle changes the combined action alist
-only for the package's display call and for a run of the caller's
-function list from that prompt; it does not change the alist Emacs
-passes to a later function in the caller's ACTION after the package
-returns nil.  Do not reorder or deduplicate the list.  Use the first
-association of an alist key, as Emacs does.
+does not return nil to the caller's action functions.  A window-setting
+toggle changes the combined action alist only for the package's display
+call and for a run of the caller's function list from that prompt; it
+does not change the alist Emacs passes to a later function in the
+caller's function list after the package returns nil.  Do not reorder
+or deduplicate the list.  Use the first association of an alist key,
+as Emacs does.
 
 A package prefix command is user intent, not caller intent.
 `disbuf-pivot-prefix-mode` remaps the built-in prefix commands to the
@@ -624,8 +626,8 @@ package prefix command or a user choice in a prompt is separate; the
 package may call the same function after that choice.
 
 The table applies when the function is the first function in the
-caller's ACTION.  A later function in the same ACTION is a caller
-fallback; section 3 gives the rule for a list of functions.
+caller's ACTION.  A later function in the caller's function list is a
+caller fallback; section 3 gives the rule for the list.
 
 The "Relevant alists" column lists the action alist entries the action
 function reads.  Window-setting entries are shared by every action
@@ -739,7 +741,7 @@ prompt runs; the action returns nil.
   section 6 shows the error and shows the dispatch prompt again.  A
   `body-function` error is such a failure; it is not a window-setting
   entry and a window-setting toggle does not remove it.  Do not return
-  nil to the caller's ACTION functions while the dispatch prompt can
+  nil to the caller's action functions while the dispatch prompt can
   run.
 - A nil choice: the prompt returns nil without C-g; the action returns
   nil; the later functions in Emacs's combined function list run.
@@ -763,7 +765,7 @@ prompt runs; the action returns nil.
    caller's whole function list in order when the user chooses it.  A
    failure after the choice while the package can prompt is handled by
    showing the dispatch prompt again or aborting; do not return nil to
-   the caller's ACTION functions.  A nil choice returns nil; it is not
+   the caller's action functions.  A nil choice returns nil; it is not
    a failure after the choice.
 4. Regulate same-window, reuse, other-window, new-window,
    use-some-window, use-least-recent-window, full-frame, direction,
@@ -973,7 +975,7 @@ Every rule needs a Buttercup test.  Combine:
 - context: batch, active minibuffer, timer, process filter, keyboard
   macro, and recursive display.
 
-Also test C-g (quit), a nil choice (returns nil and the caller's ACTION
+Also test C-g (quit), a nil choice (returns nil and the caller's action
 functions run), split failure, dead windows, an action function that
 returns nil (message and `fail`) or signals an error (propagates or is
 re-signaled), a `body-function` error, that selection entries are not

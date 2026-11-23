@@ -23,8 +23,9 @@ Source: the Emacs 31.1 docstrings, the Elisp manual nodes
 - Decision -- the package treatment: `Regulate` or `Respect`.
 
 The Decision column applies when the listed function is the first
-function in the caller's ACTION.  A later function in the same ACTION is
-a caller fallback; see `docs/DESIGN_RULESET.md` section 3.
+function in the caller's ACTION.  A later function in the caller's
+function list is a caller fallback; see `docs/DESIGN_RULESET.md`
+section 3.
 
 ## 1. Reuse and selection
 

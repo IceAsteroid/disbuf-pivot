@@ -147,23 +147,25 @@ entries below are this package's terms.
   window is undisplayable, its frame or tab is gone, or the action
   function returns nil or errors.  The design rules list the responses.
 - **abort**, **nil choice** — an abort ends the display instead of
-  prompting again or returning nil, and does not run the later functions
-  in the caller's ACTION.  C-g is the user's way to abort; `quit` is its
-  mechanism; the leave-undisplayed outcome is not an abort.  A nil
-  choice is the prompt returning nil without C-g; the action returns
-  nil, and the later functions in Emacs's combined function list run.
-  The dispatch prompt menu's cancel key makes a nil choice.  A nil
-  choice is not an abort.
+  prompting again or returning nil, and does not run the later
+  functions in the caller's function list.  C-g is the user's way to
+  abort; `quit` is its mechanism; the leave-undisplayed outcome is not
+  an abort.  A nil choice is the prompt returning nil without C-g; the
+  action returns nil, and the later functions in Emacs's combined
+  function list run.  The dispatch prompt menu's cancel key makes a nil
+  choice.  A nil choice is not an abort.
 - **caller**, **caller's ACTION**, **caller's function list**,
-  **caller intent**, **caller intent info** — the caller is the code
-  that calls `display-buffer`; do not use the word for code that shows
-  the tab prompt.  The caller's ACTION
+  **caller's action function**, **caller intent**, **caller intent
+  info** — the caller is the code that calls `display-buffer`; do not
+  use the word for code that shows the tab prompt.  The caller's ACTION
   is the ACTION argument of the `display-buffer` call: a
   `(FUNCTIONS . ALIST)` pair.  Its first function is the caller's
   primary intent; its FUNCTIONS are the caller's function list, one
   function or a list, and are included in the combined function list;
-  its ALIST is part of the combined action alist.  An ACTION with no
-  function is no preference; ACTION `t` is an other-window request.
+  each function in the caller's function list is a caller's action
+  function; its ALIST is part of the combined action alist.  An ACTION
+  with no function is no preference; ACTION `t` is an other-window
+  request.
   The caller intent is what the ACTION asks for; the first function
   names a place, a tab or frame, a relative placement, a strategy, no
   display, or no preference.  A constraint or a window-setting entry is
@@ -192,8 +194,9 @@ entries below are this package's terms.
   placement, names a strategy, no display, or no preference.  A caller's
   ACTION has one intent class: the first function names it; an ACTION
   with no function is no preference; ACTION `t` is the special
-  other-window request, not an intent class.  Later functions are
-  fallbacks, and an action alist entry does not change the intent class.
+  other-window request, not an intent class.  Later functions in the
+  caller's function list are fallbacks, and an action alist entry does
+  not change the intent class.
 - **caller constraint**, **selection entry**, **window-setting entry**,
   **window-setting toggle**, **window-settings group toggle** — an
   entry in these terms is an action alist entry, never a key in the

@@ -20,6 +20,10 @@
 
 ### Internal Changes
 
+- Docs: add the caller's action function to the caller Core term
+  heading; use the caller's action functions for the caller-function
+  references and the caller's function list for the remaining
+  later-function references in the design rules and matrix.
 - Docs: add caller's function list to the caller Core term heading and
   use it for the later functions in the caller intent info rule.
 - Docs: unify the caller intent info format: a `Caller:` part with
