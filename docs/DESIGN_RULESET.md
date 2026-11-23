@@ -378,37 +378,43 @@ faces; it does not repeat the reason.
   groups: the Windows group, the dispatch action group, and the
   window-settings group.  The labels remain visible on the windows, and
   the dispatch action list is not hidden behind `?`.
+
+The dispatch prompt menu header is composed as follows:
+
+```text
+dispatch prompt menu header
+├── caller intent info
+│   ├── primary intent, effects, and window facts
+│   ├── caller's fallback chain
+│   └── source-labeled entries
+└── dispatch prompt default
+```
+
 - The caller intent info and the dispatch prompt default form the
   dispatch prompt menu header above the groups.  The info is one line
-  and is a concise summary.  It starts with `Caller:`; the primary
-  intent and its effects follow, separated by commas, together with
-  whether the selected window can display and which windows display the
-  buffer when they affect the choice or the chosen window.  A caller's
-  fallback chain follows, with each later function introduced by a
-  semicolon and `else`; each is named by its effect.  An entry supplied
-  by another action is introduced by a semicolon and its source label.
-  It covers the combined action alist entries the current rule reads
-  that affect the choice or the chosen window.  It names effects
-  and sources, not raw entries;
-  the window-settings group shows when each entry applies.  It does not
-  name controls, entries the rule does not read, or the functions in
-  the combined function list that come from sources other than the
-  caller's ACTION.  `body-function` is not named.
-- A fallback is named by the effect phrase for its action, using the
-  section 4 table's phrases; a no-display fallback is "no window", a
-  full-frame fallback is "full frame, other windows will be deleted",
-  the `Respect` functions are "child frame", "side window", or "atom
-  window", and a function the package does not cover is named by its
-  symbol.
-- The dispatch prompt menu header names the source of an entry that is not
-  from the caller's ACTION.  In the dispatch prompt menu header,
-  `display-buffer-base-action` is "base action",
-  `display-buffer-overriding-action` is "overriding action", and
-  `display-buffer-fallback-action` is "fallback action"; the special
-  action and the extra action are named as they are.  Use the full
-  variable names everywhere else.  The matching `display-buffer-alist`
-  entry supplies no action alist entries when the prompt shows: it is
-  the package's entry, and its action alist is nil.
+  and is a concise summary.  It starts with `Caller:`; the `Caller:`
+  part holds the primary intent, its effects, whether the selected
+  window can display, and which windows display the buffer, separated
+  by commas.  The window facts appear when they affect the choice or
+  the chosen window.  The caller's fallback chain follows, with each
+  later function introduced by a semicolon and `else`; each is named by
+  its effect.  An entry supplied by another action is introduced by a
+  semicolon and its source label.  It covers the combined action alist
+  entries the current rule reads that affect the choice or the chosen
+  window.  It names the entries by their effects and sources, not as
+  raw entries; the window-settings group shows when each entry applies.
+  It does not name controls, entries the rule does not read, or the
+  functions in the combined function list that come from sources other
+  than the caller's ACTION.  `body-function` is not named.
+- A fallback is named by its effect, using the section 4 table's
+  phrases; a no-display fallback is "no window", a full-frame fallback
+  is "full frame, other windows will be deleted", the `Respect`
+  functions are "child frame", "side window", or "atom window", and a
+  function the package does not cover is named by its symbol.
+- The caller intent info names the source of an entry that is not from
+  the caller's ACTION with its source label.  The matching
+  `display-buffer-alist` entry supplies no action alist entries when the
+  prompt shows: it is the package's entry, and its action alist is nil.
 - Example: "Caller: direction right, a 20-line window, preserve size;
   base action: dedicated."  The window-settings group shows when each
   entry applies: height and dedication are "new windows only"; preserve
@@ -901,21 +907,19 @@ Every rule needs a Buttercup test.  Combine:
   window-label keys, the dispatch action keys, and the toggle keys;
   `aw-select` is not called;
 - caller intent info: a one-line summary in the dispatch prompt menu
-  header; it starts with `Caller:`; commas separate the primary intent
-  and its effects; a semicolon and `else` introduce each later function;
-  a fallback is named by its effect and an uncovered function by its
-  symbol; a semicolon and a source label precede an entry from another
-  action; it names whether the selected window can display and which
+  header; it starts with `Caller:`; commas separate the primary intent,
+  its effects, whether the selected window can display, and which
   windows display the buffer when they affect the choice or chosen
-  window, and the entries the rule reads that affect the choice or
-  chosen window, as effects and sources, not when an entry applies; the
-  window-settings group shows when each entry applies; the source labels
-  are "base action",
-  "overriding action",
-  and "fallback action", and the special and extra actions by name; the
-  full variable names are used outside the dispatch prompt menu header; the
-  matching `display-buffer-alist` entry supplies no source when the
-  prompt shows;
+  window; a semicolon and `else` introduce each later function; a
+  fallback is named by its effect and an uncovered function by its
+  symbol; a semicolon and a source label precede an entry from another
+  action; it names the entries the rule reads that affect the choice or
+  chosen window by their effects and sources, not when an entry applies;
+  the window-settings group shows when each entry applies; the source
+  labels are "base action", "overriding action", and "fallback action",
+  and the special and extra actions by name; the full variable names are
+  used outside the dispatch prompt menu header; the matching
+  `display-buffer-alist` entry supplies no source when the prompt shows;
   entries the rule does not read and `body-function` are not named;
 - dispatch prompt key: the keys from `aw-keys` and `aw-dispatch-alist`
   win; a package-supplied key for a dispatch action or a window-setting
@@ -927,8 +931,9 @@ Every rule needs a Buttercup test.  Combine:
 - same-window conflict: info with a source is "Caller: same window;
   base action: inhibit same window"; when the caller's ACTION
   supplies the entry, "Caller: same window, inhibit same window";
-  the message names `inhibit-same-window` and its source; choosing the
-  selected window binds the entry to nil;
+  the message names `inhibit-same-window` and, when it is not the
+  caller's ACTION, the source; choosing the selected window binds the
+  entry to nil;
 - other entry: `inhibit-switch-frame`, `allow-no-window`;
 - full frame: the dispatch prompt menu shows "Display full frame" as the
   dispatch prompt default; a window label displays normally; "Display full

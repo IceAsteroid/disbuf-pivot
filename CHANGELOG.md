@@ -20,6 +20,10 @@
 
 ### Internal Changes
 
+- Docs: add the dispatch prompt menu header composition diagram; define
+  the caller's fallback chain and source label; state the caller intent
+  info slots and order explicitly; fix the fallback naming, the
+  same-window source wording, and the test order.
 - Docs: add the caller's action function to the caller Core term
   heading; use the caller's action functions for the caller-function
   references and the caller's function list for the remaining

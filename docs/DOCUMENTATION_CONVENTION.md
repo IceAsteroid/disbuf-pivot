@@ -88,8 +88,10 @@ entries below are this package's terms.
 - **dispatch prompt menu window** — the side window that shows the
   dispatch prompt menu; the prompt does not label it.
 - **dispatch prompt menu header** — the part of the dispatch prompt menu
-  above the groups; it holds the caller intent info and the dispatch
-  prompt default.
+  above the groups; it holds the caller intent info, which states the
+  caller's request and the window facts, and the dispatch prompt
+  default, which gives the target or action the prompt uses if the user
+  accepts.
 - **dispatch prompt menu group**, **Windows group**,
   **dispatch action group**, **window-settings group** — a dispatch
   prompt menu group is a visually separated group in the dispatch
@@ -155,40 +157,46 @@ entries below are this package's terms.
   function list run.  The dispatch prompt menu's cancel key makes a nil
   choice.  A nil choice is not an abort.
 - **caller**, **caller's ACTION**, **caller's function list**,
-  **caller's action function**, **caller intent**, **caller intent
-  info** — the caller is the code that calls `display-buffer`; do not
-  use the word for code that shows the tab prompt.  The caller's ACTION
+  **caller's action function**, **caller's fallback chain**,
+  **caller intent**, **caller intent info** — the caller is the code
+  that calls `display-buffer`; do not use the word for code that shows
+  the tab prompt.  The caller's ACTION
   is the ACTION argument of the `display-buffer` call: a
   `(FUNCTIONS . ALIST)` pair.  Its first function is the caller's
   primary intent; its FUNCTIONS are the caller's function list, one
   function or a list, and are included in the combined function list;
   each function in the caller's function list is a caller's action
-  function; its ALIST is part of the combined action alist.  An ACTION
-  with no function is no preference; ACTION `t` is an other-window
-  request.
+  function; its ALIST is part of the combined action alist.  The later
+  functions in the caller's function list form the caller's fallback
+  chain; each is a caller fallback.  An ACTION with no function is no
+  preference; ACTION `t` is an other-window request.
   The caller intent is what the ACTION asks for; the first function
   names a place, a tab or frame, a relative placement, a strategy, no
   display, or no preference.  A constraint or a window-setting entry is
   an action alist entry the rule reads, not an intent class.  The caller intent
   info is the one-line summary in the dispatch prompt menu header.  It
-  names the primary intent, the caller's fallback chain, whether the
-  selected window can display and which windows display the buffer when
-  they affect the choice or the chosen window, and the combined action
-  alist entries the current rule reads that affect the choice or the
-  chosen window.  It names effects and sources, not raw entries; the
-  window-settings group shows when each window-setting entry applies:
-  "new windows only", "new frame", or "any chosen window".
-  The dispatch prompt menu header labels the source when an entry is
-  not from the caller's ACTION: `display-buffer-base-action` as "base
-  action", `display-buffer-overriding-action` as "overriding action",
-  and `display-buffer-fallback-action` as "fallback action"; the
-  special action and the extra action are named as they are.  Use the
-  full variable names everywhere else.  The info does not name controls,
+  names the primary intent and its effects, whether the selected window
+  can display and which windows display the buffer when they affect the
+  choice or the chosen window, the caller's fallback chain, and the
+  combined action alist entries the current rule reads that affect the
+  choice or the chosen window.  It names the entries by their effects
+  and sources, not as raw entries; the window-settings group shows when
+  each window-setting entry applies: "new windows only", "new frame",
+  or "any chosen window".
+  The caller intent info uses a source label when an entry is not from
+  the caller's ACTION.  The info does not name controls,
   entries the rule does not read, or the functions in the combined
   function list that come from sources other than the caller's ACTION.
   It introduces each later function in the caller's fallback chain with
   `else` and names it by its effect; a function the package does not
   cover is named by its symbol.  `body-function` is not named.
+- **source label** — the label after a semicolon that names the action
+  supplying an entry that is not from the caller's ACTION:
+  `display-buffer-base-action` as "base action",
+  `display-buffer-overriding-action` as "overriding action", and
+  `display-buffer-fallback-action` as "fallback action"; the special
+  action and the extra action are named as they are.  Use the full
+  variable names everywhere else.
 - **intent class** — the classification of the caller's ACTION by its
   first function: names a place, names a tab or frame, names a relative
   placement, names a strategy, no display, or no preference.  A caller's
