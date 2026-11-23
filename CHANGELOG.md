@@ -20,6 +20,15 @@
 
 ### Internal Changes
 
+- Docs: unify the caller intent info format: a `Caller:` part with
+  commas for the primary intent, its effects, whether the selected
+  window can display, and which windows display the buffer, `else` for
+  each later function in the caller's fallback chain, and a source label
+  after a semicolon for an entry from another action; name a fallback by
+  its effect and an uncovered function by its symbol; name the
+  same-window conflict with its source and "inhibit same window";
+  the same-window conflict message remains separate; no info appears
+  without the dispatch prompt.
 - Docs: rename the intended choice to the dispatch prompt default, and
   add the tab prompt default and the frame prompt default; define the
   default each prompt offers and how it is accepted; fix the tab prompt

@@ -168,20 +168,24 @@ entries below are this package's terms.
   display, or no preference.  A constraint or a window-setting entry is
   an action alist entry the rule reads, not an intent class.  The caller intent
   info is the one-line summary in the dispatch prompt menu header.  It
-  names the primary intent, the caller's fallback chain, and the
-  combined action alist entries the current rule reads that affect the
-  choice or the chosen window.  It names effects and sources, not raw
-  entries; the window-settings group shows when each window-setting
-  entry applies: "new windows only", "new frame", or "any chosen
-  window".
+  names the primary intent, the caller's fallback chain, whether the
+  selected window can display and which windows display the buffer when
+  they affect the choice or the chosen window, and the combined action
+  alist entries the current rule reads that affect the choice or the
+  chosen window.  It names effects and sources, not raw entries; the
+  window-settings group shows when each window-setting entry applies:
+  "new windows only", "new frame", or "any chosen window".
   The dispatch prompt menu header labels the source when an entry is
   not from the caller's ACTION: `display-buffer-base-action` as "base
   action", `display-buffer-overriding-action` as "overriding action",
   and `display-buffer-fallback-action` as "fallback action"; the
   special action and the extra action are named as they are.  Use the
   full variable names everywhere else.  The info does not name controls,
-  entries the rule does not read, or the combined function list.
-  `body-function` is not named.
+  entries the rule does not read, or the functions in the combined
+  function list that come from sources other than the caller's ACTION.
+  It introduces each later function in the caller's fallback chain with
+  `else` and names it by its effect; a function the package does not
+  cover is named by its symbol.  `body-function` is not named.
 - **intent class** — the classification of the caller's ACTION by its
   first function: names a place, names a tab or frame, names a relative
   placement, names a strategy, no display, or no preference.  A caller's
