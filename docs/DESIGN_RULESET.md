@@ -152,9 +152,9 @@ A caller's ACTION may name several functions.  The first function is
 the caller's primary intent; the later functions are the caller's
 fallbacks.  Caller intent info names the chain: the first function's
 effect, followed by each later function introduced by `else`, e.g.
-"Caller: same window; else new window."  A later function is named by
-its effect; a function the package does not cover is named by its
-symbol.
+"Caller: same window; else new window."  A later function in the
+caller's function list is named by its effect; a function the package
+does not cover is named by its symbol.
 
 When the rule shows the dispatch prompt, the dispatch prompt default is
 "Use caller intent" when the caller's ACTION can run; the dispatch prompt

@@ -154,9 +154,10 @@ entries below are this package's terms.
   nil, and the later functions in Emacs's combined function list run.
   The dispatch prompt menu's cancel key makes a nil choice.  A nil
   choice is not an abort.
-- **caller**, **caller's ACTION**, **caller intent**, **caller intent
-  info** — the caller is the code that calls `display-buffer`; do not
-  use the word for code that shows the tab prompt.  The caller's ACTION
+- **caller**, **caller's ACTION**, **caller's function list**,
+  **caller intent**, **caller intent info** — the caller is the code
+  that calls `display-buffer`; do not use the word for code that shows
+  the tab prompt.  The caller's ACTION
   is the ACTION argument of the `display-buffer` call: a
   `(FUNCTIONS . ALIST)` pair.  Its first function is the caller's
   primary intent; its FUNCTIONS are the caller's function list, one

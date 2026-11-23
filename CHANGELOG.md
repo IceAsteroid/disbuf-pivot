@@ -20,6 +20,8 @@
 
 ### Internal Changes
 
+- Docs: add caller's function list to the caller Core term heading and
+  use it for the later functions in the caller intent info rule.
 - Docs: unify the caller intent info format: a `Caller:` part with
   commas for the primary intent, its effects, whether the selected
   window can display, and which windows display the buffer, `else` for
