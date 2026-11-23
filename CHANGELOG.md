@@ -20,6 +20,8 @@
 
 ### Internal Changes
 
+- Docs: state that choosing an existing tab name selects the tab and a
+  new name makes a new tab.
 - Docs: add the dispatch prompt menu header composition diagram; define
   the caller's fallback chain and source label; state the caller intent
   info slots and order explicitly; fix the fallback naming, the

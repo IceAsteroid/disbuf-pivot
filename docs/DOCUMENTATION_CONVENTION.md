@@ -111,7 +111,8 @@ entries below are this package's terms.
   `disbuf-pivot-tab-bar-read-tab-name` implements it.
   `disbuf-pivot-tab-bar-read-function` can replace the plain tab
   reader, and the optional consult library supplies the consult tab
-  reader.  The frame prompt reads a frame name from the live visible
+  reader.  Choosing an existing name selects the tab; a new name makes
+  a new tab.  The frame prompt reads a frame name from the live visible
   top-level frames, filtered by `frame-predicate`; `dp-action--frame`
   implements it.  An existing name selects the frame, a new name makes
   a new frame, and an empty name makes a new frame with the default
