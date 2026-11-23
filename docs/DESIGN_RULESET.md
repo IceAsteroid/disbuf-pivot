@@ -393,10 +393,10 @@ dispatch prompt menu header
 - The caller intent info and the dispatch prompt default form the
   dispatch prompt menu header above the groups.  The info is one line
   and is a concise summary.  It starts with `Caller:`; the `Caller:`
-  part holds the primary intent, its effects, whether the selected
-  window can display, and which windows display the buffer, separated
-  by commas.  The window facts appear when they affect the choice or
-  the chosen window.  The caller's fallback chain follows, with each
+  part holds the primary intent, the effects of the primary intent and
+  of the caller's action alist entries, and the window facts,
+  separated by commas.  A window fact appears when it affects the
+  choice or the chosen window.  The caller's fallback chain follows, with each
   later function introduced by a semicolon and `else`; each is named by
   its effect.  An entry supplied by another action is introduced by a
   semicolon and its source label.  It covers the combined action alist
@@ -419,6 +419,20 @@ dispatch prompt menu header
   base action: dedicated."  The window-settings group shows when each
   entry applies: height and dedication are "new windows only"; preserve
   size applies to any chosen window.
+
+The example's parts:
+
+| Part | Example |
+|---|---|
+| primary intent | "direction right" |
+| effects of the caller's action alist entries | "a 20-line window", "preserve size" |
+| window facts | none in this line; e.g. "selected window cannot display", "windows X display the buffer" |
+| caller's fallback chain | none in this line; e.g. "else new window" |
+| source-labeled entry | "base action: dedicated", effect "dedicated" |
+| dispatch prompt default | separate; when it is a window, its label states eligibility |
+
+A full-frame line shows a primary intent effect: "Caller: full frame,
+other windows will be deleted."
 - The dispatch prompt menu shows a window-setting toggle for each
   window-setting entry present in the combined action alist with the
   fixed keys above; the toggle shows the entry's source, state, and when
@@ -908,13 +922,15 @@ Every rule needs a Buttercup test.  Combine:
   `aw-select` is not called;
 - caller intent info: a one-line summary in the dispatch prompt menu
   header; it starts with `Caller:`; commas separate the primary intent,
-  its effects, whether the selected window can display, and which
-  windows display the buffer when they affect the choice or chosen
-  window; a semicolon and `else` introduce each later function; a
-  fallback is named by its effect and an uncovered function by its
-  symbol; a semicolon and a source label precede an entry from another
-  action; it names the entries the rule reads that affect the choice or
-  chosen window by their effects and sources, not when an entry applies;
+  the effects of the primary intent and of the caller's action alist
+  entries, and the window facts; it names whether the selected window
+  can display and which windows display the buffer when they affect the
+  choice or chosen window; a semicolon and `else` introduce each later
+  function; a fallback is named by its effect and an uncovered function
+  by its symbol; a semicolon and a source label precede an entry from
+  another action; it names the entries the rule reads that affect the
+  choice or chosen window by their effects and sources, not when an
+  entry applies;
   the window-settings group shows when each entry applies; the source
   labels are "base action", "overriding action", and "fallback action",
   and the special and extra actions by name; the full variable names are

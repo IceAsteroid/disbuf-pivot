@@ -20,6 +20,10 @@
 
 ### Internal Changes
 
+- Docs: define effect and window fact in the caller intent info;
+  distinguish the primary intent from its effects; state the `Caller:`
+  slots and order; add the parts table and examples; align the grammar
+  and tests.
 - Docs: state that choosing an existing tab name selects the tab and a
   new name makes a new tab.
 - Docs: add the dispatch prompt menu header composition diagram; define

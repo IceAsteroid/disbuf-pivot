@@ -175,15 +175,24 @@ entries below are this package's terms.
   names a place, a tab or frame, a relative placement, a strategy, no
   display, or no preference.  A constraint or a window-setting entry is
   an action alist entry the rule reads, not an intent class.  The caller intent
-  info is the one-line summary in the dispatch prompt menu header.  It
-  names the primary intent and its effects, whether the selected window
-  can display and which windows display the buffer when they affect the
-  choice or the chosen window, the caller's fallback chain, and the
-  combined action alist entries the current rule reads that affect the
-  choice or the chosen window.  It names the entries by their effects
-  and sources, not as raw entries; the window-settings group shows when
-  each window-setting entry applies: "new windows only", "new frame",
-  or "any chosen window".
+  info is the one-line summary in the dispatch prompt menu header.  The
+  primary intent is the placement the caller's first function names.  An
+  effect is a user-facing phrase for a consequence other than the
+  primary intent's placement: a window setting or constraint from an
+  action alist entry, a display outcome of the primary intent, or a
+  fallback's placement.  It is not a raw action function or action
+  alist entry.  A window fact is whether the selected window can
+  display the buffer or which windows display the buffer; it is named
+  when it affects the choice or the chosen window.  It is not the
+  dispatch prompt default's target eligibility; when the default is a
+  window, the window label for that target states that eligibility.
+  The info names the primary intent, the effects of the primary intent
+  and of the caller's action alist entries, the window facts, the
+  caller's fallback chain, and the entries from other actions with
+  their source labels.  It names the entries by their effects and
+  sources, not as raw entries; the window-settings group shows when each
+  window-setting entry applies: "new windows only", "new frame", or
+  "any chosen window".
   The caller intent info uses a source label when an entry is not from
   the caller's ACTION.  The info does not name controls,
   entries the rule does not read, or the functions in the combined
