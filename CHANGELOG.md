@@ -20,6 +20,7 @@
 
 ### Internal Changes
 
+- Docs: add effect to the caller Core term heading.
 - Docs: add the Info effect column to the action function checklist and
   use it for fallback naming.
 - Docs: define effect and window fact in the caller intent info;
