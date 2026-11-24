@@ -20,6 +20,8 @@
 
 ### Internal Changes
 
+- Docs: add the Info effect column to the action function checklist and
+  use it for fallback naming.
 - Docs: define effect and window fact in the caller intent info;
   distinguish the primary intent from its effects; state the `Caller:`
   slots and order; add the parts table and examples; align the grammar

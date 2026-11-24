@@ -406,9 +406,8 @@ dispatch prompt menu header
   It does not name controls, entries the rule does not read, or the
   functions in the combined function list that come from sources other
   than the caller's ACTION.  `body-function` is not named.
-- A fallback is named by its effect, using the section 4 table's
-  phrases; a no-display fallback is "no window", a full-frame fallback
-  is "full frame, other windows will be deleted", the `Respect`
+- A fallback is named by its effect, using the `Info effect` column in
+  section 7; a no-display fallback is "no window", the `Respect`
   functions are "child frame", "side window", or "atom window", and a
   function the package does not cover is named by its symbol.
 - The caller intent info names the source of an entry that is not from
@@ -654,27 +653,27 @@ function reads.  Window-setting entries are shared by every action
 function; section 8 handles them.  A selection entry is not applied to
 the chosen window after the choice.
 
-| Action function | Treatment | Relevant alists |
-|---|---|---|
-| `display-buffer-same-window` | Regulate.  When the selected window can display, its label is eligible; choosing it binds `inhibit-same-window` to nil for this call.  When it cannot display, the prompt offers the split actions and cancel. | `inhibit-same-window` |
-| `display-buffer-reuse-window` | Regulate.  If the user chooses the selected window despite `inhibit-same-window`, bind that entry to nil for this call. | `inhibit-same-window`, `reusable-frames`, `inhibit-switch-frame`, `reuse-indirect` |
-| `display-buffer-reuse-mode-window` | Regulate as reuse with `mode`. | `mode`, `inhibit-same-window`, `reusable-frames`, `inhibit-switch-frame` |
-| `display-buffer-pop-up-window` | Regulate for a split action. | `inhibit-switch-frame`; shared window-setting entries (section 8) |
-| `display-buffer-in-previous-window` | Regulate.  Show the `previous-window` entry as the preferred candidate; when it is not usable, mark the windows that previously showed the buffer. | `previous-window`, `inhibit-same-window`, `reusable-frames` |
-| `display-buffer-use-some-window` | Regulate: show caller intent info; the dispatch prompt; the dispatch prompt default is "Use caller intent" (the caller's ACTION); a label or another action overrides.  Do not display without the prompt. | `some-window`, `lru-frames`, `lru-time`, `window-min-width`, `window-min-height`, `inhibit-same-window`, `inhibit-switch-frame` |
-| `display-buffer-use-least-recent-window` | Regulate like `display-buffer-use-some-window`. | `reusable-frames`, `inhibit-switch-frame`, `lru-frames`, `lru-time`, `window-min-width`, `window-min-height`; `inhibit-same-window` is forced to t internally |
-| `display-buffer-in-direction` | Regulate; the dispatch prompt default is "Use caller intent" (the caller's ACTION, `display-buffer-in-direction`). | `direction`, `window` |
-| `display-buffer-below-selected` | Regulate; the dispatch prompt default is "Use caller intent" (the caller's ACTION).  `window-min-height` is an eligibility constraint. | `window-min-height` |
-| `display-buffer-at-bottom` | Regulate; the dispatch prompt default is "Use caller intent" (the caller's ACTION). | None specific |
-| `display-buffer-full-frame` | Regulate.  Show caller intent info; the dispatch prompt default is "Display full frame"; a window label displays normally; split, tab, and frame actions override; the cancel key returns nil | Delegates to `display-buffer-reuse-window`, `display-buffer-same-window`, `display-buffer-pop-up-window`, and `display-buffer-use-some-window`; their entries apply |
-| `display-buffer-pop-up-frame` | Regulate for a new frame.  Ask for a new frame name; do not offer existing frames.  Use `pop-up-frame-parameters`; the new frame is top-level unless that entry sets `parent-frame`.  `pop-up-frames` selects the frame strategy but this function does not read it. | `pop-up-frame-parameters`, `inhibit-switch-frame` |
-| `display-buffer-use-some-frame` | Regulate for an existing frame; `frame-predicate` filters the candidates. | `frame-predicate`, `inhibit-same-window`, `inhibit-switch-frame` |
-| `display-buffer-in-tab` | Regulate.  The tab prompt offers the selected frame's tabs and every tab in the `reusable-frames` scope that displays the buffer; other tabs of those frames are not candidates.  Preselect the tab the function would select (the current tab first unless `ignore-current-tab`); a new tab starts without an existing-tab preselect. | `reusable-frames` (nil differs), `ignore-current-tab`, `tab-name`, `tab-group` |
-| `display-buffer-in-new-tab` | Regulate; ask for a new tab name; do not select an existing tab with the same name. | `tab-name`, `tab-group` |
-| `display-buffer-no-window` | Regulate: leave undisplayed; only with `allow-no-window`. | `allow-no-window` |
-| `display-buffer-in-child-frame` | Respect. | `child-frame-parameters` (including a `parent-frame` entry naming a top-level or child frame), `inhibit-switch-frame` |
-| `display-buffer-in-side-window` | Respect; side as-is. | `side`, `slot` |
-| `display-buffer-in-atom-window` | Respect. | `side`, `window` |
+| Action function | Info effect | Treatment | Relevant alists |
+|---|---|---|---|
+| `display-buffer-same-window` | "same window" | Regulate.  When the selected window can display, its label is eligible; choosing it binds `inhibit-same-window` to nil for this call.  When it cannot display, the prompt offers the split actions and cancel. | `inhibit-same-window` |
+| `display-buffer-reuse-window` | "reuse" | Regulate.  If the user chooses the selected window despite `inhibit-same-window`, bind that entry to nil for this call. | `inhibit-same-window`, `reusable-frames`, `inhibit-switch-frame`, `reuse-indirect` |
+| `display-buffer-reuse-mode-window` | "reuse" | Regulate as reuse with `mode`. | `mode`, `inhibit-same-window`, `reusable-frames`, `inhibit-switch-frame` |
+| `display-buffer-pop-up-window` | "new window" | Regulate for a split action. | `inhibit-switch-frame`; shared window-setting entries (section 8) |
+| `display-buffer-in-previous-window` | "previous window X" or "a window that previously showed the buffer" | Regulate.  Show the `previous-window` entry as the preferred candidate; when it is not usable, mark the windows that previously showed the buffer. | `previous-window`, `inhibit-same-window`, `reusable-frames` |
+| `display-buffer-use-some-window` | "some window" | Regulate: show caller intent info; the dispatch prompt; the dispatch prompt default is "Use caller intent" (the caller's ACTION); a label or another action overrides.  Do not display without the prompt. | `some-window`, `lru-frames`, `lru-time`, `window-min-width`, `window-min-height`, `inhibit-same-window`, `inhibit-switch-frame` |
+| `display-buffer-use-least-recent-window` | "a recently unused window" | Regulate like `display-buffer-use-some-window`. | `reusable-frames`, `inhibit-switch-frame`, `lru-frames`, `lru-time`, `window-min-width`, `window-min-height`; `inhibit-same-window` is forced to t internally |
+| `display-buffer-in-direction` | "direction X" | Regulate; the dispatch prompt default is "Use caller intent" (the caller's ACTION, `display-buffer-in-direction`). | `direction`, `window` |
+| `display-buffer-below-selected` | "below the selected window" | Regulate; the dispatch prompt default is "Use caller intent" (the caller's ACTION).  `window-min-height` is an eligibility constraint. | `window-min-height` |
+| `display-buffer-at-bottom` | "at the bottom of the frame" | Regulate; the dispatch prompt default is "Use caller intent" (the caller's ACTION). | None specific |
+| `display-buffer-full-frame` | "full frame, other windows will be deleted" | Regulate.  Show caller intent info; the dispatch prompt default is "Display full frame"; a window label displays normally; split, tab, and frame actions override; the cancel key returns nil | Delegates to `display-buffer-reuse-window`, `display-buffer-same-window`, `display-buffer-pop-up-window`, and `display-buffer-use-some-window`; their entries apply |
+| `display-buffer-pop-up-frame` | "new frame" | Regulate for a new frame.  Ask for a new frame name; do not offer existing frames.  Use `pop-up-frame-parameters`; the new frame is top-level unless that entry sets `parent-frame`.  `pop-up-frames` selects the frame strategy but this function does not read it. | `pop-up-frame-parameters`, `inhibit-switch-frame` |
+| `display-buffer-use-some-frame` | "existing frame X" | Regulate for an existing frame; `frame-predicate` filters the candidates. | `frame-predicate`, `inhibit-same-window`, `inhibit-switch-frame` |
+| `display-buffer-in-tab` | "existing tab X" or "new tab" | Regulate.  The tab prompt offers the selected frame's tabs and every tab in the `reusable-frames` scope that displays the buffer; other tabs of those frames are not candidates.  Preselect the tab the function would select (the current tab first unless `ignore-current-tab`); a new tab starts without an existing-tab preselect. | `reusable-frames` (nil differs), `ignore-current-tab`, `tab-name`, `tab-group` |
+| `display-buffer-in-new-tab` | "new tab" | Regulate; ask for a new tab name; do not select an existing tab with the same name. | `tab-name`, `tab-group` |
+| `display-buffer-no-window` | None | Regulate: leave undisplayed; only with `allow-no-window`. | `allow-no-window` |
+| `display-buffer-in-child-frame` | None | Respect. | `child-frame-parameters` (including a `parent-frame` entry naming a top-level or child frame), `inhibit-switch-frame` |
+| `display-buffer-in-side-window` | None | Respect; side as-is. | `side`, `slot` |
+| `display-buffer-in-atom-window` | None | Respect. | `side`, `window` |
 
 ## 8. Action alist checklist
 
