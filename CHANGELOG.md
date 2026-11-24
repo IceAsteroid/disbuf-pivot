@@ -20,6 +20,9 @@
 
 ### Internal Changes
 
+- Docs: add the Effect phrase column to the window-setting entries, list
+  their effects in the fixed order, and note the window-size frame-size
+  caveat.
 - Docs: rename the Info effect column to Effect phrase.
 - Docs: correct preserve-size to new windows only; the standard display
   path applies it only to a new window on an existing frame.

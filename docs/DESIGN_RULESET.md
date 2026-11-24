@@ -414,9 +414,9 @@ dispatch prompt menu header
   the caller's ACTION with its source label.  The matching
   `display-buffer-alist` entry supplies no action alist entries when the
   prompt shows: it is the package's entry, and its action alist is nil.
-- Example: "Caller: direction right, a 20-line window, preserve size;
+- Example: "Caller: direction right, preserve size, a 20-line window;
   base action: dedicated."  The window-settings group shows when each
-  entry applies: height, dedication, and preserve size are "new windows
+  entry applies: dedication, preserve size, and height are "new windows
   only".
 
 The example's parts:
@@ -424,7 +424,7 @@ The example's parts:
 | Part | Example |
 |---|---|
 | primary intent | "direction right" |
-| effects of the caller's action alist entries | "a 20-line window", "preserve size" |
+| effects of the caller's action alist entries | "preserve size", "a 20-line window" |
 | window facts | none in this line; e.g. "selected window cannot display", "windows X display the buffer" |
 | caller's fallback chain | none in this line; e.g. "else new window" |
 | source-labeled entry | "base action: dedicated", effect "dedicated" |
@@ -718,18 +718,26 @@ function, not a window-setting entry; the package preserves it.
 
 ### Window-setting entries
 
-| Entry | Treatment |
-|---|---|
-| `dedicated` | Preserve; apply through `window--display-buffer`.  A reused normal window is not dedicated; a new window receives the entry's value; a window already dedicated to this buffer and showing it keeps its flag; a window dedicated to this buffer but not showing it is reset to nil before display; a window dedicated to another buffer is undisplayable; its label is ineligible.  `display-buffer-in-side-window` is Respect and adds `(dedicated . side)` by default unless the alist already has a `dedicated` entry (`window.el:1120–1122`); the prompt labels a side window as ineligible.  Caller intent info names the effect; the window-settings group shows "new windows only" and names the source.  A window-setting toggle removes the entry. |
-| `window-parameters` | Preserve; apply to the chosen window.  Caller intent info names the effect "window parameters"; the window-settings group names the source.  A window-setting toggle removes the entry. |
-| `preserve-size` | Preserve the chosen window's size; apply to new windows only.  Caller intent info names the effect; the window-settings group shows "new windows only".  A window-setting toggle removes the entry. |
-| `window-height`, `window-width` | Preserve; apply only when the window never showed another buffer (a new window on an existing frame).  Caller intent info names the effect; the window-settings group shows "new windows only".  A window-setting toggle removes each entry. |
-| `window-size` | Preserve; apply when the window is on a new frame.  Caller intent info names the effect; the window-settings group shows "new frame".  A window-setting toggle removes the entry. |
+| Entry | Effect phrase | Treatment |
+|---|---|---|
+| `dedicated` | "dedicated" | Preserve; apply through `window--display-buffer`.  A reused normal window is not dedicated; a new window receives the entry's value; a window already dedicated to this buffer and showing it keeps its flag; a window dedicated to this buffer but not showing it is reset to nil before display; a window dedicated to another buffer is undisplayable; its label is ineligible.  `display-buffer-in-side-window` is Respect and adds `(dedicated . side)` by default unless the alist already has a `dedicated` entry (`window.el:1120–1122`); the prompt labels a side window as ineligible.  The window-settings group shows "new windows only" and names the source.  A window-setting toggle removes the entry. |
+| `window-parameters` | "window parameters" | Preserve; apply to the chosen window.  The window-settings group names the source.  A window-setting toggle removes the entry. |
+| `preserve-size` | "preserve width", "preserve height", or "preserve size" from the value | Preserve the chosen window's size; apply to new windows only.  The window-settings group shows "new windows only".  A window-setting toggle removes the entry. |
+| `window-height`, `window-width` | "an N-line window" / "an N-column window" for an integer; "N% of the frame high" / "N% of the frame wide" for a float; "a window with an N-line body" / "an N-column body" for a `body-lines` / `body-columns` cons; the function symbol for a function | Preserve; apply only when the window never showed another buffer (a new window on an existing frame).  The window-settings group shows "new windows only".  A window-setting toggle removes each entry. |
+| `window-size` | "a new frame N columns by M lines"; "a new frame with an N by M body" for `body-chars`; the function symbol for a function | Preserve; apply when the window is on a new frame.  The window-settings group shows "new frame".  A window-setting toggle removes the entry. |
+
+Caller intent info lists these effects in this table's order, and the
+window-settings group keeps that order.  A key reassignment changes the
+key label, not the order.
 
 Why new windows only: Emacs applies `preserve-size` only to a new
 window on an existing frame, after `window-height` and `window-width`;
 it preserves the size the window has at that point.  A reused window,
 a new frame, and a new tab are excluded (`window.el:7927-7930`).
+
+`window-size` requests a frame size.  A tiling window manager or a text
+terminal may ignore the request; the sole window then does not get the
+requested size.
 
 ### Other entries
 
@@ -973,7 +981,8 @@ Every rule needs a Buttercup test.  Combine:
   fixed Meta-digit key; user keys win; an absent entry has no toggle;
   each toggle shows the source, state, and when it applies;
   `preserve-size`, `window-height`, and `window-width` are new windows
-  only; `window-size` is a new frame.
+  only; `window-size` is a new frame.  The caller intent info lists them
+  in the window-setting table order.
   The window-settings group toggle is shown with one or more
   window-setting entries, removes all if any window-setting entry is
   active, restores all if all are removed, shows on, off, or mixed, and
