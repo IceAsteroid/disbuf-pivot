@@ -406,8 +406,8 @@ dispatch prompt menu header
   It does not name controls, entries the rule does not read, or the
   functions in the combined function list that come from sources other
   than the caller's ACTION.  `body-function` is not named.
-- A fallback is named by its effect, using the `Info effect` column in
-  section 7; a no-display fallback is "no window", the `Respect`
+- A fallback is named by its effect, using the `Effect phrase` column
+  in section 7; a no-display fallback is "no window", the `Respect`
   functions are "child frame", "side window", or "atom window", and a
   function the package does not cover is named by its symbol.
 - The caller intent info names the source of an entry that is not from
@@ -653,7 +653,7 @@ function reads.  Window-setting entries are shared by every action
 function; section 8 handles them.  A selection entry is not applied to
 the chosen window after the choice.
 
-| Action function | Info effect | Treatment | Relevant alists |
+| Action function | Effect phrase | Treatment | Relevant alists |
 |---|---|---|---|
 | `display-buffer-same-window` | "same window" | Regulate.  When the selected window can display, its label is eligible; choosing it binds `inhibit-same-window` to nil for this call.  When it cannot display, the prompt offers the split actions and cancel. | `inhibit-same-window` |
 | `display-buffer-reuse-window` | "reuse" | Regulate.  If the user chooses the selected window despite `inhibit-same-window`, bind that entry to nil for this call. | `inhibit-same-window`, `reusable-frames`, `inhibit-switch-frame`, `reuse-indirect` |
