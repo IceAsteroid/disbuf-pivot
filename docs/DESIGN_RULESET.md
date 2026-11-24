@@ -416,8 +416,8 @@ dispatch prompt menu header
   prompt shows: it is the package's entry, and its action alist is nil.
 - Example: "Caller: direction right, a 20-line window, preserve size;
   base action: dedicated."  The window-settings group shows when each
-  entry applies: height and dedication are "new windows only"; preserve
-  size applies to any chosen window.
+  entry applies: height, dedication, and preserve size are "new windows
+  only".
 
 The example's parts:
 
@@ -722,9 +722,14 @@ function, not a window-setting entry; the package preserves it.
 |---|---|
 | `dedicated` | Preserve; apply through `window--display-buffer`.  A reused normal window is not dedicated; a new window receives the entry's value; a window already dedicated to this buffer and showing it keeps its flag; a window dedicated to this buffer but not showing it is reset to nil before display; a window dedicated to another buffer is undisplayable; its label is ineligible.  `display-buffer-in-side-window` is Respect and adds `(dedicated . side)` by default unless the alist already has a `dedicated` entry (`window.el:1120–1122`); the prompt labels a side window as ineligible.  Caller intent info names the effect; the window-settings group shows "new windows only" and names the source.  A window-setting toggle removes the entry. |
 | `window-parameters` | Preserve; apply to the chosen window.  Caller intent info names the effect "window parameters"; the window-settings group names the source.  A window-setting toggle removes the entry. |
-| `preserve-size` | Preserve the chosen window's size; apply to any chosen window.  Caller intent info names the effect; the window-settings group shows "any chosen window".  A window-setting toggle removes the entry. |
+| `preserve-size` | Preserve the chosen window's size; apply to new windows only.  Caller intent info names the effect; the window-settings group shows "new windows only".  A window-setting toggle removes the entry. |
 | `window-height`, `window-width` | Preserve; apply only when the window never showed another buffer (a new window on an existing frame).  Caller intent info names the effect; the window-settings group shows "new windows only".  A window-setting toggle removes each entry. |
 | `window-size` | Preserve; apply when the window is on a new frame.  Caller intent info names the effect; the window-settings group shows "new frame".  A window-setting toggle removes the entry. |
+
+Why new windows only: Emacs applies `preserve-size` only to a new
+window on an existing frame, after `window-height` and `window-width`;
+it preserves the size the window has at that point.  A reused window,
+a new frame, and a new tab are excluded (`window.el:7927-7930`).
 
 ### Other entries
 
@@ -967,8 +972,8 @@ Every rule needs a Buttercup test.  Combine:
 - window-setting toggle: one per present window-setting entry, with the
   fixed Meta-digit key; user keys win; an absent entry has no toggle;
   each toggle shows the source, state, and when it applies;
-  `preserve-size` applies to any chosen window; `window-height` and
-  `window-width` are new windows only; `window-size` is a new frame.
+  `preserve-size`, `window-height`, and `window-width` are new windows
+  only; `window-size` is a new frame.
   The window-settings group toggle is shown with one or more
   window-setting entries, removes all if any window-setting entry is
   active, restores all if all are removed, shows on, off, or mixed, and

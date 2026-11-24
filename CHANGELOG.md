@@ -20,6 +20,8 @@
 
 ### Internal Changes
 
+- Docs: correct preserve-size to new windows only; the standard display
+  path applies it only to a new window on an existing frame.
 - Docs: add effect to the caller Core term heading.
 - Docs: add the Info effect column to the action function checklist and
   use it for fallback naming.
