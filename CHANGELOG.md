@@ -20,6 +20,25 @@
 
 ### Internal Changes
 
+- Docs: tighten `docs/DOCUMENTATION_CONVENTION.md` to concise
+  definitions without behavioral duplication; restructure
+  `docs/DESIGN_RULESET.md` with visual diagrams and zero rule
+  repetition; fix verified Emacs 31.1 design flaws (non-list `ACTION`
+  clearing, reuse-first chains such as
+  `display-buffer--other-frame-action`, dynamic `pop-up-frames` and
+  `display-buffer-reuse-frames`, `window--display-buffer` `TYPE`
+  propagation, `(KEY . nil)` window-setting toggle shadowing, direct
+  `display-buffer-in-side-window` menu rendering, safe
+  `dp-action--action` reentrancy, and one-shot prefix override avoiding
+  double `window--display-buffer`); define three-way displayable,
+  eligible, and splittable window predicates (dedicated normal windows
+  remain undisplayable yet splittable, and caller intent never makes a
+  displayable window ineligible); design the package's own
+  window-labeling and split facility (dropping `ace-window` as a
+  required dependency while optionally honoring `aw-keys` and
+  `aw-dispatch-alist`); keep window dispatch prompts free of tab and
+  frame actions; expand `docs/DISPLAY_BUFFER_MATRIX.md` verification
+  notes.
 - Docs: absorb `docs/GIT_CONVENTION.md` and `docs/CHANGELOG_CONVENTION.md`
   into `CONTRIBUTING.md`, remove the standalone files, and update the
   pointers in `AGENTS.md`, `CLAUDE.md`, and `README.md`.

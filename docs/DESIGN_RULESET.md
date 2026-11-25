@@ -1,1020 +1,809 @@
 # DESIGN_RULESET
 
 This file is the design authority for `disbuf-pivot`.  It describes the
-intended behavior; the source does not yet implement all of it.
-`docs/DOCUMENTATION_CONVENTION.md` is the authority for terms and
-documentation; `docs/GIT_CONVENTION.md` for commits;
-`docs/CHANGELOG_CONVENTION.md` for changelog entries.  Define a term
-there, not here.
+intended behavior; the current v0.1.0 source does not yet implement all
+of it.  `docs/DOCUMENTATION_CONVENTION.md` is the authority for terms
+and prose; `CONTRIBUTING.md` for commands, verification, commits, and
+changelog entries; `docs/DISPLAY_BUFFER_MATRIX.md` is the non-normative
+Emacs 31.1 reference matrix verified against `window.el.gz` and
+`tab-bar.el.gz`.
 
-The Emacs 31.1 action matrix used to check sections 7 and 8 is
-`docs/DISPLAY_BUFFER_MATRIX.md`; it is a reference, not normative.
-
-## 1. Goal and scope
+## 1. Goal, scope, and non-goals
 
 `disbuf-pivot` replaces an implicit `display-buffer` choice with an
 explicit one.  It aims for predictable display management, zero
-surprises, and an explicit choice for the user.
+surprises, and explicit user control at the pivot.
 
-The package is a policy layer.  It may call Emacs action functions as
-the display primitive, but the target choice and the prompt remain the
-package's.
+The package is a policy layer: it calls Emacs action functions or
+`window--display-buffer` as display primitives, while target selection
+and prompting remain the package's.
 
-Full coverage means:
+**In scope:**
 
-- every `display-buffer` call that reaches the package's
-  `display-buffer-alist` entry;
-- the package prefix commands;
-- the tab prompt and frame prompt used by those commands.
+- Every `display-buffer` call that reaches the package's
+  `display-buffer-alist` entry.
+- The four package prefix commands (`disbuf-pivot-prefix-mode`).
+- The tab prompt and frame prompt used at and outside the pivot.
 
-Full coverage does not mean every buffer-switching command.  It does not
-include `switch-to-buffer`, completion previews, timers, process
-filters, or calls handled by `display-buffer-overriding-action` or an
-earlier `display-buffer-alist` entry.  `switch-to-buffer` remains
-default; it obeys the display rules only when
-`switch-to-buffer-obey-display-actions` is non-nil.
+**Out of scope / non-goals:**
 
-`column-popup` owns the buffers it declares; `disbuf-pivot` handles the
-remaining buffers.  The intended order is `column-popup` first,
-`disbuf-pivot` second.  Both packages cons at the front when their mode
-is enabled, so the user enables `disbuf-pivot` first, then
-`column-popup`.  The package does not force an order.  Anything that
-should take precedence must be enabled after the package.
+- `switch-to-buffer` remains default and obeys display rules only when
+  `switch-to-buffer-obey-display-actions` is non-nil.
+- Calls already handled by `display-buffer-overriding-action` or an
+  earlier `display-buffer-alist` entry.  For pop-up windows, pair
+  `disbuf-pivot` with a manager such as `column-popup` or `popper`:
+  both cons at the front of `display-buffer-alist` when enabled, so
+  enable `disbuf-pivot-action-mode` first and the pop-up manager second.
+  `disbuf-pivot` does not force an order.
+- Noninteractive and cannot-prompt contexts (section 10), including
+  completion previews, timers, process filters, and keyboard macros.
+- Automatic splitting: `disbuf-pivot-window-utility-split-p` and its
+  options are not consulted by the redesigned core; splitting is an
+  explicit user dispatch action.
+- Frame preview (not part of this design; tab preview with `consult`
+  remains optional).
 
-Zero surprises means the user sees caller intent info and the dispatch
-prompt default when the dispatch prompt chooses the placement, the
-placement is explicit, and noninteractive calls do not prompt.
-Predictable means the same intent, window eligibility and buffer
-display, and options produce the same target or the same dispatch
-prompt; there is no hidden cache.
+**Legacy and global Emacs display variables:**
 
-## 2. Terms
+- `display-buffer-mark-dedicated`: honored naturally through
+  `window--display-buffer` for new windows unless a `dedicated` entry
+  (or a window-setting toggle shadowing it with `nil`) overrides it.
+- `pop-up-frames` (including `'graphic-only`) and
+  `display-buffer-reuse-frames`: honored when `reusable-frames` or
+  frame intent is resolved (section 3).
+- `same-window-buffer-names`, `same-window-regexps`,
+  `special-display-buffer-names`, `special-display-regexps`,
+  `pop-up-windows`, and functions in `display-buffer-base-action`:
+  preempted while `disbuf-pivot-action-mode` regulates the buffer
+  (because the package's `display-buffer-alist` entry runs before the
+  special action, base action, and fallback action).  Use
+  `disbuf-pivot-exclude-conditions`, an earlier `display-buffer-alist`
+  entry, or the cancel key (nil choice) when those rules should govern
+  a buffer.  Action alist entries in `display-buffer-base-action` are
+  still read through the combined action alist.
 
-Package-specific terms are defined in
-`docs/DOCUMENTATION_CONVENTION.md`.  Emacs's terms are used as they
-are.
+**Predictability and zero surprises:** the same caller intent, window
+state, and options always produce the same target or the same dispatch
+prompt; there is no hidden cache across multiple `display-buffer` calls
+in one command.
 
-## 3. Intent classes and eligibility
+## 2. Window predicates: displayable, eligible, and splittable
 
-The package reads two inputs:
+Emacs window operations distinguish three independent properties that
+must not be conflated:
 
-- the caller's ACTION: its first function names the intent class; its
-  later functions are the caller's fallbacks;
-- the combined action alist: the entries the first function's rule
-  reads, the eligibility constraints, and the window settings.  The
-  combined action alist includes the caller's ACTION alist and entries
-  from the overriding action, the matching `display-buffer-alist` entry,
-  the special action, the extra action, `display-buffer-base-action`,
-  and `display-buffer-fallback-action`.  The first association of a key
-  wins.
+1. **Displayable for `buffer`**: live, not a minibuffer window, not a
+   side window (`(window-parameter win 'window-side)` is nil), and not
+   dedicated to *another* buffer (`(or (not (window-dedicated-p win))
+   (eq buffer (window-buffer win)))`).
+2. **Eligible for direct display** in the current dispatch prompt: a
+   displayable window not excluded by explicit *user* prefix intent
+   (`disbuf-pivot-other-window-prefix` marks the selected window
+   ineligible).  **Caller intent never makes a displayable window
+   ineligible**: caller preferences (`inhibit-same-window`,
+   `display-buffer-pop-up-window`, `display-buffer-use-least-recent-window`,
+   `display-buffer-full-frame`, etc.) affect caller intent info and the
+   dispatch prompt default, never blocking the user from choosing any
+   displayable window.
+3. **Splittable target** for a split action: live, not a minibuffer
+   window, not a side window, and its frame does not have a non-nil
+   `unsplittable` parameter.  **A dedicated normal window is
+   undisplayable yet splittable.**
+
+| Window kind | Displayable for `buffer`? | Eligible (direct display)? | Splittable target? |
+|---|---|---|---|
+| Normal window (non-selected) | Yes | Yes | Yes |
+| Normal window (selected) | Yes | Yes (`No` for `other-window-prefix`) | Yes (including `other-window-prefix`) |
+| Dedicated to *this* `buffer` (non-side) | Yes | Yes | Yes |
+| Dedicated to *another* buffer (non-side) | No | No | **Yes** (new split is non-dedicated) |
+| Side window | No | No | No (`split-window` signals error) |
+| Minibuffer / dead window | No | No | No |
+
+**Verified Emacs 31.1 quirks behind these predicates:**
+
+- `split-window` on a hard-dedicated normal window (`set-window-dedicated-p`
+  set to `t`) succeeds and makes a fresh **non-dedicated** window while
+  leaving the original window dedicated.  Thus, even when every normal
+  window on a frame is dedicated, a split action still produces a clean
+  displayable window.
+- `split-window` on a side window signals `"Cannot split side window or
+  parent of side window"`; on a minibuffer it signals an error.
+- `display-buffer-same-window` (`window.el.gz:8489`) rejects *any*
+  dedicated window — even one dedicated to `buffer` itself — and does
+  not check `window-side`.  Therefore `disbuf-pivot` tests its own
+  per-buffer displayable predicate and calls `window--display-buffer`
+  directly rather than delegating blindly to
+  `display-buffer-same-window`.
+- Splitting a constituent of an atomic window (`window-atom`) splits the
+  atomic window's root, creating a sibling outside the atom.
+
+## 3. Decision pipeline and effective intent
 
 The condition of the package's `display-buffer-alist` entry receives
 the caller's ACTION; its action function receives the combined action
 alist.
 
-An entry in the combined action alist does not move the call to another
-intent class by itself.  The first function's rule names the entries it
-reads.
-For example, `display-buffer-reuse-window` reads `pop-up-frames` as a
-frame scope, not as a frame target; a top-level `parent-frame` is not
-read by `display-buffer-pop-up-frame` or `display-buffer-in-child-frame`
-(the latter reads `parent-frame` inside `child-frame-parameters`).
+```mermaid
+flowchart TD
+    A["display-buffer reaches package entry"] --> B{"Excluded buffer or\ncannot-prompt context?"}
+    B -- "Yes" --> Z1["Return nil\n(Emacs runs later functions)"]
+    B -- "No" --> C["Resolve effective intent\n(caller's ACTION + pop-up-frames +\ninhibit-same-window)"]
+    C --> D{"Intent class"}
+    D -- "Respect\n(side / atom / child-frame / unknown)" --> Z1
+    D -- "No display\n(display-buffer-no-window +\nallow-no-window)" --> Z2["Return 'fail\n(leave undisplayed)"]
+    D -- "Reuse-first chain" --> E{"Reusable window\nfound?"}
+    E -- "Yes + reuse=auto" --> Z3["Display in reused window\n(type 'reuse)"]
+    E -- "Yes + reuse=ask" --> P["Dispatch prompt\n(default = preferred reuse window)"]
+    E -- "No" --> F["Continue with next caller\nfallback function (or no-preference)"]
+    F --> D
+    D -- "Tab or Frame intent" --> TF["Tab prompt / Frame prompt\n(new target -> selected window, type 'tab/'frame;\nexisting target -> dispatch prompt)"]
+    D -- "Same-window or\nNo-preference" --> G{"Selected window displayable\nand not inhibited?"}
+    G -- "Yes (no conflict)" --> Z4["Display in selected window\n(type 'reuse)"]
+    G -- "No / conflict" --> P
+    D -- "Strategy / Relative /\nFull-frame / Other-window" --> P["Dispatch prompt"]
+    P -- "Window label" --> W1["window--display-buffer\n(type 'reuse)"]
+    P -- "Split action" --> W2["Pick splittable target (if >1) ->\nsplit -> window--display-buffer (type 'window)"]
+    P -- "Use caller intent" --> W3["Run caller's function list\nunder recursion guard"]
+    P -- "Cancel key" --> Z1
+    P -- "C-g" --> Z5["Quit (abort, no fallbacks)"]
+```
 
-The package distinguishes these intent classes:
+### Effective-intent resolution
 
-- **names a place** -- a first function whose rule reads an entry as a
-  fixed place: `display-buffer-in-side-window` (`side`, `slot`),
-  `display-buffer-in-atom-window` (`window`, `side`), and
-  `display-buffer-in-child-frame` (`child-frame-parameters`, including a
-  `parent-frame` entry naming a top-level or child frame).  Respect the
-  caller's placement; do not prompt unless the user invoked a prefix.
-- **names a tab or frame** -- a tab or frame action and the entries its
-  rule reads: `tab-name`, `tab-group`, `reusable-frames`,
-  `ignore-current-tab`, `pop-up-frame-parameters`, `frame-predicate`,
-  and `pop-up-frames` where the rule selects a frame.  Regulate the tab
-  or frame choice: prompt with the tab prompt or frame prompt.  An
-  existing-target action preselects an existing tab or frame; the tab
-  prompt default is the preselected tab and the frame prompt default is
-  the preselected frame.  A new-target action starts a new one and does
-  not select an existing target.  The tab prompt offers the tabs of its
-  scope (section 6);
-  `display-buffer-in-tab` adds every tab in the frames named by
-  `reusable-frames` that already displays the buffer as a candidate,
-  and does not add the other tabs of those frames.  A reusable tab is a
-  candidate, not a silent selection.  Child frames are not targets; the
-  tab prompt does not offer them.
-- **names a relative placement** -- `display-buffer-in-direction`
-  (`direction`, `window`), `display-buffer-below-selected`, and
-  `display-buffer-at-bottom`.  Regulate like direction: show caller
-  intent info, prompt by the rule in section 6, and offer a dispatch
-  action that calls the caller's function.
-- **names a strategy** -- same-window, reuse, other-window, new-window,
-  use-some-window, use-least-recent-window, previous window, full-frame.
-  Regulate the display by the rules below.
-- **names no display** -- `display-buffer-no-window` with
-  `allow-no-window`; call `display-buffer-no-window` and return `fail`
-  (section 4).
-- **no preference** -- follow the default order of
-  `disbuf-pivot-action-functions`: reuse a window that displays the
-  buffer, use the selected window when it can display, then prompt.
+1. **Exclusion & context gate**: if the buffer matches
+   `disbuf-pivot-exclude-conditions`, or the call is in a cannot-prompt
+   context (section 10), return nil.
+2. **Reuse-first chains**: many real Emacs callers combine a reuse
+   function with a fallback placement, notably
+   `display-buffer--other-frame-action` (`window.el.gz:8439`, used by
+   `C-x 5 b` / `switch-to-buffer-other-frame` /
+   `display-buffer-other-frame`), which is
+   `((display-buffer-reuse-window display-buffer-pop-up-frame)
+   (reusable-frames . 0) (inhibit-same-window . t))`, and third-party
+   chains such as `(display-buffer-reuse-window
+   display-buffer-in-side-window)` or `(display-buffer-reuse-window
+   display-buffer-pop-up-window)`.
+   - When the current leading function is `display-buffer-reuse-window`
+     or `display-buffer-reuse-mode-window`: first search for matching
+     reusable windows (honoring `reusable-frames`, `(window--pop-up-frames
+     alist)`, `display-buffer-reuse-frames`, `reuse-indirect`, `mode`,
+     and `inhibit-same-window`).
+   - If a reusable window exists, handle it under the Reuse rule
+     (`disbuf-pivot-reuse`: `auto` or `ask`).
+   - If no reusable window exists **and** the caller's function list
+     has later functions, classify by the next function in the caller's
+     function list (preserving the full caller function list for caller
+     intent info and `"Use caller intent"`).  If no later function
+     exists, show the dispatch prompt (Reuse, no window found).
+3. **Caller function intent classes** (on the effective function):
+   - **Fixed place (`Respect`)**: `display-buffer-in-side-window`,
+     `display-buffer-in-atom-window`, `display-buffer-in-child-frame`,
+     or any action function not covered by section 9.  Return nil so
+     Emacs runs the later functions in its combined function list.
+   - **Tab or frame (`Regulate`)**: `display-buffer-in-tab`,
+     `display-buffer-in-new-tab`, `display-buffer-pop-up-frame`,
+     `display-buffer-use-some-frame`.  Run the tab prompt or frame
+     prompt (section 6).
+   - **Relative placement (`Regulate`)**:
+     `display-buffer-in-direction`, `display-buffer-below-selected`,
+     `display-buffer-at-bottom`.  Show the dispatch prompt with
+     `"Use caller intent"` as default.
+   - **Strategy (`Regulate`)**: `display-buffer-same-window`,
+     `display-buffer-reuse-window`, `display-buffer-reuse-mode-window`,
+     `display-buffer-pop-up-window`, `display-buffer-in-previous-window`,
+     `display-buffer-use-some-window`,
+     `display-buffer-use-least-recent-window`,
+     `display-buffer-full-frame`.
+   - **No display (`Regulate`)**: `display-buffer-no-window` with
+     non-nil `allow-no-window` returns `fail`.  (Without
+     `allow-no-window`, `display-buffer-no-window` returns nil, so
+     continue to any later caller function or no preference.)
+4. **No caller function (`ACTION` has no function)**:
+   - **Emacs 31.1 non-list `ACTION` quirk (`window.el.gz:8176`)**:
+     `display-buffer` converts any non-nil, non-list `ACTION` — such as
+     `t` (`C-x 4 b` / `switch-to-buffer-other-window`) or `'other-window`
+     (`compile.el`) — into `action = nil` **before** calling
+     `display-buffer-assq-regexp`, moving `(inhibit-same-window . t)`
+     into `extra-action` (and any optional third argument `FRAME` into
+     `(reusable-frames . FRAME)`).  Without advising `display-buffer`,
+     a non-list `ACTION` is therefore indistinguishable from
+     `(nil (inhibit-same-window . t))`.
+   - When the caller's function list is empty, resolve in order:
+     1. Non-nil `(window--pop-up-frames alist)` (`window.el.gz:7425`,
+        checking alist `pop-up-frames` first, then the dynamic variable
+        `pop-up-frames`, honoring `'graphic-only` — covers callers like
+        `xref`'s `(let ((pop-up-frames t)) (pop-to-buffer buf t))`):
+        treat as new-frame intent (frame prompt).
+     2. Non-nil `tab-name` or `tab-group` in `alist`: treat as tab
+        intent (tab prompt).
+     3. Non-nil `inhibit-same-window` in `alist`: treat as **other-window
+        intent** (dispatch prompt; default is `"Use caller intent"` /
+        other-window fallback unless a reuse candidate wins first).
+     4. Otherwise (**no preference**): run `disbuf-pivot-action-functions`
+        in order (default: reuse a window displaying the buffer, use
+        the selected window when displayable, then show the dispatch
+        prompt).
+5. **Running `"Use caller intent"`**: executes the caller's whole
+   function list in order with the prompt's local combined action alist
+   under a recursion guard that prevents the package's
+   `display-buffer-alist` entry from running again.  Each function
+   receives the same local alist; nil passes to the next, and an error
+   propagates.  If every function in that run returns nil, show the
+   dispatch prompt again or abort; do not return nil to Emacs's
+   combined function list.
 
-A constraint or a window-setting entry is an action alist entry the
-rule reads, not an intent class.  `reusable-frames`, `previous-window`,
-`frame-predicate`, `window-min-width`, and `window-min-height` are
-constraints; honor them.  `inhibit-switch-frame` is honored where the
-action function reads it; it does not limit the candidate windows.
-`allow-no-window` permits the leave-undisplayed outcome (section 4).
+### Required `window--display-buffer` `TYPE` propagation
 
-`display-buffer-in-child-frame` takes `parent-frame` from
-`child-frame-parameters`; a top-level `parent-frame` entry is not read.
-The value may name a top-level frame or a child frame.  The package's
-own frame prompt offers top-level frames only.
+`window--display-buffer` (`window.el.gz:7757`) and
+`display-buffer-record-window` (`window.el.gz:6996`) behave differently
+depending on `TYPE`: `quit-window` (`quit-restore`),
+`set-window-prev-buffers`, `dedicated`, `window-height`, `window-width`,
+`preserve-size`, and `window-size` all depend on it.  Every package
+display path must pass the exact `TYPE` below:
 
-The package decides in this order:
-
-1. An excluded buffer is not regulated; return nil.
-2. In a context in section 9 where the package cannot prompt, return
-   nil.
-3. Read the first function of the caller's ACTION.  An ACTION with no
-   function is no preference; ACTION `t` is an other-window request
-   (section 4).  A first function that is `Respect` or not covered
-   returns nil; the later functions in Emacs's combined function list
-   run.  A first function that is `Regulate` uses the rule for its
-   intent class.
-4. The rule for the intent class reads the entries it names from the
-   combined action alist.  An entry it does not name does not change the
-   intent class.
-5. The rule for the intent class shows the dispatch prompt when it says
-   so and displays the buffer; the prompt follows section 6.  A nil choice, a
-   failure after the choice, and C-g follow section 9.
-
-A caller's ACTION may name several functions.  The first function is
-the caller's primary intent; the later functions are the caller's
-fallbacks.  Caller intent info names the chain: the first function's
-effect, followed by each later function introduced by `else`, e.g.
-"Caller: same window; else new window."  A later function in the
-caller's function list is named by its effect; a function the package
-does not cover is named by its symbol.
-
-When the rule shows the dispatch prompt, the dispatch prompt default is
-"Use caller intent" when the caller's ACTION can run; the dispatch prompt
-shows it with a key.  Choosing it runs the caller's whole function list
-in order with the combined action alist, under a guard that prevents
-the package's `display-buffer-alist` entry from running again.  The
-action is in the Caller intent group.  The package does not regulate a
-later function; it remains a later function in the caller's function
-list.
-If the package cannot prompt (section 9), it returns nil and Emacs
-continues with the later functions in its combined function list; the
-caller's later functions are fallbacks.  A failure after the choice
-while the package can prompt is handled by showing the dispatch prompt
-again or aborting; it does not return nil to the caller's action
-functions.  Emacs calls every function in its combined list with the
-same combined action alist; a function that returns nil passes to the
-next, and an error propagates.
-The package's run of the caller's function list for "Use caller intent"
-follows the same nil and error rule.  If every function in that run
-returns nil, the package shows the dispatch prompt again or aborts; it
-does not return nil to the caller's action functions.  A window-setting
-toggle changes the combined action alist only for the package's display
-call and for a run of the caller's function list from that prompt; it
-does not change the alist Emacs passes to a later function in the
-caller's function list after the package returns nil.  Do not reorder
-or deduplicate the list.  Use the first association of an alist key,
-as Emacs does.
-
-A package prefix command is user intent, not caller intent.
-`disbuf-pivot-prefix-mode` remaps the built-in prefix commands to the
-package prefix commands.  The package prefix commands keep the same
-override for the next command, so they take precedence over the
-caller's ACTION; they make the target explicit and predictable.
-Section 6 gives the placement path and the dispatch prompt default
-for the target window.
-
-The selected window cannot display a buffer when it is a minibuffer
-window, is dedicated to another buffer, is a side window, or is not
-live.  `inhibit-same-window` is shown in caller intent info; it is not
-one of these eligibility conditions.
-
-When the user chooses the selected window despite
-`inhibit-same-window`, the user's choice wins.  The dispatch prompt's
-label for the selected window is eligible.  Bind that entry to nil for
-the display call; caller intent info reports the non-selected-window
-request and names the action that supplies the entry when it is not the
-caller's ACTION.
-
-## 4. Rules
-
-Section 6 gives the rule.  The intent class rows are keyed by the
-caller's first function; no function is no preference.  An entry the rule reads,
-such as `inhibit-same-window` or a window-setting entry, follows
-section 8 in addition to the row.  The no-preference rows follow the
-default order of `disbuf-pivot-action-functions`; a reordered list
-changes the order.  When a row shows the dispatch prompt, the Behavior
-cell names the dispatch prompt default; "no default" means the prompt
-has no default key, so the user chooses a label, an action, or the
-cancel key.
-
-Every dispatch prompt labels every window in the window label scope.
-When a Behavior cell lists split actions and cancel, the prompt also
-labels the windows.  "No default" does not mean the prompt has
-no window labels.
-
-| Case | Behavior | Caller intent info |
+| Display outcome | `TYPE` passed to `window--display-buffer` | Effect in Emacs 31.1 |
 |---|---|---|
-| Same-window, selected window can display | Use the selected window; no prompt | None |
-| Same-window, selected window cannot display | The dispatch prompt; no default; offer split actions and cancel | "Caller: same window, selected window cannot display" |
-| Same-window plus `inhibit-same-window` | Report the conflict; `disbuf-pivot-same-window-conflict` chooses the same window or shows the dispatch prompt; the dispatch prompt default is the same window; choosing it binds `inhibit-same-window` to nil | "Caller: same window; base action: inhibit same window" when it asks |
-| No preference, a window displays the buffer | Reuse the preferred window; `disbuf-pivot-reuse` can ask with the dispatch prompt; the dispatch prompt default is the preferred reuse window | "Caller: no preference, windows X display the buffer" when it asks |
-| No preference, no window displays and the selected window can display | Use the selected window; no prompt | None |
-| No preference, no window displays and the selected window cannot display | The dispatch prompt; no default; offer split actions and cancel | "Caller: no preference, selected window cannot display" |
-| Reuse intent, a window displays the buffer | Reuse it; `disbuf-pivot-reuse` chooses auto or ask; ask marks every reuse window and shows the dispatch prompt; the dispatch prompt default is the preferred reuse window | "Caller: reuse, windows X display the buffer" when it asks |
-| Reuse intent, no window displays the buffer | The dispatch prompt; no default; offer split actions and cancel | "Caller: reuse, no window displays the buffer" |
-| Use some window | The dispatch prompt; the dispatch prompt default is "Use caller intent" (the caller's ACTION); labels and split actions override; show caller intent info | "Caller: some window" |
-| Use least recent window | The dispatch prompt; the dispatch prompt default is "Use caller intent" (the caller's ACTION); the selected window's label is ineligible; labels and split actions override; show caller intent info | "Caller: a recently unused window" |
-| Full frame | Show caller intent info; the dispatch prompt; the dispatch prompt default is "Display full frame"; a window label displays normally; offer tab/frame, split, and cancel | "Caller: full frame, other windows will be deleted" |
-| Other-window | The dispatch prompt; the dispatch prompt default is "Use caller intent" (the caller's ACTION); the selected window's label is ineligible; offer split actions and cancel | "Caller: other window" |
-| New-window | The dispatch prompt; the dispatch prompt default is "Use caller intent" (the caller's ACTION); existing windows' labels are ineligible; offer split and new-frame actions and cancel | "Caller: new window" |
-| Direction | The dispatch prompt; the dispatch prompt default is "Use caller intent" (the caller's ACTION); labels and actions override; leave side windows as-is | "Caller: direction X" |
-| Below-selected / at-bottom | The dispatch prompt; the dispatch prompt default is "Use caller intent" (the caller's ACTION); labels and actions override; leave side windows as-is | "Caller: below the selected window" or "Caller: at the bottom of the frame" |
-| Previous window | The dispatch prompt; the dispatch prompt default is "Use caller intent" (the caller's ACTION); show the named `previous-window` as the preferred candidate, or mark the windows that previously showed the buffer; use `disbuf-pivot-reuse` when no previous window is usable | "Caller: previous window X" or "Caller: a window that previously showed the buffer" |
-| Tab or frame action | The other-frame prefix prompts frame, then tab when needed, then the window with the dispatch prompt.  A caller's tab or frame action prompts with the tab prompt or frame prompt; an existing target then shows the dispatch prompt, whose default is the window that displays the buffer in the target, else the target's selected window; a new target uses its selected window.  An existing-target action preselects an existing tab or frame; the tab prompt default is the preselected tab and the frame prompt default is the preselected frame; a new-target action starts a new one and does not select an existing tab or frame with the same name | "Caller: existing tab X", "Caller: new tab", "Caller: existing frame X", or "Caller: new frame" |
-| Placed `child-frame-parameters` (including a `parent-frame` entry) | Respect the caller's placement; no prompt | None |
-| Atom window | Respect the caller's placement; no prompt | None |
-| Side window | Leave the caller's side placement as-is; no prompt | None |
-| ACTION `t` | Treat as an other-window request; the selected window's label is ineligible; the dispatch prompt; the dispatch prompt default is the other-window request | "Caller: other window" |
-| Caller ACTION with several functions | Classify the first function; later functions are the caller's fallbacks.  The dispatch prompt default is "Use caller intent"; it runs the whole list in order when the user chooses it | "Caller: same window; else new window; else new frame" |
-| No display | With `allow-no-window`, call `display-buffer-no-window`; return `fail` | None |
-| Excluded buffer | Return nil; the later functions in Emacs's combined function list run | None |
-| Anything not covered | Return nil; the later functions in Emacs's combined function list run | None |
-| `switch-to-buffer` | Default; it obeys the rules only with `switch-to-buffer-obey-display-actions` | None |
+| Existing window chosen via label or silent reuse/same-window | `'reuse` | Preserves previous buffers; `quit-window` restores old buffer; `window-parameters` applies; new-window size/dedication entries do not apply |
+| New window made by a split action | `'window` | Clears `window-prev-buffers`; `quit-window` deletes the split; `dedicated`, `window-height`, `window-width`, `preserve-size`, and `window-parameters` apply |
+| New tab made by tab prompt / `display-buffer-in-new-tab` | `'tab` | Clears `window-prev-buffers`; `quit-window` closes tab; `dedicated` and `window-parameters` apply (`preserve-size`/height/width do not) |
+| New frame made by frame prompt / `display-buffer-pop-up-frame` | `'frame` | Clears `window-prev-buffers`; `quit-window` deletes frame; `dedicated`, `window-parameters`, and `window-size` apply |
 
-## 5. Options and defaults
+## 4. Intent rules
 
-- `disbuf-pivot-reuse` -- `auto` (default) or `ask`.  It applies when
-  a window already displays the buffer, and to the previous-buffer
-  candidates of `display-buffer-in-previous-window`.  When it asks, the
-  dispatch prompt shows the preferred reuse window as the dispatch
-  prompt default.
-- `disbuf-pivot-same-window-conflict` -- `ask` (default) or
-  `same-window`.  It applies when the caller asks for the same window
-  and sets `inhibit-same-window`.  When it chooses the same window,
-  bind `inhibit-same-window` to nil for the display call.  When it
-  asks, the dispatch prompt default is the same window; choosing it
-  binds `inhibit-same-window` to nil.
-- `disbuf-pivot-action-functions` -- the action functions the package's
-  `display-buffer-alist` entry tries, in order.  The default is
-  `display-buffer-reuse-window`, `display-buffer-same-window`, and
-  `dp-action-choose-window`; it does not include an automatic split.
-- `disbuf-pivot-caller-intent-info` -- non-nil (default) shows caller
-  intent info in the dispatch prompt.  Silent selected-window defaults
-  show no info.  Nil hides caller intent info in the dispatch prompt.
-  It names the action that supplies an entry when it is not the
-  caller's ACTION.
-- `disbuf-pivot-exclude-conditions` -- nil (default) or a list of
-  `buffer-match-p` conditions.  A matching buffer is not regulated: the
-  package's `display-buffer-alist` entry returns nil and the later
-  functions in Emacs's combined function list run.  A condition can
-  match the buffer name (a regexp), a major mode
-  (`(derived-mode . MODE)` or `(major-mode . MODE)`), a category
-  (`(category . SYMBOL)`), or a predicate function; `not`, `and`, and
-  `or` combine conditions.
-- `disbuf-pivot-action-select` -- `auto` (default), `t`, or `nil`.
-  `t` selects the chosen window; `auto` leaves selection to the caller;
-  `nil` selects nothing and restores the window selected before the
-  action at the end of the command.  It controls selection after the
-  dispatch prompt.
-- `disbuf-pivot-other-window-prefix-select` -- `auto` (default), `t`,
-  or `nil`.  It has the same values and effects after the other-window
-  prefix.
-- `disbuf-pivot-tab-prompt-scope` -- nil (default), `t`, `visible`, or
-  `0`.  The default for the tab prompt scope outside the pivot: nil for
-  the selected frame, `t` for all existing frames, `visible` for the
-  visible frames, and `0` for all frames on the current terminal.  The
-  reader's scope argument also accepts a frame.  Outside the pivot, the
-  tab prompt uses the user option as its default; at the pivot, its
-  scope is the selected frame, and the reusable tabs from other frames
-  are candidates, not part of the scope.  The user option applies only
-  outside the pivot.
+Cross-cutting entries (section 9) apply in addition to the row below.
+In every dispatch prompt, every displayable window in the window label
+scope is eligible (section 2), and split actions and the cancel key are
+always available.
 
-C-g always aborts; there is no option for it.
+| Effective intent | Behavior | Dispatch prompt default | Caller intent info |
+|---|---|---|---|
+| Same-window, selected displayable, no `inhibit-same-window` | Display in selected window (`'reuse`); no prompt | — | None |
+| Same-window, selected undisplayable | Dispatch prompt | None | `"Caller: same window, selected window cannot display"` |
+| Same-window + `inhibit-same-window` | Report conflict; `disbuf-pivot-same-window-conflict` chooses same window (`inhibit-same-window` bound to nil) or shows dispatch prompt | Selected window (choosing it binds `inhibit-same-window` to nil) | `"Caller: same window; <source>: inhibit same window"` (or `"Caller: same window, inhibit same window"` if self-contradictory) |
+| No preference (default `disbuf-pivot-action-functions`) | 1. Reuse if visible (`disbuf-pivot-reuse` auto/ask); 2. Selected window if displayable; 3. Dispatch prompt | Preferred reuse window (when asking on reuse), else None | `"Caller: no preference, windows X display the buffer"` or `"Caller: no preference, selected window cannot display"` |
+| Other-window (`ACTION t`, `'other-window`, or empty functions + `inhibit-same-window`) | Dispatch prompt (selected window remains eligible; choosing it binds `inhibit-same-window` to nil) | Preferred reuse window if visible, else `"Use caller intent"` / other-window fallback | `"Caller: other window"` (plus reuse windows if any) |
+| Reuse (`reuse-window` / `reuse-mode-window`), match found | `disbuf-pivot-reuse`: `auto` reuses (`'reuse`); `ask` marks matching windows and shows dispatch prompt | Preferred reuse window (or `"Reuse in frame NAME"` if on another frame) | `"Caller: reuse, windows X display the buffer"` |
+| Reuse, no match, no fallback | Dispatch prompt | None | `"Caller: reuse, no window displays the buffer"` |
+| Reuse, no match, with fallback | Re-classify by next caller function (section 3) | Per effective fallback row (or `"Use caller intent"`) | Full chain, e.g. `"Caller: reuse; else new frame"` |
+| New-window (`display-buffer-pop-up-window`) | Dispatch prompt (all displayable windows remain eligible) | `"Use caller intent"` | `"Caller: new window"` |
+| Use some window (`display-buffer-use-some-window`) | Dispatch prompt | `"Use caller intent"` | `"Caller: some window"` |
+| Use least recent window (`display-buffer-use-least-recent-window`) | Dispatch prompt (all displayable windows remain eligible) | `"Use caller intent"` | `"Caller: a recently unused window"` |
+| Previous window (`display-buffer-in-previous-window`) | Dispatch prompt; highlight `previous-window` (dereferencing variable symbols) or previous-buffer windows; consult `disbuf-pivot-reuse` when none is usable | Preferred previous window if usable, else `"Use caller intent"` | `"Caller: previous window X"` or `"Caller: a window that previously showed the buffer"` |
+| Relative placement (`in-direction`, `below-selected`, `at-bottom`) | Dispatch prompt; leave side windows as-is | `"Use caller intent"` | `"Caller: direction X"`, `"Caller: below the selected window"`, or `"Caller: at the bottom of the frame"` |
+| Full frame (`display-buffer-full-frame`) | Dispatch prompt; window labels display normally without deleting other windows; `"Display full frame"` runs caller's full-frame action | `"Display full frame"` | `"Caller: full frame, other windows will be deleted"` |
+| Tab or frame action (or dynamic/alist `pop-up-frames` / `tab-name` / `tab-group`) | Tab prompt or frame prompt (section 6); existing target then runs dispatch prompt; new target displays in its selected window (`'tab`/`'frame`) | Window displaying buffer in target, else target's selected window | `"Caller: existing tab X"`, `"Caller: new tab"`, `"Caller: existing frame X"`, or `"Caller: new frame"` |
+| Fixed place (`in-side-window`, `in-atom-window`, `in-child-frame`) | Respect: return nil; no prompt | — | None |
+| No display (`display-buffer-no-window` + `allow-no-window`) | Return `fail`; no prompt | — | None |
+| Excluded buffer / cannot-prompt / uncovered function | Return nil; no prompt | — | None |
 
-Automatic split is not part of the core.  Split actions are user
-choices in the prompt.  `disbuf-pivot-window-utility-split-p` and its
-options are not consulted by the core behavior.
+## 5. Dispatch prompt UI and interaction
 
-Frame preview is not part of the first implementation.  The tab preview
-with consult remains optional.
+### Visual layout
 
-The dispatch prompt draws the labels on every window in the window
-label scope.  The label of an eligible window acts; the label of an
-ineligible window states why it is ineligible and keeps the prompt open.
-The prompt draws the label of an eligible window with
-`disbuf-pivot-eligible-label` and the label of an ineligible window with
-`disbuf-pivot-ineligible-label`.  The Windows group repeats the keys and
-faces; it does not repeat the reason.
+The dispatch prompt has two synchronous parts: **window labels** drawn
+as overlays on every window in the window label scope, and the
+**dispatch prompt menu** shown in a side window (itself outside the
+window label scope and never labeled).
 
-## 6. Interaction rules
+```text
++---------------------------+---------------------------+
+| [a] main.el               | [b] notes.org             |
+| (eligible face)           | (eligible face)           |
+|                           |                           |
++---------------------------+---------------------------+
+| [c] *compilation* (side)                              |  <- ineligible face
++=======================================================+
+| Caller: direction right, preserve size, a 20-line     |  <- header: caller intent info
+|         window; base action: dedicated                |
+| Default: [M-c] Use caller intent                      |  <- header: dispatch prompt default
+|-------------------------------------------------------|
+| Windows     | Dispatch actions      | Window settings |
+| [a] main.el | Split                 | [M-0] All (on)  |
+| [b] notes   |   [v] Split below     | [M-1] dedicated (on, new windows only; base)
+| [c] *comp*  |   [b] Split right     | [M-3] preserve-size (on, new windows only)
+|             |   [j] Split fair      | [M-4] window-height (on, new windows only)
+|             | Caller intent         |                 |
+|             |   [M-c] Use caller    |                 |
+|             | Other                 |                 |
+|             |   [M-q] Cancel        |                 |
++=======================================================+
+  ^ dispatch prompt menu window (created directly via
+    display-buffer-in-side-window; never labeled)
+```
 
-- When a rule shows the dispatch prompt, the prompt labels every window
-  in the window label scope.  The label of an eligible window acts;
-  the label of an ineligible window states why it is ineligible and
-  keeps the prompt open.  The prompt shows the dispatch prompt default
-  with a key.  When the rule has no target or action that can run, the
-  prompt has no default; the window labels, the split actions, and the
-  cancel key remain.  A split action splits the selected window; the cancel key
-  returns nil (a nil choice).
-- The dispatch prompt has two parts: the window labels drawn on the
-  windows and the dispatch prompt menu.  The dispatch prompt menu is not
-  a transient menu: the action function reads its keys and does not
-  return to `display-buffer` until the user chooses.  A transient prefix
-  command
-  returns before the choice; the package does not call one.  The
-  dispatch prompt draws the labels on every window in the window label
-  scope: the label of an eligible window uses
-  `disbuf-pivot-eligible-label`; the label of an ineligible window uses
-  `disbuf-pivot-ineligible-label` and states why it is ineligible.  The
-  Windows group repeats the keys and faces; it does not repeat that
-  reason.  The package computes the windows before the dispatch prompt
-  menu is shown and does not label the dispatch prompt menu window.
-  That window is a side window; the package's `display-buffer-alist`
-  entry returns nil for its side-window action.  The dispatch prompt
-  menu shows a window-setting toggle for each window-setting entry
-  present in the combined action alist, and the window-settings group
-  toggle when at least one window-setting entry is present.  The action
-  function reads the keys for the window labels, the dispatch actions,
-  and the toggles; the package does not call `aw-select` or a transient
-  prefix command.  A
-  window-setting toggle or the group toggle keeps the dispatch prompt
-  menu open; a label, an action, or the cancel key ends the dispatch
-  prompt menu and the action function returns; C-g aborts.
-- The dispatch action list groups the actions:
-  - **Split**: the split actions from `aw-dispatch-alist`, with their
-    keys and descriptions.
-  - **Caller intent**: "Use caller intent" when the caller's ACTION has
-    a function or functions, and any action the rule offers from the
-    caller's ACTION, named by its user-facing action, not by the raw
-    function.
-  - **Other**: a new frame for a new-window intent; leave undisplayed
-    only with `allow-no-window`; the cancel key.
-  The window-setting toggles and the window-settings group toggle are
-  not dispatch actions; they are in the window-settings group.  The window labels
-  are not dispatch actions; they are in the compact Windows group with
-  the same keys and faces.  From `aw-dispatch-alist`, the dispatch action
-  list takes only the split actions; the user's other actions are not
-  offered.
-- The keys in `aw-keys` and `aw-dispatch-alist` win.  Window labels use
-  the `aw-keys` keys that do not collide with `aw-dispatch-alist`.  The
-  package's dispatch actions use Meta-letter defaults.  Window-setting
-  toggles use fixed Meta-digit defaults: `M-1` dedicated, `M-2`
-  window-parameters, `M-3` preserve-size, `M-4` window-height, `M-5`
-  window-width, `M-6` window-size, and `M-0` for the group.  An absent
-  entry has no toggle, and its key is not reused.  A dispatch prompt key
-  the package supplies for a dispatch action or a window-setting toggle
-  is offered only when it does not collide with a key from `aw-keys` or
-  `aw-dispatch-alist`, a window label, or another such key; if a default
-  collides, use the next free key of the same kind.
-- The dispatch prompt menu header is above the three horizontal menu
-  groups: the Windows group, the dispatch action group, and the
-  window-settings group.  The labels remain visible on the windows, and
-  the dispatch action list is not hidden behind `?`.
+### Synchronous execution and own labeling/split facility
 
-The dispatch prompt menu header is composed as follows:
+- **Synchronous key loop**: the action function displays the overlays
+  and menu, reads keys synchronously until a terminal choice is made,
+  cleans up overlays and the menu window in `unwind-protect`, and
+  returns the resulting window (or `fail` / nil) to `display-buffer`.
+  It does **not** call `aw-select` and does **not** call a transient
+  prefix command (which returns before the user chooses).
+- **Direct side-window menu creation**: compute the window list and
+  labels *before* showing the dispatch prompt menu window.  Show the
+  menu buffer directly with `display-buffer-in-side-window` (not
+  `display-buffer`) under a recursion guard so active
+  `display-buffer-overriding-action` (in prefix commands) or earlier
+  `display-buffer-alist` entries (such as `column-popup`) cannot
+  intercept the menu buffer.
+- **Own facility, no required `ace-window` dependency**: because
+  `aw-select` is not called, the package implements its own lightweight
+  window-overlay renderer and split primitives (`split-window-below`,
+  `split-window-right`, and aspect-ratio fair split), requiring only
+  Emacs 31.1 (`Package-Requires: ((emacs "31.1"))`).
+  - `disbuf-pivot-window-keys` defaults to `'auto`: inherits `aw-keys`
+    when `ace-window` is loaded and `aw-keys` is bound, else uses
+    built-in home-row defaults (falling back to two-key prefixes when
+    the window count exceeds the key list length).
+  - `disbuf-pivot-split-actions` defaults to `'auto`: inherits split
+    entries (`aw-split-window-vert`, `aw-split-window-horz`,
+    `aw-split-window-fair`) from `aw-dispatch-alist` when bound, else
+    uses built-in defaults (`v` split below, `b` split right, `j` split
+    fair).
+- **Window labels**: drawn on every window in the window label scope
+  (selected tab's windows when `tab-bar-mode` is active, else selected
+  frame's windows).
+  - Eligible window label: `disbuf-pivot-eligible-label` face; pressing
+    it displays `buffer` in that window with `type = 'reuse` (binding
+    `inhibit-same-window` to nil if the selected window is chosen).
+  - Ineligible window label: `disbuf-pivot-ineligible-label` face;
+    pressing it reports why the window is ineligible (side window,
+    dedicated to `<buf>`, minibuffer, or excluded by
+    `other-window-prefix`) in the echo area and keeps the prompt open.
+  - The Windows group repeats keys and faces compactly without
+    repeating the ineligibility reason.
+
+### Dispatch action list and split target selection
+
+The dispatch action group ("Dispatch actions") contains three
+subgroups (window labels and window-setting toggles are separate
+dispatch prompt menu groups, not dispatch actions):
+
+- **Split**: the configured split actions (from
+  `disbuf-pivot-split-actions`).
+  - When the user presses a split key:
+    - If there is **1 splittable window** in the scope (e.g. a sole
+      normal window alongside side windows, or a sole dedicated normal
+      window), split it immediately.
+    - If there are **more than 1 splittable windows**, enter a
+      split-target key read highlighting every splittable window
+      (including dedicated normal windows, excluding side and
+      minibuffer windows) so the user selects which window to split.
+    - If there are **0 splittable windows** (e.g. `unsplittable` frame
+      or only side windows), report the reason and keep the prompt
+      open.
+  - Display `buffer` in the newly split window with `type = 'window`.
+  - If splitting fails (e.g. window too small), report the error and
+    show the dispatch prompt again.
+- **Caller intent**:
+  - `"Use caller intent"` when the caller's ACTION has runnable action
+    functions (or `"Display full frame"` for `display-buffer-full-frame`,
+    or `"Reuse in frame NAME"` when `disbuf-pivot-reuse` is `'ask` and
+    the preferred reuse window is on another frame outside the window
+    label scope).
+- **Other**:
+  - `"Leave undisplayed"` (returns `fail`) **only** when
+    `allow-no-window` is non-nil.
+  - The cancel key (always available; returns nil, a nil choice).
+  - Window dispatch prompts do **not** mix in tab or frame actions;
+    tab and frame targets use tab/frame intents or the package prefix
+    commands (section 7).
+
+### Key precedence and collision rules
+
+- Configured window keys and split keys win (including `aw-keys` /
+  `aw-dispatch-alist` when inherited under `'auto`).  Window labels
+  skip keys already taken by split actions.
+- Package dispatch actions use Meta-letter defaults (e.g. `M-c` Use
+  caller intent, `M-q` Cancel, `M-n` Leave undisplayed).
+- Window-setting toggles use fixed Meta-digit defaults:
+  - `M-0`: window-settings group toggle (All)
+  - `M-1`: `dedicated`
+  - `M-2`: `window-parameters`
+  - `M-3`: `preserve-size`
+  - `M-4`: `window-height`
+  - `M-5`: `window-width`
+  - `M-6`: `window-size`
+- An absent window-setting entry has no toggle and its digit is not
+  reused by other entries (preserving positional muscle memory).
+- If any package default key collides with a user window/split key or
+  another assigned key, assign the next free key of the same kind
+  (Meta-letter for dispatch actions, Meta-digit for toggles).
+
+### Dispatch prompt menu header and caller intent info
 
 ```text
 dispatch prompt menu header
-├── caller intent info
-│   ├── primary intent, effects, and window facts
-│   ├── caller's fallback chain
-│   └── source-labeled entries
-└── dispatch prompt default
+├── caller intent info (hidden when disbuf-pivot-caller-intent-info is nil)
+│   ├── Caller: <primary intent>, <caller alist effects>, <window facts>
+│   ├── ; else <fallback effect or uncovered symbol> ...
+│   └── ; <source label>: <effect> ...
+└── dispatch prompt default (shown with its key, or omitted if no default)
 ```
 
-- The caller intent info and the dispatch prompt default form the
-  dispatch prompt menu header above the groups.  The info is one line
-  and is a concise summary.  It starts with `Caller:`; the `Caller:`
-  part holds the primary intent, the effects of the primary intent and
-  of the caller's action alist entries, and the window facts,
-  separated by commas.  A window fact appears when it affects the
-  choice or the chosen window.  The caller's fallback chain follows, with each
-  later function introduced by a semicolon and `else`; each is named by
-  its effect.  An entry supplied by another action is introduced by a
-  semicolon and its source label.  It covers the combined action alist
-  entries the current rule reads that affect the choice or the chosen
-  window.  It names the entries by their effects and sources, not as
-  raw entries; the window-settings group shows when each entry applies.
-  It does not name controls, entries the rule does not read, or the
-  functions in the combined function list that come from sources other
-  than the caller's ACTION.  `body-function` is not named.
-- A fallback is named by its effect, using the `Effect phrase` column
-  in section 7; a no-display fallback is "no window", the `Respect`
-  functions are "child frame", "side window", or "atom window", and a
-  function the package does not cover is named by its symbol.
-- The caller intent info names the source of an entry that is not from
-  the caller's ACTION with its source label.  The matching
-  `display-buffer-alist` entry supplies no action alist entries when the
-  prompt shows: it is the package's entry, and its action alist is nil.
-- Example: "Caller: direction right, preserve size, a 20-line window;
-  base action: dedicated."  The window-settings group shows when each
-  entry applies: dedication, preserve size, and height are "new windows
-  only".
+- Caller intent info is a concise one-line summary shown only when the
+  dispatch prompt runs (silent defaults show no info).
+- It names:
+  1. Primary intent, effects of primary intent and caller alist entries
+     (using the Effect phrase columns in section 9, in table order for
+     window-setting entries), and relevant window facts (whether the
+     selected window can display, or which windows display the buffer,
+     when they affect the choice), separated by commas.
+  2. Each later function in the caller's fallback chain introduced by
+     `; else ` and named by its Effect phrase (`"child frame"`, `"side
+     window"`, `"atom window"`, `"no window"`, or symbol if uncovered).
+  3. Any entry the current rule reads that comes from an action other
+     than the caller's ACTION, introduced by `; <source label>: `
+     (`"base action"`, `"overriding action"`, `"fallback action"`, or
+     `"extra action"`).  The matching `display-buffer-alist` entry is
+     the package's own entry (nil alist), and
+     `display-buffer--special-action` (`window.el.gz:8693`) always has
+     a nil alist, so neither supplies alist entries.
+- It omits controls, unread entries, functions from non-caller sources,
+  `body-function`, and applicability notes (the window-settings group
+  shows when each window-setting entry applies).
+- Example: `"Caller: direction right, preserve size, a 20-line window;
+  base action: dedicated."`
 
-The example's parts:
+### Window-setting toggles
 
-| Part | Example |
-|---|---|
-| primary intent | "direction right" |
-| effects of the caller's action alist entries | "preserve size", "a 20-line window" |
-| window facts | none in this line; e.g. "selected window cannot display", "windows X display the buffer" |
-| caller's fallback chain | none in this line; e.g. "else new window" |
-| source-labeled entry | "base action: dedicated", effect "dedicated" |
-| dispatch prompt default | separate; when it is a window, its label states eligibility |
+- Shown in the window-settings group ("Window settings") when at least
+  one window-setting entry is present in the combined action alist, in
+  the fixed table order of section 9.
+- Each present entry gets its fixed `M-1`..`M-6` toggle showing its
+  source (when not the caller's ACTION), state (`on`/`off`), and
+  applicability (`"new windows only"`, `"new frame"`, or `"any chosen
+  window"`).
+- **`M-0` (window-settings group toggle)** is always shown whenever
+  **1 or more** window-setting entries are present (preserving uniform
+  muscle memory for toggling all caller settings off/on regardless of
+  count).  If any entry is `on`, `M-0` turns all off; if all are `off`,
+  `M-0` restores all to their prompt-start values; its state displays
+  `on`, `off`, or `mixed`.
+- Both per-entry toggles and `M-0` keep the dispatch prompt open.
+- **Shadowing mechanism (`(KEY . nil)` vs. key deletion)**: turning a
+  window-setting toggle off prepends `(KEY . nil)` to the prompt's
+  local copy of the combined action alist rather than deleting the key.
+  - *Why*: in Emacs 31.1, omitting `dedicated` lets
+    `display-buffer-mark-dedicated` (`window.el.gz:7810`) still
+    dedicate a new window, and omitting `window-height` lets
+    `display-buffer-in-direction` (`window.el.gz:8985`) append
+    `(window-height . fit-window-to-buffer)` and `temp-buffer-resize-mode`
+    resize the window.  Prepending `(KEY . nil)` shadows all later
+    associations cleanly and inhibits those fallbacks too.
+  - Restoring a toggle removes the local `(KEY . nil)` shadow so the
+    original combined action alist value applies again.
+- **Local scope**: toggles affect only the package's display call and
+  any `"Use caller intent"` run from that prompt; they leave
+  selection entries, `body-function`, `post-command-select-window`,
+  `bump-use-time`, and `inhibit-switch-frame` untouched, never mutate
+  the caller's ACTION, and do not affect Emacs's later functions after
+  a nil choice.
 
-A full-frame line shows a primary intent effect: "Caller: full frame,
-other windows will be deleted."
-- The dispatch prompt menu shows a window-setting toggle for each
-  window-setting entry present in the combined action alist with the
-  fixed keys above; the toggle shows the entry's source, state, and when
-  it applies.  An absent entry has no toggle.
-- A window-setting toggle removes or restores every association of one
-  window-setting entry's action alist key in the combined action alist
-  for the package's display call and for a run of the caller's function
-  list from that
-  prompt.  The toggle stays available while the dispatch prompt is
-  open; toggling it does not close the prompt.  It leaves every
-  non-window-setting entry unchanged, including selection entries,
-  `body-function`, `post-command-select-window`, `bump-use-time`, and
-  `inhibit-switch-frame`.  It does not change the caller's ACTION.  It
-  is local: if the package returns nil, Emacs's later action functions
-  receive the original combined action alist.  The display call and a
-  run of the caller's function list for "Use caller intent" use the
-  modified alist.
-- The window-settings group toggle is shown when at least one
-  window-setting entry is present.  It removes every window-setting
-  entry if any window-setting entry is active; if all are removed, it
-  restores every window-setting entry to its value in the combined
-  action alist at prompt start.  Its state is on, off, or mixed; with
-  one window-setting entry it has the same effect as that entry's
-  toggle.  It keeps the prompt open, and the local-scope rule above
-  applies to it.
-- For a full-frame intent, caller intent info says "Caller: full frame,
-  other windows will be deleted."  The dispatch prompt
-  shows "Display full frame" as the dispatch prompt default.  Add
-  "Display in another or new tab" (when `tab-bar-mode` is active) and
-  "Display in another or new frame" to the Other group.  "Display full
-  frame"
-  deletes the other windows; a window label displays normally without
-  that deletion; a split, tab, or frame action displays another way; the
-  cancel key returns nil.  The caller's full-frame action remains part
-  of the caller's ACTION: its nil or error is not a failure after the
-  choice.
-- The package checks `disbuf-pivot-exclude-conditions` in the
-  condition of its `display-buffer-alist` entry.  A matching buffer
-  returns nil; no prompt runs, and the later functions in Emacs's
-  combined function list run.
-  `display-buffer-overriding-action` and earlier
-  `display-buffer-alist` entries still take precedence.
-- C-g aborts the display; it does not run the caller's fallbacks.  The
-  "Use caller intent" action is the explicit way to run the chain.
-- The Other group offers a leave-undisplayed dispatch action only when
-  `allow-no-window` is non-nil.  The cancel key is always available.
-- A split action ends the dispatch prompt.  If the split action fails,
-  show the error and show the dispatch prompt again.
-- Selection follows `disbuf-pivot-action-select`: `auto` leaves it to
-  the caller, `t` selects the chosen window, and `nil` restores the
-  window selected before the action at the end of the command.
-- Frame focus and raising use the standard action functions and honor
+### Post-choice selection and frame raising
+
+- Selection after a dispatch prompt follows
+  `disbuf-pivot-action-select`: `auto` (default, honors caller and
+  `post-command-select-window`), `t` (selects chosen window), or `nil`
+  (restores previously selected window via `post-command-hook`).
+- Frame raising and focus use standard Emacs primitives and honor
   `inhibit-switch-frame`.
-- For the other-frame prefix, the order is frame, then tab when needed,
-  then the window with the dispatch prompt.  The dispatch prompt default
-  is the window that displays the buffer in the target, else the target's
-  selected window.  A new frame uses its selected window.  Skip the tab
-  prompt for a new frame, and for a frame with one tab unless
-  `tab-bar-mode` is active.
-- The tab prompt offers the tabs of its scope: nil for the selected
-  frame, `t` for all existing frames, `visible` for the visible frames,
-  `0` for all frames on the current terminal, or a frame for that frame.
-  Child frames are not offered.  The reader takes an optional scope;
-  outside the pivot, the tab prompt uses
-  `disbuf-pivot-tab-prompt-scope` as its default; at the pivot, its
-  scope is the selected frame, and the reusable tabs from other frames
-  are candidates, not part of the scope.  The user option applies only
-  outside the pivot.  The prompt string is "Switch or create tab:" for
-  the selected frame; for another scope it appends the scope before the
-  colon: "(all frames)" for `t`, "(visible frames)" for `visible`,
-  "(current terminal)" for `0`, and "(frame NAME)" for a frame.
-- `display-buffer-in-tab` adds every tab in the frames named by
-  `reusable-frames` that already displays the buffer to the tab prompt
-  as a candidate.  It does not add the other tabs of those frames.
-  Choosing the candidate selects its frame and the tab; no frame prompt
-  runs for the choice.  When several tabs display the buffer, all are
-  candidates; the tab prompt default is the tab the caller's function
-  would select, following `ignore-current-tab`.
-- The tab candidate annotation shows the frame when the prompt offers
-  tabs in more than one frame.  A name that matches no tab the prompt
-  offers is a tab history candidate; the prompt marks it `(closed)`.
-  The package supplies the annotation, not Marginalia.
-- The consult tab reader does not preview a candidate whose tab is
-  outside the selected frame and does not switch frames during
-  completion.  The plain tab reader has no preview.  The buffer column
-  of the tab candidate annotation shows the candidate's buffers.
-- When the package selects or makes a tab, it enables `tab-bar-mode` if
-  `tab-bar-show` is non-nil and the mode is off; it does not enable it
-  when `tab-bar-show` is nil.  This applies to the other-tab prefix, a
-  caller's `display-buffer-in-tab` or `display-buffer-in-new-tab`, the
-  frame prompt's tab step, and a reusable tab chosen in the tab prompt.
-  `tab-bar-new-tab` already enables
-  the mode for a new tab (`tab-bar.el:2144–2148`); the package does the
-  same for an existing tab, so the layout switch shows the tab bar.
-  Once the mode is on, the frame prompt's tab step runs for an existing
-  frame even when the frame has one tab; a new frame still uses its
-  selected window.
-- An existing-target action preselects an existing tab or frame; the
-  tab prompt default is the preselected tab and the frame prompt default
-  is the preselected frame.  A new-target action starts a new one and
-  must not select an existing tab or frame with the same name.  The
-  prompt string states the caller's intention; the dispatch prompt,
-  when there is one, shows it in caller intent info.
-- Reuse caller intent info names the qualifying windows.  Same-window
-  and no-preference info is optional.
-- The same-window conflict message states which request is the
-  caller's and which entry conflicts, naming the action that supplies
-  the entry when it is not the caller's ACTION, then applies
-  `disbuf-pivot-same-window-conflict`.  The info names the effect as
-  "inhibit same window".  When the caller's ACTION itself supplies
-  the entry, the info names both in the `Caller:` part: "Caller: same
-  window, inhibit same window"; the message reports the
-  self-contradiction.  When the option asks, the dispatch prompt default
-  is the same window; choosing it binds `inhibit-same-window` to nil.
-- Direction uses `display-buffer-in-direction` for the dispatch prompt default.
-  Below-selected and at-bottom use their own functions for the dispatch
-  prompt default.  Side windows are left as-is.
-- The four package prefix commands are remapped: same-window,
-  other-window, other-tab, and other-frame.  The next subsection gives
-  their placement paths and dispatch prompt defaults.
 
-### The package prefix commands
+## 6. Tab prompt and frame prompt
 
-A package prefix command is user intent, not caller intent: it sets the
-target for the next command, and the caller's ACTION is not the
-dispatch prompt default.
+```text
+Frame action / other-frame-prefix
+  → frame prompt (top-level visible frames filtered by frame-predicate)
+    ├ existing frame → tab prompt (if tab-bar-mode active or >1 tab)
+    │                  ├ existing tab → dispatch prompt (default: reuse win else selected)
+    │                  └ new tab      → its selected window (type 'tab)
+    └ new frame      → its selected window (type 'frame)
+
+Tab action / other-tab-prefix
+  → tab prompt (selected frame + reusable tabs from reusable-frames)
+    ├ existing tab → dispatch prompt (default: reuse win else selected)
+    └ new tab      → its selected window (type 'tab)
+```
+
+### Tab prompt rules
+
+- **Existing vs. new target**:
+  - `display-buffer-in-tab` preselects the tab Emacs's function would
+    choose (reusable tab honoring `ignore-current-tab`, else existing
+    `tab-name`); the tab prompt default is that tab.  Note: in Emacs
+    31.1 (`tab-bar.el.gz:2995`), when `display-buffer-in-tab` selects
+    an existing tab by `tab-name` that does not yet show the buffer, it
+    returns `nil`; regulating it with the dispatch prompt inside that
+    tab avoids falling through to unregulated fallbacks.
+  - `display-buffer-in-new-tab` starts a new tab without an
+    existing-tab preselect and must not select an existing tab even if
+    the user enters the same name.
+  - If `tab-name` or `tab-group` is a function taking `(BUFFER ALIST)`,
+    evaluate it **once** per display call and reuse the result (avoid
+    duplicate side effects across info formatting and tab creation).
+- **Tab prompt scope**:
+  - Values: nil (selected frame), `t` (all existing frames), `visible`
+    (visible frames), `0` (all frames on current terminal), or a frame.
+    Child frames are excluded.
+  - Outside the pivot, the tab prompt defaults to
+    `disbuf-pivot-tab-prompt-scope`.  At the pivot, its scope is the
+    selected frame (the user option is not read); for
+    `display-buffer-in-tab`, every tab in the frames named by
+    `reusable-frames` that already displays the buffer is added as a
+    candidate (other tabs of those frames are not added).  Choosing a
+    reusable tab selects its frame and tab without a frame prompt, then
+    runs the dispatch prompt inside it.
+  - Prompt string: `"Switch or create tab: "` for the selected frame;
+    other scopes append `" (all frames)"`, `" (visible frames)"`,
+    `" (current terminal)"`, or `" (frame NAME)"` before the colon.
+    Caller tab prompts state the caller's intention in the prompt
+    string.
+- **Annotations and previews**:
+  - The package supplies tab candidate annotations (not Marginalia),
+    adding the frame column whenever offered tabs span multiple frames.
+  - A history name matching no offered tab in the prompt is a tab
+    history candidate marked `(closed)` relative to the prompt's scope.
+  - With the consult tab reader, candidates in the selected frame
+    preview by selecting the tab; candidates in other frames are not
+    previewed (no frame switching during completion; the buffer column
+    still shows their buffers).  The plain tab reader has no preview.
+  - *PGTK caveat*: the consult tab reader deletes child frames before
+    saving window configuration (preventing PGTK deadlocks on invisible
+    Corfu frames) and preserves active minibuffer height during preview.
+- **Enabling `tab-bar-mode`**: whenever the package selects or makes a
+  tab (other-tab prefix, `display-buffer-in-tab`,
+  `display-buffer-in-new-tab`, frame prompt's tab step, or choosing a
+  reusable tab), enable `tab-bar-mode` if `tab-bar-show` is non-nil and
+  the mode is off — matching `tab-bar-new-tab` (`tab-bar.el.gz:2144-2148`)
+  so an existing-tab switch also displays the tab bar.  Do not enable
+  it when `tab-bar-show` is nil.
+
+### Frame prompt rules
+
+- Offers live visible top-level frames only (child frames and
+  minibuffer-only frames excluded), filtered by `frame-predicate` and
+  disambiguating repeated frame names (`NAME<2>`).
+- `display-buffer-use-some-frame` preselects an existing frame;
+  `display-buffer-pop-up-frame` asks for a new frame name and never
+  selects an existing frame even with the same name.
+- Empty name makes a new frame with the default name; a new name sets
+  its `name` parameter; both honor `pop-up-frame-parameters` and
+  `inhibit-switch-frame` and use the new frame's selected window
+  (`type = 'frame`).
+- Choosing an existing frame selects/focuses it (honoring
+  `inhibit-switch-frame`), runs the tab prompt when `tab-bar-mode` is
+  active or the frame has more than one tab (using the chosen frame as
+  scope), then runs the dispatch prompt inside the chosen existing tab
+  (or uses the selected window of a newly made tab).
+
+## 7. Package prefix commands
+
+`disbuf-pivot-prefix-mode` remaps the four built-in prefix commands via
+its keymap (no advice on `display-buffer`).  A package prefix command
+is explicit **user intent**, taking precedence over the caller's
+ACTION; the caller's ACTION is never the dispatch prompt default.
 
 | Prefix | Frame prompt | Tab prompt | Dispatch prompt | Dispatch prompt default |
 |---|---|---|---|---|
-| same-window | No | No | Only if the selected window cannot display | None; the selected window is used when no prompt runs; the dispatch prompt has no default |
-| other-window | No | No | Yes | The prefix's other-window request |
-| other-tab | No | Yes | Yes for an existing tab; no for a new tab (its selected window) | The window displaying the buffer in the chosen tab, else its selected window |
-| other-frame | Yes | Yes for an existing frame when `tab-bar-mode` is active or the frame has more than one tab; no for a new frame | Yes for an existing tab; no for a new tab (its selected window) | The window displaying the buffer in the chosen tab, else its selected window |
+| `same-window` | No | No | Only if selected window cannot display | None (selected window used silently when displayable) |
+| `other-window` | No | No | Yes (selected window ineligible, still splittable) | Prefix's other-window request |
+| `other-tab` | No | Yes (selected frame scope) | Existing tab: yes; new tab: no (`'tab`) | Window displaying buffer in tab, else tab's selected window |
+| `other-frame` | Yes | Existing frame when `tab-bar-mode` or >1 tab (chosen frame scope); new frame: no | Existing tab: yes; new tab/frame: no (`'tab`/`'frame`) | Window displaying buffer in tab, else tab's selected window |
 
-Read each row left to right; `No` skips that prompt, and a conditional
-cell says when it runs.  The other-tab prefix always shows the tab
-prompt; only the other-frame prefix's tab step is gated on
-`tab-bar-mode` or more than one tab.
+- **`other-window-prefix`**: no automatic split; honors
+  `reusable-frames`; selection follows
+  `disbuf-pivot-other-window-prefix-select`; caller intent info states
+  the user's prefix request (if the caller's ACTION was recorded and
+  can run, it may still appear in the Caller intent group).
+- **`other-tab-prefix` / `other-frame-prefix`**: neither reads
+  `disbuf-pivot-tab-prompt-scope`; a next command's `reusable-frames`
+  still adds reusable tabs to the tab prompt; selection after a
+  dispatch prompt follows `disbuf-pivot-action-select` (new targets
+  leave selection to the caller).
+- **Emacs 31.1 `display-buffer-override-next-command` quirk
+  (`window.el.gz:9751`)**: Emacs's `display-buffer-override-next-command`
+  unconditionally calls `(window--display-buffer buffer window type
+  alist)` with the *original unmodified `alist`* after `pre-function`
+  returns.  Calling `window--display-buffer` inside `pre-function`
+  causes `body-function` to run twice and would re-apply window
+  settings toggled off in the dispatch prompt.  Package prefix commands
+  therefore use a dedicated one-shot `display-buffer-overriding-action`
+  wrapper (preserving minibuffer-depth checks,
+  `switch-to-buffer-obey-display-actions`, mouse-event handling, and
+  `prefix-command-echo-keystrokes-functions`) that owns the single
+  `window--display-buffer` call and guards nested displays during tab
+  or frame creation.
+- **Child frames (deferred)**: current prefix commands redirect to
+  `frame-parent` when invoked from a child frame; keeping vs. removing
+  that redirection is deferred (see `TODO.md`).  Child frames are never
+  frame-prompt targets.
 
-```text
-same-window
-  → selected window
-  ↳ if the selected window cannot display → dispatch prompt
+## 8. Options, defaults, and faces
 
-other-window
-  → dispatch prompt
-
-other-tab
-  → tab prompt
-    ├ existing tab → dispatch prompt
-    └ new tab      → its selected window
-
-other-frame
-  → frame prompt
-    ├ existing frame → tab prompt
-    │                  (when tab-bar-mode is active or the frame has
-    │                   more than one tab)
-    │                  ├ existing tab → dispatch prompt
-    │                  └ new tab      → its selected window
-    └ new frame      → its selected window
-```
-
-For the same-window prefix, use the selected window when it can
-display.  When it cannot, show the dispatch prompt, make the selected
-window's label ineligible when it is in the window label scope, and
-leave the prompt without a default; its split actions and
-cancel key remain.
-
-For the other-window prefix, show the dispatch prompt, label every
-window in the window label scope, and make the selected window's label
-ineligible when it is in the window label scope.  Split actions are
-prompt choices, not automatic.  The dispatch prompt default is the prefix's
-other-window request, not "Use caller intent"; the caller's ACTION may
-still appear in the Caller intent group when it can run.  The info line
-states the user's request, not the caller's ACTION.  The prefix follows
-`reusable-frames` and ignores the selected window for the display.
-Selection follows `disbuf-pivot-other-window-prefix-select`.
-
-The other-tab and other-frame prefixes follow the tab or frame action
-placement path: an existing tab or frame chosen by the prompt shows the
-dispatch prompt; a new tab or frame uses its selected window.  An
-existing tab or frame that already displays the buffer still shows the
-dispatch prompt, with that window as the dispatch prompt default.  Failure
-after the choice follows section 9.  Selection after a dispatch prompt
-follows `disbuf-pivot-action-select`; a prefix that shows no dispatch
-prompt leaves selection to the caller.
-
-The other-tab prefix uses the selected frame as the tab prompt scope;
-the other-frame prefix's tab step uses the chosen frame.  Neither
-prefix reads `disbuf-pivot-tab-prompt-scope`.  A next command's tab
-action that reads `reusable-frames` adds its reusable tabs to the
-prompt.
-
-When the selected frame is a child frame, the prefix commands use the
-parent frame for the dispatch prompt.  Child frames are not targets;
-the frame prompt offers top-level frames only.
-
-## 7. Action function checklist
-
-`Regulate` means the package handles the display under its own rules:
-it shows caller intent info and the dispatch prompt default, prompts when
-needed, lets the user choose a target or a dispatch action, and
-displays the buffer in the chosen window.  Calling an Emacs action
-function is the display primitive, not a delegation of the regulation.
-
-`Respect` means the package returns nil without displaying; the later
-functions in Emacs's combined function list run.
-
-The table describes a caller's ACTION that names the function.  A
-package prefix command or a user choice in a prompt is separate; the
-package may call the same function after that choice.
-
-The table applies when the function is the first function in the
-caller's ACTION.  A later function in the caller's function list is a
-caller fallback; section 3 gives the rule for the list.
-
-The "Relevant alists" column lists the action alist entries the action
-function reads.  Window-setting entries are shared by every action
-function; section 8 handles them.  A selection entry is not applied to
-the chosen window after the choice.
-
-| Action function | Effect phrase | Treatment | Relevant alists |
-|---|---|---|---|
-| `display-buffer-same-window` | "same window" | Regulate.  When the selected window can display, its label is eligible; choosing it binds `inhibit-same-window` to nil for this call.  When it cannot display, the prompt offers the split actions and cancel. | `inhibit-same-window` |
-| `display-buffer-reuse-window` | "reuse" | Regulate.  If the user chooses the selected window despite `inhibit-same-window`, bind that entry to nil for this call. | `inhibit-same-window`, `reusable-frames`, `inhibit-switch-frame`, `reuse-indirect` |
-| `display-buffer-reuse-mode-window` | "reuse" | Regulate as reuse with `mode`. | `mode`, `inhibit-same-window`, `reusable-frames`, `inhibit-switch-frame` |
-| `display-buffer-pop-up-window` | "new window" | Regulate for a split action. | `inhibit-switch-frame`; shared window-setting entries (section 8) |
-| `display-buffer-in-previous-window` | "previous window X" or "a window that previously showed the buffer" | Regulate.  Show the `previous-window` entry as the preferred candidate; when it is not usable, mark the windows that previously showed the buffer. | `previous-window`, `inhibit-same-window`, `reusable-frames` |
-| `display-buffer-use-some-window` | "some window" | Regulate: show caller intent info; the dispatch prompt; the dispatch prompt default is "Use caller intent" (the caller's ACTION); a label or another action overrides.  Do not display without the prompt. | `some-window`, `lru-frames`, `lru-time`, `window-min-width`, `window-min-height`, `inhibit-same-window`, `inhibit-switch-frame` |
-| `display-buffer-use-least-recent-window` | "a recently unused window" | Regulate like `display-buffer-use-some-window`. | `reusable-frames`, `inhibit-switch-frame`, `lru-frames`, `lru-time`, `window-min-width`, `window-min-height`; `inhibit-same-window` is forced to t internally |
-| `display-buffer-in-direction` | "direction X" | Regulate; the dispatch prompt default is "Use caller intent" (the caller's ACTION, `display-buffer-in-direction`). | `direction`, `window` |
-| `display-buffer-below-selected` | "below the selected window" | Regulate; the dispatch prompt default is "Use caller intent" (the caller's ACTION).  `window-min-height` is an eligibility constraint. | `window-min-height` |
-| `display-buffer-at-bottom` | "at the bottom of the frame" | Regulate; the dispatch prompt default is "Use caller intent" (the caller's ACTION). | None specific |
-| `display-buffer-full-frame` | "full frame, other windows will be deleted" | Regulate.  Show caller intent info; the dispatch prompt default is "Display full frame"; a window label displays normally; split, tab, and frame actions override; the cancel key returns nil | Delegates to `display-buffer-reuse-window`, `display-buffer-same-window`, `display-buffer-pop-up-window`, and `display-buffer-use-some-window`; their entries apply |
-| `display-buffer-pop-up-frame` | "new frame" | Regulate for a new frame.  Ask for a new frame name; do not offer existing frames.  Use `pop-up-frame-parameters`; the new frame is top-level unless that entry sets `parent-frame`.  `pop-up-frames` selects the frame strategy but this function does not read it. | `pop-up-frame-parameters`, `inhibit-switch-frame` |
-| `display-buffer-use-some-frame` | "existing frame X" | Regulate for an existing frame; `frame-predicate` filters the candidates. | `frame-predicate`, `inhibit-same-window`, `inhibit-switch-frame` |
-| `display-buffer-in-tab` | "existing tab X" or "new tab" | Regulate.  The tab prompt offers the selected frame's tabs and every tab in the `reusable-frames` scope that displays the buffer; other tabs of those frames are not candidates.  Preselect the tab the function would select (the current tab first unless `ignore-current-tab`); a new tab starts without an existing-tab preselect. | `reusable-frames` (nil differs), `ignore-current-tab`, `tab-name`, `tab-group` |
-| `display-buffer-in-new-tab` | "new tab" | Regulate; ask for a new tab name; do not select an existing tab with the same name. | `tab-name`, `tab-group` |
-| `display-buffer-no-window` | None | Regulate: leave undisplayed; only with `allow-no-window`. | `allow-no-window` |
-| `display-buffer-in-child-frame` | None | Respect. | `child-frame-parameters` (including a `parent-frame` entry naming a top-level or child frame), `inhibit-switch-frame` |
-| `display-buffer-in-side-window` | None | Respect; side as-is. | `side`, `slot` |
-| `display-buffer-in-atom-window` | None | Respect. | `side`, `window` |
-
-## 8. Action alist checklist
-
-The action alist entries have different roles.  The package passes the
-combined action alist to the function it calls.  It does not drop an
-entry silently.  It binds `inhibit-same-window` to nil when the user
-chooses the selected window, and a window-setting toggle removes or
-restores the window-setting entry it shows.
-
-A **selection entry** limits, orders, or chooses the candidate window,
-frame, tab, or placement, or the display outcome.  The package uses it
-during the prompt; it is not applied to the chosen window afterward.
-A **window-setting entry** changes the chosen window itself: its
-dedication, parameters, or size.  The package preserves it and applies
-it through the standard display path.  `body-function` is a body
-function, not a window-setting entry; the package preserves it.
-
-### Selection entries
-
-| Entry | Treatment |
-|---|---|
-| `inhibit-same-window` | Show caller intent info; the dispatch prompt; the selected window's label is eligible; choosing it binds this entry to nil for the display call.  The user may choose another window or a dispatch action. |
-| `previous-window` | Show the named window as the preferred candidate when it is displayable; do not force it.  Without a usable entry, mark the windows that previously showed the buffer. |
-| `mode` | Pass to `display-buffer-reuse-mode-window` when reuse is regulated with a mode. |
-| `frame-predicate` | Frame candidates; honor. |
-| `reusable-frames` | Reuse and tab scope; honor.  The tab meaning of nil differs.  For `display-buffer-in-tab`, the frames are searched for a tab that displays the buffer; they do not add those frames' other tabs to the tab prompt. |
-| `window-min-width`, `window-min-height` | Eligibility constraints; honor when choosing a window. |
-| `some-window`, `lru-frames`, `lru-time` | Pass to `display-buffer-use-some-window` or `display-buffer-use-least-recent-window` when the package calls it; otherwise leave in the alist.  Do not apply them to the chosen window. |
-| `reuse-indirect` | Pass to `display-buffer-reuse-window`. |
-| `pop-up-frames` | Selects the frame strategy; `display-buffer-pop-up-frame` does not read it.  The reuse functions use it as the frame scope when `reusable-frames` has no entry. |
-| `allow-no-window` | Allow the leave-undisplayed outcome. |
-
-### Entries that name a place
-
-| Entry | Treatment |
-|---|---|
-| `tab-name`, `tab-group`, `ignore-current-tab` | Tab placement; honor. |
-| `direction`, `window` | Direction action; honor. |
-| `side`, `slot` | Side placement; leave as-is. |
-| `child-frame-parameters` (including a `parent-frame` entry naming a top-level or child frame) | Child-frame placement; respect. |
-| `pop-up-frame-parameters` | New-frame parameters; honor. |
-
-### Window-setting entries
-
-| Entry | Effect phrase | Treatment |
+| Symbol | Default | Values / Role |
 |---|---|---|
-| `dedicated` | "dedicated" | Preserve; apply through `window--display-buffer`.  A reused normal window is not dedicated; a new window receives the entry's value; a window already dedicated to this buffer and showing it keeps its flag; a window dedicated to this buffer but not showing it is reset to nil before display; a window dedicated to another buffer is undisplayable; its label is ineligible.  `display-buffer-in-side-window` is Respect and adds `(dedicated . side)` by default unless the alist already has a `dedicated` entry (`window.el:1120–1122`); the prompt labels a side window as ineligible.  The window-settings group shows "new windows only" and names the source.  A window-setting toggle removes the entry. |
-| `window-parameters` | "window parameters" | Preserve; apply to the chosen window.  The window-settings group names the source.  A window-setting toggle removes the entry. |
-| `preserve-size` | "preserve width", "preserve height", or "preserve size" from the value | Preserve the chosen window's size; apply to new windows only.  The window-settings group shows "new windows only".  A window-setting toggle removes the entry. |
-| `window-height`, `window-width` | "an N-line window" / "an N-column window" for an integer; "N% of the frame high" / "N% of the frame wide" for a float; "a window with an N-line body" / "an N-column body" for a `body-lines` / `body-columns` cons; the function symbol for a function | Preserve; apply only when the window never showed another buffer (a new window on an existing frame).  The window-settings group shows "new windows only".  A window-setting toggle removes each entry. |
-| `window-size` | "a new frame N columns by M lines"; "a new frame with an N by M body" for `body-chars`; the function symbol for a function | Preserve; apply when the window is on a new frame.  The window-settings group shows "new frame".  A window-setting toggle removes the entry. |
+| `disbuf-pivot-reuse` | `auto` | `auto` or `ask`; applies when a window already displays the buffer and to `display-buffer-in-previous-window` fallback |
+| `disbuf-pivot-same-window-conflict` | `ask` | `ask` or `same-window`; applies when caller requests same window with `inhibit-same-window` |
+| `disbuf-pivot-action-functions` | `(display-buffer-reuse-window display-buffer-same-window dp-action-choose-window)` | Action functions tried in order for no-preference calls (no automatic split) |
+| `disbuf-pivot-caller-intent-info` | `t` | Non-nil shows caller intent info in the dispatch prompt menu header; nil hides it |
+| `disbuf-pivot-exclude-conditions` | `nil` | List of `buffer-match-p` conditions (regexp, `derived-mode`, `major-mode`, `category`, predicate, `not`/`and`/`or`); matching buffers return nil |
+| `disbuf-pivot-action-select` | `auto` | `auto` (honor caller/`post-command-select-window`), `t` (select chosen), `nil` (restore previous window at command end) |
+| `disbuf-pivot-other-window-prefix-select` | `auto` | Same values/effects after `disbuf-pivot-other-window-prefix` |
+| `disbuf-pivot-tab-prompt-scope` | `nil` | `nil`, `t`, `visible`, or `0`; default tab prompt scope **outside the pivot only** |
+| `disbuf-pivot-window-keys` | `auto` | `auto` (inherit `aw-keys` if bound, else built-in home-row keys) or explicit list of key characters |
+| `disbuf-pivot-split-actions` | `auto` | `auto` (inherit split entries from `aw-dispatch-alist` if bound, else built-in `v`/`b`/`j` split actions) or explicit alist |
+| `disbuf-pivot-eligible-label` | face | Face for eligible window labels (on windows and in the Windows group) |
+| `disbuf-pivot-ineligible-label` | face | Face for ineligible window labels (on windows and in the Windows group) |
 
-Caller intent info lists these effects in this table's order, and the
-window-settings group keeps that order.  A key reassignment changes the
-key label, not the order.
+`C-g` always aborts (`quit`); there is no option to change it.
+`disbuf-pivot-mode-line-help` and the former echo-area hint string are
+removed when the dispatch prompt menu replaces them.
 
-Why new windows only: Emacs applies `preserve-size` only to a new
-window on an existing frame, after `window-height` and `window-width`;
-it preserves the size the window has at that point.  A reused window,
-a new frame, and a new tab are excluded (`window.el:7927-7930`).
+## 9. Action function and action alist reference
 
-`window-size` requests a frame size.  A tiling window manager or a text
-terminal may ignore the request; the sole window then does not get the
-requested size.
+### Action functions (all 19 Emacs 31.1 action functions)
 
-### Other entries
+`Regulate` means the package handles the display under sections 3–6;
+`Respect` means return nil so later functions in Emacs's combined
+function list run.  Window-setting entries are shared by every action
+function.
+
+| Action function | Effect phrase | Treatment | Relevant alists & Emacs 31.1 notes |
+|---|---|---|---|
+| `display-buffer-same-window` | `"same window"` | Regulate | `inhibit-same-window`.  Emacs rejects dedicated-to-self and accepts non-dedicated side windows (`window.el.gz:8489`); use package displayable check + `window--display-buffer`. |
+| `display-buffer-reuse-window` | `"reuse"` | Regulate (reuse-first chain) | `inhibit-same-window`, `reusable-frames`, `inhibit-switch-frame`, `reuse-indirect` (including `'buffer` no-swap, `window.el.gz:8609`), fallback via `window--pop-up-frames` / `display-buffer-reuse-frames`. |
+| `display-buffer-reuse-mode-window` | `"reuse"` | Regulate (reuse-first chain) | `mode` (defaults to `buffer`'s `major-mode` when omitted, 4-tier same/derived × same/other-frame priority, `window.el.gz:8621`), `inhibit-same-window`, `reusable-frames`, `inhibit-switch-frame`. |
+| `display-buffer-pop-up-window` | `"new window"` | Regulate | `inhibit-switch-frame`; all displayable windows remain eligible in dispatch prompt. |
+| `display-buffer-in-previous-window` | `"previous window X"` / `"a window that previously showed the buffer"` | Regulate | `previous-window` (may be a bound variable symbol, `window.el.gz:9159`), `inhibit-same-window`, `reusable-frames`. |
+| `display-buffer-use-some-window` | `"some window"` | Regulate | `some-window`, `lru-frames`, `lru-time`, `window-min-width`, `window-min-height`, `inhibit-same-window`, `inhibit-switch-frame`. |
+| `display-buffer-use-least-recent-window` | `"a recently unused window"` | Regulate | `reusable-frames`, `inhibit-switch-frame`, `lru-frames`, `lru-time`, `window-min-width`, `window-min-height`; forces `inhibit-same-window` internally (`window.el.gz:9323`); user can still choose selected window explicitly. |
+| `display-buffer-in-direction` | `"direction X"` | Regulate | `direction`, `window`.  Appends default `window-height` / `preserve-size` when absent (`window.el.gz:8985`); shadowing with `(KEY . nil)` blocks it. |
+| `display-buffer-below-selected` | `"below the selected window"` | Regulate | `window-min-height` (hard integer check). |
+| `display-buffer-at-bottom` | `"at the bottom of the frame"` | Regulate | None specific. |
+| `display-buffer-full-frame` | `"full frame, other windows will be deleted"` | Regulate | Delegates to reuse, same-window, pop-up-window, use-some-window (`window.el.gz:8509`); their entries apply.  Nil/error of caller's full-frame action follows caller's ACTION. |
+| `display-buffer-pop-up-frame` | `"new frame"` | Regulate (new frame) | `pop-up-frame-parameters`, `inhibit-switch-frame`.  New frame is top-level unless `pop-up-frame-parameters` sets `parent-frame`. |
+| `display-buffer-use-some-frame` | `"existing frame X"` | Regulate (existing frame) | `frame-predicate`, `inhibit-same-window`, `inhibit-switch-frame`. |
+| `display-buffer-in-tab` | `"existing tab X"` / `"new tab"` | Regulate (existing/new tab) | `reusable-frames` (nil = no search), `ignore-current-tab`, `tab-name`, `tab-group`.  Returns nil for existing `tab-name` not showing buffer (`tab-bar.el.gz:2995`). |
+| `display-buffer-in-new-tab` | `"new tab"` | Regulate (new tab) | `tab-name`, `tab-group`. |
+| `display-buffer-no-window` | `"no window"` | Regulate | `allow-no-window` (returns `fail` when non-nil, else nil). |
+| `display-buffer-in-child-frame` | `"child frame"` | Respect | `child-frame-parameters` (reads `parent-frame` inside it, not top-level, `window.el.gz:8807`), `inhibit-switch-frame`. |
+| `display-buffer-in-side-window` | `"side window"` | Respect | `side` (default `bottom`), `slot` (default `0`); adds `(dedicated . side)` unless `dedicated` already set (`window.el.gz:1120-1122`). |
+| `display-buffer-in-atom-window` | `"atom window"` | Respect (deferred) | `window` (default selected window), `side` (default `below`, `window.el.gz:692`). |
+
+### Action alist entries
+
+The package passes the combined action alist to the display primitive
+without silently dropping entries.  Only `inhibit-same-window` (when
+the user chooses the selected window) and active window-setting toggles
+(shadowing with `(KEY . nil)`) modify the local alist.
+
+**Selection entries** (used during prompt; not applied to the chosen
+window afterward):
 
 | Entry | Treatment |
 |---|---|
-| `body-function` | Preserve; call after the buffer is displayed and before the size entries.  It is a body function, not a window-setting entry; it is not named in caller intent info and the window-setting toggles do not remove it.  A failure follows the failure-after-the-choice rule. |
-| `post-command-select-window` | Honor; `disbuf-pivot-action-select` defaults to `auto`.  The toggles leave it. |
-| `bump-use-time` | Handle through `window--display-buffer`.  The toggles leave it. |
-| `inhibit-switch-frame` | Frame raising and focus; honor.  The toggles leave it. |
-| `category` | Pass through; use it in caller intent info when present.  The toggles leave it. |
+| `inhibit-same-window` | Shown in caller intent info; triggers dispatch prompt (or conflict policy); selected window remains eligible and choosing it binds entry to nil for the display call |
+| `previous-window` | Dereference if bound symbol; highlight as preferred candidate when displayable |
+| `mode` | Honor in `display-buffer-reuse-mode-window` (default: `buffer`'s `major-mode`) |
+| `frame-predicate` | Filter frame prompt candidates |
+| `reusable-frames` | Scope reuse search and `display-buffer-in-tab` reusable tab candidates (note tab nil difference) |
+| `window-min-width`, `window-min-height` | Honor as constraints/soft preferences (`'full-width`/`'full-height` supported in LRU matching; integer height checked in `below-selected`) |
+| `some-window`, `lru-frames`, `lru-time` | Pass through when calling `use-some-window` / `use-least-recent-window`; do not apply to a manually chosen window |
+| `reuse-indirect` | Pass to `display-buffer-reuse-window` / `get-buffer-window-list` (preserving `'buffer` no-swap semantics) |
+| `pop-up-frames` | Resolve via `window--pop-up-frames` for frame intent and reuse fallback |
+| `allow-no-window` | Permits `fail` outcome (and `"Leave undisplayed"` in Other group) |
 
-## 9. Contexts
+**Entries that name a place:**
 
-The package cannot prompt in the batch, active-minibuffer, timer,
-process-filter, keyboard-macro, and recursive-display contexts below.
-In them none of the dispatch prompt, the tab prompt, or the frame
-prompt runs; the action returns nil.
+| Entry | Treatment |
+|---|---|
+| `tab-name`, `tab-group`, `ignore-current-tab` | Honor in tab prompt; evaluate function-valued `tab-name`/`tab-group` once |
+| `direction`, `window` | Honor in `display-buffer-in-direction` |
+| `side`, `slot` | Side-window placement (Respect) |
+| `child-frame-parameters` | Child-frame placement (Respect; includes nested `parent-frame`) |
+| `pop-up-frame-parameters` | Honor when making a new frame |
 
-- Batch: return nil.  Do not prompt.
-- Active minibuffer: return nil.  Do not prompt.
-- Timer, process filter, or keyboard macro: return nil.  Do not prompt.
-- Daemon or text terminal: the same prompt rules apply; the dispatch
-  prompt may still work.
-- Recursive display during tab or frame creation, or during a preview:
-  return nil for the nested call.
-- Multiple `display-buffer` calls in one command: no cache.
-- Failure after the choice: if the chosen window is undisplayable
-  because it is dead, show the dispatch prompt again; if it is
-  undisplayable because its frame or tab is gone, prompt again with the
-  frame prompt or tab prompt.  If the action function it calls returns
-  nil, report it with `message` and return `fail`; if it signals an
-  error, propagate or re-signal it.  A split action failure is separate:
-  section 6 shows the error and shows the dispatch prompt again.  A
-  `body-function` error is such a failure; it is not a window-setting
-  entry and a window-setting toggle does not remove it.  Do not return
-  nil to the caller's action functions while the dispatch prompt can
-  run.
-- A nil choice: the prompt returns nil without C-g; the action returns
-  nil; the later functions in Emacs's combined function list run.
-- A nil return is reserved for the cannot-prompt contexts, the excluded
-  buffer, the Respect or not-covered cases, and a nil choice; Emacs
-  calls the later functions in its combined function list with the same
-  combined action alist.  A window-setting toggle is local to the
-  prompt and the package's display call.
+**Window-setting entries** (listed in this fixed order in caller intent
+info and the window-settings group; toggleable via `M-1`..`M-6` and
+`M-0`):
 
-## 10. Implementation tasks
+| Key | Entry | Effect phrase | Applicability | Notes & Emacs 31.1 caveats |
+|---|---|---|---|---|
+| `M-1` | `dedicated` | `"dedicated"` | `"new windows only"` | Applied by `window--display-buffer`: reused normal window is not dedicated; window already dedicated to *this* buffer keeps its flag; window dedicated to *this* buffer but not showing it resets before display; new window receives value. |
+| `M-2` | `window-parameters` | `"window parameters"` | `"any chosen window"` | Applied to any chosen window via `set-window-parameter`. |
+| `M-3` | `preserve-size` | `"preserve width"`, `"preserve height"`, or `"preserve size"` | `"new windows only"` | Applied by Emacs only to a new window on an existing frame (`type = 'window`), after height/width; reused windows, new frames, and new tabs are excluded (`window.el.gz:7927-7930`). |
+| `M-4` | `window-height` | `"an N-line window"`, `"N% of the frame high"`, `"a window with an N-line body"`, or function symbol | `"new windows only"` | Applied only when window never showed another buffer (`type = 'window` or matching `quit-restore`). |
+| `M-5` | `window-width` | `"an N-column window"`, `"N% of the frame wide"`, `"an N-column body"`, or function symbol | `"new windows only"` | Same applicability as `window-height`. |
+| `M-6` | `window-size` | `"a new frame N columns by M lines"`, `"a new frame with an N by M body"`, or function symbol | `"new frame"` | Applied only when `type = 'frame`.  Tiling window managers or text terminals may ignore frame resize requests. |
 
-1. Add the options in section 5 with the stated defaults.
-2. Change the default action list: replace `dp-action-split-or-ask`
-   with `dp-action-choose-window`; split actions are prompt choices
-   only.
-3. Classify the first function in the caller's ACTION; later functions
-   are the caller's fallbacks.  Respect the intent classes in section 3;
-   return
-   nil for anything the package does not regulate.  The dispatch prompt default
-   is "Use caller intent" when the caller's ACTION can run; it runs the
-   caller's whole function list in order when the user chooses it.  A
-   failure after the choice while the package can prompt is handled by
-   showing the dispatch prompt again or aborting; do not return nil to
-   the caller's action functions.  A nil choice returns nil; it is not
-   a failure after the choice.
-4. Regulate same-window, reuse, other-window, new-window,
-   use-some-window, use-least-recent-window, full-frame, direction,
-   below-selected, at-bottom, previous window, and the tab and frame
-   choices.  Use the tab prompt and frame prompt, then the dispatch
-   prompt for the target window; an existing-target action preselects
-   an existing tab or frame, and a new-target action starts a new one
-   and does not select an existing target.  Keep the tab and frame
-   placement paths of the package prefix commands.  Enable
-   `tab-bar-mode` under `tab-bar-show` when the package selects or
-   makes a tab.  Use the action functions in section 7 as the display
-   primitives.
-5. Handle `inhibit-same-window`: show caller intent info, show the
-   dispatch prompt, keep the selected window's label eligible, and bind
-   the entry to nil when the user chooses it.
-6. Show the dispatch prompt menu header: caller intent info and the
-   dispatch prompt default above the groups.  The info is a one-line
-   summary of the primary intent, the fallback chain, and the entries
-   the rule reads
-   that affect the choice or chosen window; it names effects and
-   sources, not when an entry applies; the window-settings group shows
-   when each entry applies.  Use the dispatch prompt menu header source
-   labels.  The dispatch prompt menu is not a transient menu; the
-   action function reads its keys and does not return until the user
-   chooses.  Do not call a transient prefix command.  Remove
-   `disbuf-pivot-mode-line-help` and the former one-line hint string.
-7. Make C-g abort.  Remove any option that changes C-g behavior.
-8. Default selection to `auto`; honor `post-command-select-window`;
-   keep `t` and `nil` as forcing options.
-9. The dispatch prompt draws the labels on every window in the window
-   label scope and shows them in a compact Windows group with the same
-   keys and faces.  The label of an eligible window acts; the label of an
-   ineligible window states why it is ineligible and keeps the prompt
-   open.  Lay the dispatch prompt menu header and the three menu groups
-   out horizontally: the Windows group, the dispatch action group, and
-   the window-settings group.  The prompt reads the keys for the labels,
-   the dispatch actions, and the toggles; do not call `aw-select`.  Add
-   `disbuf-pivot-eligible-label` and `disbuf-pivot-ineligible-label`.
-10. Add the context guard from section 9.
-11. Preserve the window-setting entries; name their effects in caller
-    intent info and when each entry applies in the window-settings
-    group; show a window-setting toggle for each present window-setting
-    entry with its source, state, and when it applies; show the
-    window-settings group toggle when at least one window-setting entry
-    is present.  Use the fixed Meta-digit keys and `M-0` for the
-    window-settings group toggle; user keys win.  A window-setting
-    toggle removes or restores every association of its action alist key
-    for the display call and for a run of the caller's function list
-    from that prompt; the window-settings group toggle does so for every
-    window-setting entry's action alist key.  Leave `body-function` and
-    every other non-window-setting entry unchanged.
-12. Regulate `display-buffer-full-frame` when it is the first caller
-    function.  Show caller intent info; the dispatch prompt default is
-    "Display full frame"; add the tab and frame actions to the Other
-    group.  A window label displays normally; "Display full frame"
-    deletes the other windows; the cancel key returns nil.
-13. Add the tab prompt scope: the scope option and reader argument;
-    the scope values and child-frame exclusion; the reusable tabs from
-    `reusable-frames` as added candidates; the frame-aware selection;
-    the frame column in the tab candidate annotation; the
-    scope-relative tab history candidate; and no preview for a
-    candidate outside the selected frame.
-14. Add tests for every rule in section 4, every action function in
-    section 7, every action alist entry in section 8, and every context
-    in section 9.
-15. Update `README.md` and `CHANGELOG.md` after the behavior is
-    implemented.
+**Other entries** (preserved; toggles leave all of them unchanged):
 
-## 11. Test matrix
+| Entry | Treatment |
+|---|---|
+| `body-function` | Preserved; called by `window--display-buffer` after display and before size entries.  Not a window-setting entry; omitted from caller intent info; errors follow failure-after-choice rules. |
+| `post-command-select-window` | Honored when `disbuf-pivot-action-select` is `auto`. |
+| `bump-use-time` | Handled by `window--display-buffer`. |
+| `inhibit-switch-frame` | Honored for frame raising and focus. |
+| `category` | Passed through; available for `disbuf-pivot-exclude-conditions` and caller intent info. |
 
-Every rule needs a Buttercup test.  Combine:
+## 10. Contexts, reentrancy, and failure handling
 
-- caller intent: same-window, no preference, reuse with a target, reuse
-  without a target, other-window, new-window, use some window, use least
-  recent window, full frame, direction, below-selected, at-bottom,
-  previous window, existing tab, new tab, existing frame, new frame,
-  placed, atom, side, ACTION `t`, no display (`allow-no-window`),
-  excluded buffer, `switch-to-buffer`;
-- no preference order: a window displays the buffer; no window displays
-  and the selected window can display; no window displays and the
-  selected window cannot display;
-- caller ACTION: one function, several functions, all-Regulate,
-  all-Respect, mixed, duplicate, empty, and an inapplicable first
-  function;
-- combined action alist: an entry from `display-buffer-base-action`,
-  `display-buffer-overriding-action`, `display-buffer-fallback-action`,
-  the special action, or the extra action that the rule reads affects
-  eligibility or the info line and is named; an entry the rule does not
-  read does not change the intent class;
-- tab prompt and frame prompt: an existing-target action preselects an
-  existing tab or frame; the tab prompt default is the preselected tab;
-  the frame prompt default is the preselected existing frame or a new
-  frame with the default name; a new-target action starts a new one and
-  does not select an existing one; the prompt string states the caller's
-  intention;
-- tab prompt scope: nil, `t`, `visible`, `0`, and a frame; child frames
-  are excluded; the prompt string appends the scope suffix for `t`,
-  `visible`, `0`, and a frame; outside the pivot, the tab prompt uses
-  `disbuf-pivot-tab-prompt-scope`; at the pivot, its scope is the
-  selected frame and the user option is not read;
-- reusable tab: a tab in another frame is a candidate; that frame's
-  other tabs are not; several matching tabs are candidates, with the
-  function's choice as the tab prompt default; choosing the candidate
-  selects its frame and the tab; no frame prompt runs;
-- tab candidate annotation: the frame column appears when the prompt
-  offers tabs in more than one frame; a name matching no offered tab is
-  a tab history candidate, marked `(closed)`; the package supplies the
-  annotation, not Marginalia;
-- tab preview: with the consult tab reader, a candidate in the selected
-  frame is previewed by selecting its tab, and a candidate in another
-  frame has no preview; the plain tab reader has no preview; the buffer
-  column shows its buffers;
-- window eligibility and buffer display: selected window eligible,
-  dedicated to another buffer, dedicated to this buffer, side, minibuffer,
-  and dead; window already displaying the buffer or not;
-- target state: existing, new, none;
-- dispatch prompt: draws the labels on every window in the window label
-  scope and shows them in a compact Windows group with the same keys and
-  faces; the window label scope is the selected tab's windows when
-  `tab-bar-mode` is active and the selected frame's windows otherwise;
-  the label of an eligible window acts; the label of an
-  ineligible window states why it is ineligible and keeps the prompt
-  open; the Windows group does not repeat the reason; the two faces; the
-  dispatch prompt menu header holds caller intent info and the
-  dispatch prompt default; the dispatch prompt menu groups are laid out
-  horizontally;
-  the dispatch prompt default
-  is shown with a key; the action function does not return before the
-  choice; a transient prefix command is not called; the dispatch prompt
-  menu stays open across a window-setting toggle; the dispatch prompt
-  menu window is not labeled; the Windows group is not a dispatch
-  action; the cancel key returns nil; the action function reads the
-  window-label keys, the dispatch action keys, and the toggle keys;
-  `aw-select` is not called;
-- caller intent info: a one-line summary in the dispatch prompt menu
-  header; it starts with `Caller:`; commas separate the primary intent,
-  the effects of the primary intent and of the caller's action alist
-  entries, and the window facts; it names whether the selected window
-  can display and which windows display the buffer when they affect the
-  choice or chosen window; a semicolon and `else` introduce each later
-  function; a fallback is named by its effect and an uncovered function
-  by its symbol; a semicolon and a source label precede an entry from
-  another action; it names the entries the rule reads that affect the
-  choice or chosen window by their effects and sources, not when an
-  entry applies;
-  the window-settings group shows when each entry applies; the source
-  labels are "base action", "overriding action", and "fallback action",
-  and the special and extra actions by name; the full variable names are
-  used outside the dispatch prompt menu header; the matching
-  `display-buffer-alist` entry supplies no source when the prompt shows;
-  entries the rule does not read and `body-function` are not named;
-- dispatch prompt key: the keys from `aw-keys` and `aw-dispatch-alist`
-  win; a package-supplied key for a dispatch action or a window-setting
-  toggle is offered only when free; a collision uses the next free key
-  of the same kind;
-- caller constraint: none, `inhibit-same-window`, `reusable-frames`,
-  `previous-window`, `frame-predicate`, `window-min-width`,
-  `window-min-height`;
-- same-window conflict: info with a source is "Caller: same window;
-  base action: inhibit same window"; when the caller's ACTION
-  supplies the entry, "Caller: same window, inhibit same window";
-  the message names `inhibit-same-window` and, when it is not the
-  caller's ACTION, the source; choosing the selected window binds the
-  entry to nil;
-- other entry: `inhibit-switch-frame`, `allow-no-window`;
-- full frame: the dispatch prompt menu shows "Display full frame" as the
-  dispatch prompt default; a window label displays normally; "Display full
-  frame" deletes the other windows; "Display in another or new tab" is
-  offered when `tab-bar-mode` is active; the frame action is offered;
-  the cancel key returns nil; the caller's full-frame action's nil or
-  error follows the caller's ACTION;
-- window-setting entry: `dedicated` on a reused normal window, a new
-  window, a window already dedicated to this buffer and showing it, a
-  window dedicated to this buffer but not showing it, and a window
-  dedicated to another buffer; `window-parameters`; `preserve-size`,
-  `window-height`, `window-width`, `window-size`; a window-setting
-  toggle removes and restores one action alist key's associations while
-  the prompt stays open, and leaves `body-function` and the other
-  entries;
-- window-setting toggle: one per present window-setting entry, with the
-  fixed Meta-digit key; user keys win; an absent entry has no toggle;
-  each toggle shows the source, state, and when it applies;
-  `preserve-size`, `window-height`, and `window-width` are new windows
-  only; `window-size` is a new frame.  The caller intent info lists them
-  in the window-setting table order.
-  The window-settings group toggle is shown with one or more
-  window-setting entries, removes all if any window-setting entry is
-  active, restores all if all are removed, shows on, off, or mixed, and
-  keeps the prompt open; with one window-setting entry it matches that
-  entry's toggle;
-- prefix command: same-window with the selected window displayable and
-  not; other-window's dispatch prompt with the selected window
-  ineligible, no automatic split, and the prefix's other-window request
-  as the dispatch prompt default; other-tab existing and new; other-frame
-  existing and new; a child frame uses the parent frame for the dispatch
-  prompt; an existing target that displays the buffer shows the
-  dispatch prompt with the display window as the dispatch prompt default;
-  failure and selection;
-- tab bar mode: selecting or making a tab enables `tab-bar-mode` when
-  `tab-bar-show` is non-nil and does not when it is nil; an existing tab
-  selection shows the tab bar; the frame prompt's tab step runs after
-  the mode is enabled;
-- option: each value of `disbuf-pivot-reuse`,
-  `disbuf-pivot-same-window-conflict`, `disbuf-pivot-caller-intent-info`,
-  `disbuf-pivot-exclude-conditions`, `disbuf-pivot-tab-prompt-scope`,
-  `disbuf-pivot-action-select`, and
-  `disbuf-pivot-other-window-prefix-select`; the default and a
-  reordered `disbuf-pivot-action-functions`;
-- context: batch, active minibuffer, timer, process filter, keyboard
-  macro, and recursive display.
+- **Cannot-prompt contexts**: batch (`noninteractive`), active
+  minibuffer (`(active-minibuffer-window)`), timer, process filter,
+  keyboard macro (`executing-kbd-macro`), or recursive display
+  (during tab/frame creation, consult preview, or an open dispatch
+  prompt).  In all of these, none of the dispatch, tab, or frame
+  prompts runs and the action returns nil.
+- **Daemon or text terminal**: standard prompt rules apply.
+- **Safe `dp-action--action` reentrancy**: because `display-buffer`
+  calls `display-buffer-assq-regexp` *before* running
+  `display-buffer-overriding-action`, a nested `display-buffer` inside
+  an overriding action must not clobber an outer call's recorded
+  caller's ACTION.  Record the caller's ACTION keyed/paired per call (or guard
+  recursively) rather than overwriting one bare global variable.
+- **Failure after the choice**:
+  - Chosen window is dead: show the dispatch prompt again.
+  - Chosen window's frame or tab is gone: prompt again with the frame
+    prompt or tab prompt.
+  - Split action fails: show error message and show the dispatch prompt
+    again.
+  - Called display primitive returns nil: report with `message` and
+    return `fail` (do not fall through to caller fallbacks while the
+    prompt can run).  Note: if `pop-to-buffer` receives nil from
+    `display-buffer` (from `fail`), Emacs sets the buffer current
+    silently (`window.el.gz:9413`).
+  - Called display primitive or `body-function` signals an error:
+    propagate or re-signal it.
+- **Abort vs. nil choice**:
+  - `C-g` (`quit`): aborts the display; no later functions in Emacs's
+    combined function list run.
+  - Nil choice (cancel key): returns nil without `C-g`; later functions
+    in Emacs's combined function list run with the original combined
+    action alist.
+  - Nil returns are reserved strictly for cannot-prompt contexts,
+    excluded buffers, `Respect` / uncovered functions, and nil choices.
 
-Also test C-g (quit), a nil choice (returns nil and the caller's action
-functions run), split failure, dead windows, an action function that
-returns nil (message and `fail`) or signals an error (propagates or is
-re-signaled), a `body-function` error, that selection entries are not
-applied to the chosen window, that `post-command-select-window` is
-honored, a window-setting toggle's all-association removal and its
-local scope (later functions in Emacs's combined function list receive
-the original combined action alist), and repeated choices.  Every cell
-in the rules table has a test; there are no undecided cells.
+## 11. Implementation checklist and test coverage
+
+Implementation tasks (ordered by dependency):
+
+1. **Core options, predicates & reentrancy**: add options/faces from
+   section 8; implement per-buffer `displayable`, `eligible`, and
+   `splittable` predicates (section 2); guard cannot-prompt contexts
+   and safe `dp-action--action` recording (section 10); check
+   `disbuf-pivot-exclude-conditions`.
+2. **Own window-labeling, split facility & dispatch prompt**: build
+   overlay labels, own split primitives + `disbuf-pivot-window-keys` /
+   `disbuf-pivot-split-actions` (`'auto` optional `aw-*` inheritance),
+   direct `display-buffer-in-side-window` dispatch prompt menu (header,
+   3 horizontal groups, split-target read for >1 splittable windows,
+   `M-1`..`M-6` + always-present `M-0` with `(KEY . nil)` shadowing),
+   `C-g` abort, and nil-choice cancel; remove `aw-select`,
+   `disbuf-pivot-mode-line-help`, and automatic split from the core
+   (section 5).
+3. **Effective-intent classifier & display dispatch**: implement
+   reuse-first chain handling, non-list `ACTION` / dynamic
+   `pop-up-frames` / `display-buffer-reuse-frames`, `TYPE` propagation
+   (`'reuse`/`'window`/`'tab`/`'frame`), `inhibit-same-window`
+   override/conflict, `full-frame`, `reuse-indirect`, `mode` default,
+   symbol `previous-window`, cross-frame reuse default, and `"Use
+   caller intent"` under recursion guard (sections 3, 4, 9).
+4. **Tab prompt scope & frame prompt**: add
+   `disbuf-pivot-tab-prompt-scope`, scope suffixes, reusable tab
+   candidates, single-evaluation `tab-name`/`tab-group`,
+   `tab-bar-show` enabling, frame annotation column, scope-relative
+   `(closed)` history candidates, no out-of-frame consult preview, and
+   existing-vs-new tab/frame preselect rules (section 6).
+5. **Package prefix commands**: replace
+   `display-buffer-override-next-command` double-display path with
+   dedicated one-shot `display-buffer-overriding-action` wrapper;
+   wire all four prefixes to the dispatch/tab/frame prompts (section 7).
+6. **Tests & docs sync**: add Buttercup coverage for every row in
+   sections 2, 4, 6, 7, 8, 9, and 10 (including all 19 action
+   functions, reuse-first chains like `C-x 5 b`, non-list `ACTION t` /
+   `'other-window`, dynamic `pop-up-frames`, splittable dedicated
+   windows, `TYPE` propagation, `(KEY . nil)` toggle shadowing + local
+   scope, `M-0` with 1 and ≥2 entries, cross-frame reuse, cannot-prompt
+   contexts, `C-g` abort vs. nil choice, and failure after choice);
+   drop `ace-window` from `Package-Requires` / `Makefile` / CI; update
+   `README.md`, `CONTRIBUTING.md`, and `CHANGELOG.md`.

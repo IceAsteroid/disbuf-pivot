@@ -22,10 +22,9 @@ Source: the Emacs 31.1 docstrings, the Elisp manual nodes
 - `?` -- not verified.
 - Decision -- the package treatment: `Regulate` or `Respect`.
 
-The Decision column applies when the listed function is the first
-function in the caller's ACTION.  A later function in the caller's
-function list is a caller fallback; see `docs/DESIGN_RULESET.md`
-section 3.
+The Decision column applies when the listed function is the effective
+function in the caller's ACTION (including after a reuse-first function
+finds no matching window; see `docs/DESIGN_RULESET.md` section 3).
 
 ## 1. Reuse and selection
 
@@ -126,26 +125,65 @@ function's own logic:
 
 ## 5. Package treatment of `inhibit-same-window`
 
-Show caller intent info, prompt by the rule in `DESIGN_RULESET`
-section 6, keep the selected window a candidate, and bind the entry to
-nil for the display call if the user chooses it.
-`display-buffer-use-least-recent-window` forces it internally; the
-selected window is not a candidate for that function.
+Show caller intent info, prompt by the rules in `docs/DESIGN_RULESET.md`
+sections 2–5, keep the selected window eligible whenever it is
+displayable, and bind `inhibit-same-window` to nil for the display call
+if the user chooses it.  `display-buffer-use-least-recent-window` forces
+`(inhibit-same-window . t)` internally when Emacs runs it, so choosing
+`"Use caller intent"` avoids the selected window, while choosing the
+selected window's label explicitly overrides it.
 
-## 6. Verification notes
+## 6. Verification notes (Emacs 31.1 source)
 
-The Emacs 31.1 source confirms these cells:
-`display-buffer-in-previous-window` does not read
-`inhibit-switch-frame`; `display-buffer-use-some-window` does not read
-`reusable-frames`; `display-buffer-in-tab` does not read
-`inhibit-same-window`; `display-buffer-in-child-frame` does read
-`inhibit-switch-frame`.
-
-`display-buffer-in-child-frame` does not read a top-level
-`parent-frame`; it reads `parent-frame` from `child-frame-parameters`.
-The value may name a top-level frame or a child frame.
-
-- `display-buffer-pop-up-window` and the size entries: the manual says
+- **Alist reads verified in `window.el.gz` and `tab-bar.el.gz`**:
+  `display-buffer-in-previous-window` does not read
+  `inhibit-switch-frame` and dereferences a bound symbol in
+  `previous-window` (`window.el.gz:9159`);
+  `display-buffer-use-some-window` does not read `reusable-frames`;
+  `display-buffer-in-tab` does not read `inhibit-same-window`;
+  `display-buffer-in-child-frame` reads `inhibit-switch-frame` and reads
+  `parent-frame` inside `child-frame-parameters` rather than top-level
+  (`window.el.gz:8807`); `display-buffer-reuse-mode-window` defaults to
+  the buffer's `major-mode` when `mode` is omitted (`window.el.gz:8621`).
+- **Non-list `ACTION` clearing (`window.el.gz:8176`)**:
+  `display-buffer` clears any non-list `ACTION` (such as `t` or
+  `'other-window`) to `nil` *before* calling `display-buffer-assq-regexp`
+  and puts `(inhibit-same-window . t)` into `extra-action` (along with
+  `(reusable-frames . FRAME)` for the optional third argument).
+- **Reuse-first built-in action (`window.el.gz:8439`)**:
+  `display-buffer--other-frame-action` (used by `display-buffer-other-frame`
+  and `switch-to-buffer-other-frame`) is
+  `((display-buffer-reuse-window display-buffer-pop-up-frame)
+  (reusable-frames . 0) (inhibit-same-window . t))`.
+- **`display-buffer--special-action` (`window.el.gz:8693`)**:
+  always returns a display action with a `nil` action alist.
+- **`display-buffer-same-window` (`window.el.gz:8489`)**:
+  rejects any dedicated window (even one dedicated to the buffer being
+  displayed) and does not check `window-side`.
+- **`display-buffer-in-tab` (`tab-bar.el.gz:2995`)**:
+  when selecting an existing tab matching `tab-name` that does not
+  already show the buffer, selects that tab and returns `nil`.
+- **`display-buffer-in-direction` (`window.el.gz:8985`)**:
+  appends `(window-height . fit-window-to-buffer)` (or
+  `resize-temp-buffer-window` and `preserve-size`) to `alist` if absent.
+- **`window--display-buffer` `TYPE` & `display-buffer-mark-dedicated`
+  (`window.el.gz:6996, 7757`)**:
+  `dedicated`, `window-height`, `window-width`, `preserve-size`, and
+  window-deleting `quit-restore` apply only for `type = 'window` (new
+  window on existing frame); `window-size` applies only for
+  `type = 'frame`.  When `dedicated` is absent from `alist`,
+  `display-buffer-mark-dedicated` still applies for new windows; an
+  explicit `(dedicated . nil)` inhibits it.
+- **`display-buffer-override-next-command` (`window.el.gz:9751`)**:
+  unconditionally calls `(window--display-buffer buffer window type
+  alist)` with the original unmodified `alist` after `pre-function`
+  returns.
+- **`split-window` on dedicated vs. side windows**:
+  splitting a hard-dedicated normal window succeeds and makes a
+  non-dedicated new window while leaving the original window dedicated;
+  splitting a side window signals `"Cannot split side window or parent
+  of side window"`.
+- **`display-buffer-pop-up-window` and size entries**: the manual says
   it honors `window-height`, `window-width`, and `preserve-size`; the
   docstring delegates to the manual.  The shared table treats them as
-  generic entries.
+  generic entries applied via `window--display-buffer`.
