@@ -20,6 +20,9 @@
 
 ### Internal Changes
 
+- Docs: merge `disbuf-pivot-other-window-prefix-select` into
+  `disbuf-pivot-action-select` across both `disbuf-pivot-action-mode`
+  and `disbuf-pivot-prefix-mode`.
 - Docs: tighten `docs/DOCUMENTATION_CONVENTION.md` to concise
   definitions without behavioral duplication; restructure
   `docs/DESIGN_RULESET.md` with visual diagrams and zero rule

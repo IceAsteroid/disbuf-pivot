@@ -591,8 +591,8 @@ ACTION; the caller's ACTION is never the dispatch prompt default.
 | `other-frame` | Yes | Existing frame when `tab-bar-mode` or >1 tab (chosen frame scope); new frame: no | Existing tab: yes; new tab/frame: no (`'tab`/`'frame`) | Window displaying buffer in tab, else tab's selected window |
 
 - **`other-window-prefix`**: no automatic split; honors
-  `reusable-frames`; selection follows
-  `disbuf-pivot-other-window-prefix-select`; caller intent info states
+  `reusable-frames`; selection follows `disbuf-pivot-action-select`;
+  caller intent info states
   the user's prefix request (if the caller's ACTION was recorded and
   can run, it may still appear in the Caller intent group).
 - **`other-tab-prefix` / `other-frame-prefix`**: neither reads
@@ -627,8 +627,7 @@ ACTION; the caller's ACTION is never the dispatch prompt default.
 | `disbuf-pivot-action-functions` | `(display-buffer-reuse-window display-buffer-same-window dp-action-choose-window)` | Action functions tried in order for no-preference calls (no automatic split) |
 | `disbuf-pivot-caller-intent-info` | `t` | Non-nil shows caller intent info in the dispatch prompt menu header; nil hides it |
 | `disbuf-pivot-exclude-conditions` | `nil` | List of `buffer-match-p` conditions (regexp, `derived-mode`, `major-mode`, `category`, predicate, `not`/`and`/`or`); matching buffers return nil |
-| `disbuf-pivot-action-select` | `auto` | `auto` (honor caller/`post-command-select-window`), `t` (select chosen), `nil` (restore previous window at command end) |
-| `disbuf-pivot-other-window-prefix-select` | `auto` | Same values/effects after `disbuf-pivot-other-window-prefix` |
+| `disbuf-pivot-action-select` | `auto` | `auto` (honor caller/`post-command-select-window`), `t` (select chosen), `nil` (restore previous window at command end); applies to all dispatch prompts across both `disbuf-pivot-action-mode` and `disbuf-pivot-prefix-mode` |
 | `disbuf-pivot-tab-prompt-scope` | `nil` | `nil`, `t`, `visible`, or `0`; default tab prompt scope **outside the pivot only** |
 | `disbuf-pivot-window-keys` | `auto` | `auto` (inherit `aw-keys` if bound, else built-in home-row keys) or explicit list of key characters |
 | `disbuf-pivot-split-actions` | `auto` | `auto` (inherit split entries from `aw-dispatch-alist` if bound, else built-in `v`/`b`/`j` split actions) or explicit alist |
@@ -636,8 +635,10 @@ ACTION; the caller's ACTION is never the dispatch prompt default.
 | `disbuf-pivot-ineligible-label` | face | Face for ineligible window labels (on windows and in the Windows group) |
 
 `C-g` always aborts (`quit`); there is no option to change it.
-`disbuf-pivot-mode-line-help` and the former echo-area hint string are
-removed when the dispatch prompt menu replaces them.
+`disbuf-pivot-mode-line-help`, the former echo-area hint string, and
+`disbuf-pivot-other-window-prefix-select` (merged into
+`disbuf-pivot-action-select`) are removed when the redesign is
+implemented.
 
 ## 9. Action function and action alist reference
 
