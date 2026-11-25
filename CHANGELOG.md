@@ -20,6 +20,8 @@
 
 ### Internal Changes
 
+- Docs: track implementation milestones and deferred open decisions in
+  `TODO.md`.
 - Docs: use full backticked `display-buffer-*` action-function symbol
   names consistently across `docs/DESIGN_RULESET.md` instead of
   shortened names.
