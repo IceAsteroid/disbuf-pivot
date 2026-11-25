@@ -119,7 +119,7 @@ function's own logic:
 | `bump-use-time` | Bump the chosen window's use time; handled by `window--display-buffer`. |
 | `body-function` | Run after the buffer is displayed. |
 | `post-command-select-window` | Select or restore the window after the command. |
-| `category` | Pass through; use in caller intent info when present. |
+| `category` | Tag only (no placement effect); matched by `buffer-match-p` and shown in caller intent info as `Caller (<category>): ...`. |
 | `inhibit-same-window` | Policy for functions that reuse or use an existing window; see table 1 and the package treatment below. |
 | `allow-no-window` | Only `display-buffer-no-window`; it permits the `fail` return. |
 
@@ -184,6 +184,13 @@ selected window's label explicitly overrides it.
   non-dedicated new window while leaving the original window dedicated;
   splitting a side window signals `"Cannot split side window or parent
   of side window"`.
+- **`buffer-match-p` with `category` and `this-command`
+  (`subr.el.gz:7963-8022`)**:
+  `(category . SYMBOL)` checks `(eq (alist-get 'category (cdar args))
+  category)`, so callers of `buffer-match-p` must pass the caller's
+  `ACTION` as the third argument (entries in `display-buffer-base-action`
+  are not checked).  `(this-command . COMMAND-OR-COMMANDS)` matches the
+  current `this-command` against a symbol or list of symbols.
 - **`display-buffer-pop-up-window` and size entries**: the manual says
   it honors `window-height`, `window-width`, and `preserve-size`; the
   docstring delegates to the manual.  The shared table treats them as

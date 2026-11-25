@@ -20,6 +20,14 @@
 
 ### Internal Changes
 
+- Docs: specify the `Caller (<category>): ...` format for `category` in
+  caller intent info, note that `dp-action-control-p` must pass
+  `action` to `buffer-match-p` so `(category . SYMBOL)` matches
+  (`subr.el.gz:8016`), document `this-command` in
+  `disbuf-pivot-exclude-conditions` and `docs/DISPLAY_BUFFER_MATRIX.md`,
+  replace ambiguous `"pass through"` wording in the action-alist tables,
+  and standardize short action-function prose names in tight table cells
+  of `docs/DESIGN_RULESET.md`.
 - Docs: define `header info` (caller intent info, source-labeled
   entries, and window facts) as the optional sibling of `dispatch prompt
   default` inside `dispatch prompt menu header`, and replace
