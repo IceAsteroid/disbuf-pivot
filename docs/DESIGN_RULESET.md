@@ -262,18 +262,18 @@ always available.
 | Same-window + `inhibit-same-window` | Report conflict; `disbuf-pivot-same-window-conflict` chooses same window (`inhibit-same-window` bound to nil) or shows dispatch prompt | Selected window (choosing it binds `inhibit-same-window` to nil) | Caller: `"same window"` + source-labeled entry `"<source>: inhibit same window"` (or Caller: `"same window, inhibit same window"` if self-contradictory) |
 | No preference (default `disbuf-pivot-action-functions`) | 1. Reuse if visible (`disbuf-pivot-reuse` auto/ask); 2. Selected window if displayable; 3. Dispatch prompt | Preferred reuse window (when asking on reuse), else None | Caller: `"no preference"`; window fact: `"windows X display the buffer"` or `"selected window cannot display"` |
 | Other-window (`ACTION t`, `'other-window`, or empty functions + `inhibit-same-window`) | Dispatch prompt (selected window remains eligible; choosing it binds `inhibit-same-window` to nil) | Preferred reuse window if visible, else `"Use caller intent"` / other-window fallback | Caller: `"other window"`; window fact: reuse windows if any |
-| Reuse (reuse-window / reuse-mode-window), match found | `disbuf-pivot-reuse`: `auto` reuses (`'reuse`); `ask` marks matching windows and shows dispatch prompt | Preferred reuse window (or `"Reuse in frame NAME"` if on another frame) | Caller: `"reuse"`; window fact: `"windows X display the buffer"` |
+| Reuse (`display-buffer-reuse-window` / `display-buffer-reuse-mode-window`), match found | `disbuf-pivot-reuse`: `auto` reuses (`'reuse`); `ask` marks matching windows and shows dispatch prompt | Preferred reuse window (or `"Reuse in frame NAME"` if on another frame) | Caller: `"reuse"`; window fact: `"windows X display the buffer"` |
 | Reuse, no match, no fallback | Dispatch prompt | None | Caller: `"reuse"`; window fact: `"no window displays the buffer"` |
 | Reuse, no match, with fallback | Re-classify by next caller function (section 3) | Per effective fallback row (or `"Use caller intent"`) | Caller: full chain, e.g. `"reuse; else new frame"` |
-| New-window (pop-up-window) | Dispatch prompt (all displayable windows remain eligible) | `"Use caller intent"` | Caller: `"new window"` |
-| Use some window (use-some-window) | Dispatch prompt | `"Use caller intent"` | Caller: `"some window"` |
-| Use least recent window (use-least-recent-window) | Dispatch prompt (all displayable windows remain eligible) | `"Use caller intent"` | Caller: `"a recently unused window"` |
-| Previous window (in-previous-window) | Dispatch prompt; highlight `previous-window` (dereferencing variable symbols) or previous-buffer windows; consult `disbuf-pivot-reuse` when none is usable | Preferred previous window if usable, else `"Use caller intent"` | Caller: `"previous window X"` or `"a window that previously showed the buffer"` |
-| Relative placement (in-direction, below-selected, at-bottom) | Dispatch prompt; leave side windows as-is | `"Use caller intent"` | Caller: `"direction X"`, `"below the selected window"`, or `"at the bottom of the frame"` |
-| Full frame (full-frame) | Dispatch prompt; window labels display normally without deleting other windows; `"Display full frame"` runs caller's full-frame action | `"Display full frame"` | Caller: `"full frame, other windows will be deleted"` |
+| New-window (`display-buffer-pop-up-window`) | Dispatch prompt (all displayable windows remain eligible) | `"Use caller intent"` | Caller: `"new window"` |
+| Use some window (`display-buffer-use-some-window`) | Dispatch prompt | `"Use caller intent"` | Caller: `"some window"` |
+| Use least recent window (`display-buffer-use-least-recent-window`) | Dispatch prompt (all displayable windows remain eligible) | `"Use caller intent"` | Caller: `"a recently unused window"` |
+| Previous window (`display-buffer-in-previous-window`) | Dispatch prompt; highlight `previous-window` (dereferencing variable symbols) or previous-buffer windows; consult `disbuf-pivot-reuse` when none is usable | Preferred previous window if usable, else `"Use caller intent"` | Caller: `"previous window X"` or `"a window that previously showed the buffer"` |
+| Relative placement (`display-buffer-in-direction`, `display-buffer-below-selected`, `display-buffer-at-bottom`) | Dispatch prompt; leave side windows as-is | `"Use caller intent"` | Caller: `"direction X"`, `"below the selected window"`, or `"at the bottom of the frame"` |
+| Full frame (`display-buffer-full-frame`) | Dispatch prompt; window labels display normally without deleting other windows; `"Display full frame"` runs caller's full-frame action | `"Display full frame"` | Caller: `"full frame, other windows will be deleted"` |
 | Tab or frame action (or dynamic/alist `pop-up-frames` / `tab-name` / `tab-group`) | Tab prompt or frame prompt (section 6); existing target then runs dispatch prompt; new target displays in its selected window (`'tab`/`'frame`) | Window displaying buffer in target, else target's selected window | Caller: `"existing tab X"`, `"new tab"`, `"existing frame X"`, or `"new frame"` |
-| Fixed place (in-side-window, in-atom-window, in-child-frame) | Respect: return nil; no prompt | — | None |
-| No display (no-window + `allow-no-window`) | Return `fail`; no prompt | — | None |
+| Fixed place (`display-buffer-in-side-window`, `display-buffer-in-atom-window`, `display-buffer-in-child-frame`) | Respect: return nil; no prompt | — | None |
+| No display (`display-buffer-no-window` + `allow-no-window`) | Return `fail`; no prompt | — | None |
 | Excluded buffer / cannot-prompt / uncovered function | Return nil; no prompt | — | None |
 
 ## 5. Dispatch prompt UI and interaction
@@ -713,12 +713,12 @@ window afterward):
 |---|---|
 | `inhibit-same-window` | Shown in header info (caller intent info or source-labeled entries); triggers dispatch prompt (or conflict policy); selected window remains eligible and choosing it binds entry to nil for the display call |
 | `previous-window` | Dereference if bound symbol; highlight as preferred candidate when displayable |
-| `mode` | Honor in reuse-mode-window (default: `buffer`'s `major-mode`) |
+| `mode` | Honor in `display-buffer-reuse-mode-window` (default: `buffer`'s `major-mode`) |
 | `frame-predicate` | Filter frame prompt candidates |
-| `reusable-frames` | Scope reuse search and in-tab reusable tab candidates (note tab nil difference) |
-| `window-min-width`, `window-min-height` | Honor as constraints/soft preferences (`'full-width`/`'full-height` supported in LRU matching; integer height checked in below-selected) |
-| `some-window`, `lru-frames`, `lru-time` | Forward to use-some-window / use-least-recent-window when called; ignore when the user chooses a window manually |
-| `reuse-indirect` | Pass to reuse-window / `get-buffer-window-list` (preserving `'buffer` no-swap semantics) |
+| `reusable-frames` | Scope reuse search and `display-buffer-in-tab` reusable tab candidates (note tab nil difference) |
+| `window-min-width`, `window-min-height` | Honor as constraints/soft preferences (`'full-width`/`'full-height` supported in LRU matching; integer height checked in `display-buffer-below-selected`) |
+| `some-window`, `lru-frames`, `lru-time` | Forward to `display-buffer-use-some-window` / `display-buffer-use-least-recent-window` when called; ignore when the user chooses a window manually |
+| `reuse-indirect` | Pass to `display-buffer-reuse-window` / `get-buffer-window-list` (preserving `'buffer` no-swap semantics) |
 | `pop-up-frames` | Resolve via `window--pop-up-frames` for frame intent and reuse fallback |
 | `allow-no-window` | Permits `fail` outcome (and `"Leave undisplayed"` in Other group) |
 
@@ -727,7 +727,7 @@ window afterward):
 | Entry | Treatment |
 |---|---|
 | `tab-name`, `tab-group`, `ignore-current-tab` | Honor in tab prompt; evaluate function-valued `tab-name`/`tab-group` once |
-| `direction`, `window` | Honor in in-direction |
+| `direction`, `window` | Honor in `display-buffer-in-direction` |
 | `side`, `slot` | Side-window placement (Respect) |
 | `child-frame-parameters` | Child-frame placement (Respect; includes nested `parent-frame`) |
 | `pop-up-frame-parameters` | Honor when making a new frame |
@@ -814,7 +814,7 @@ Implementation tasks (ordered by dependency):
    reuse-first chain handling, non-list `ACTION` / dynamic
    `pop-up-frames` / `display-buffer-reuse-frames`, `TYPE` propagation
    (`'reuse`/`'window`/`'tab`/`'frame`), `inhibit-same-window`
-   override/conflict, full-frame, `reuse-indirect`, `mode` default,
+   override/conflict, `display-buffer-full-frame`, `reuse-indirect`, `mode` default,
    symbol `previous-window`, cross-frame reuse default, and `"Use
    caller intent"` under recursion guard (sections 3, 4, 9).
 4. **Tab prompt scope & frame prompt**: add

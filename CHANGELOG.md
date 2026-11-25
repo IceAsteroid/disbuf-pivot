@@ -20,6 +20,9 @@
 
 ### Internal Changes
 
+- Docs: use full backticked `display-buffer-*` action-function symbol
+  names consistently across `docs/DESIGN_RULESET.md` instead of
+  shortened names.
 - Docs: specify the `Caller (<category>): ...` format for `category` in
   caller intent info, note that `dp-action-control-p` must pass
   `action` to `buffer-match-p` so `(category . SYMBOL)` matches
