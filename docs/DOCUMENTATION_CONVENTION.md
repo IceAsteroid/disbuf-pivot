@@ -81,17 +81,22 @@ entries below are this package's terms, grouped by concept.
   An effect is a user-facing phrase for a consequence other than the
   primary placement (a window setting, constraint, display outcome, or
   fallback placement), not a raw Lisp symbol or alist cell.  The caller
-  intent info is the concise one-line summary in the dispatch prompt
-  menu header naming the primary intent, effects, relevant window
-  facts, caller's fallback chain, and source-labeled entries from other
-  actions.
-- **source label** — the short label used in the dispatch prompt menu
-  when an action alist entry comes from an action other than the
-  caller's ACTION: `display-buffer-base-action` as `"base action"`,
+  intent info is the part of header info that summarizes the caller's
+  ACTION alone: its primary intent, the effects of its primary intent
+  and the caller's action alist entries, and the caller's fallback chain
+  (for a package prefix command, the user's prefix request).
+- **source label**, **source-labeled entries**, **window fact** — a
+  source label is the short label used in the dispatch prompt menu when
+  an action alist entry comes from an action other than the caller's
+  ACTION: `display-buffer-base-action` as `"base action"`,
   `display-buffer-overriding-action` as `"overriding action"`,
   `display-buffer-fallback-action` as `"fallback action"`, and the
-  extra action as `"extra action"`.  Use the full variable names
-  everywhere outside the dispatch prompt menu.
+  extra action as `"extra action"` (use the full variable names outside
+  the dispatch prompt menu).  Source-labeled entries are those
+  non-caller entries shown in header info.  A window fact is a relevant
+  fact about the current layout or buffer display shown in header info
+  (such as whether the selected window can display, or which windows
+  already display the buffer).
 - **caller constraint**, **selection entry**, **window-setting entry**
   — an entry in these terms is an action alist entry, never a dispatch
   prompt key.  A caller constraint is an action alist entry from the
@@ -138,11 +143,15 @@ entries below are this package's terms, grouped by concept.
   action list is the grouped set of actions (Split, Caller intent,
   Other) shown in the dispatch action group.
 - **dispatch prompt menu**, **dispatch prompt menu window**,
-  **dispatch prompt menu header**, **dispatch prompt menu group** — the
-  dispatch prompt menu is the synchronous side-window menu (not a
-  transient menu) shown in the dispatch prompt menu window.  The
-  dispatch prompt menu header sits above the groups and holds the
-  caller intent info and dispatch prompt default.  The three horizontal
+  **dispatch prompt menu header**, **header info**,
+  **dispatch prompt menu group** — the dispatch prompt menu is the
+  synchronous side-window menu (not a transient menu) shown in the
+  dispatch prompt menu window.  The dispatch prompt menu header sits
+  above the groups and holds header info and the dispatch prompt
+  default.  Header info is the optional informational part of the
+  dispatch prompt menu header (controlled by `disbuf-pivot-header-info`),
+  composed of caller intent info, source-labeled entries, and window
+  facts.  The three horizontal
   dispatch prompt menu groups are the **Windows group**, the **dispatch
   action group** ("Dispatch actions"), and the **window-settings group**
   ("Window settings").

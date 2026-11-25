@@ -125,10 +125,11 @@ function's own logic:
 
 ## 5. Package treatment of `inhibit-same-window`
 
-Show caller intent info, prompt by the rules in `docs/DESIGN_RULESET.md`
-sections 2–5, keep the selected window eligible whenever it is
-displayable, and bind `inhibit-same-window` to nil for the display call
-if the user chooses it.  `display-buffer-use-least-recent-window` forces
+Show the entry in header info (caller intent info or source-labeled
+entries), prompt by the rules in `docs/DESIGN_RULESET.md` sections 2–5,
+keep the selected window eligible whenever it is displayable, and bind
+`inhibit-same-window` to nil for the display call if the user chooses
+it.  `display-buffer-use-least-recent-window` forces
 `(inhibit-same-window . t)` internally when Emacs runs it, so choosing
 `"Use caller intent"` avoids the selected window, while choosing the
 selected window's label explicitly overrides it.

@@ -20,6 +20,13 @@
 
 ### Internal Changes
 
+- Docs: define `header info` (caller intent info, source-labeled
+  entries, and window facts) as the optional sibling of `dispatch prompt
+  default` inside `dispatch prompt menu header`, and replace
+  `disbuf-pivot-caller-intent-info` with `disbuf-pivot-header-info`
+  (`t`, `nil`, or a subset of `caller-intent`, `source-entries`, and
+  `window-facts`, with the dispatch prompt default always shown when
+  present).
 - Docs: merge `disbuf-pivot-other-window-prefix-select` into
   `disbuf-pivot-action-select` across both `disbuf-pivot-action-mode`
   and `disbuf-pivot-prefix-mode`.
