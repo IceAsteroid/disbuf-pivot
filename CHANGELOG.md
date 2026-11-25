@@ -20,6 +20,9 @@
 
 ### Internal Changes
 
+- Docs: absorb `docs/GIT_CONVENTION.md` and `docs/CHANGELOG_CONVENTION.md`
+  into `CONTRIBUTING.md`, remove the standalone files, and update the
+  pointers in `AGENTS.md`, `CLAUDE.md`, and `README.md`.
 - Docs: add the Effect phrase column to the window-setting entries, list
   their effects in the fixed order, and note the window-size frame-size
   caveat.

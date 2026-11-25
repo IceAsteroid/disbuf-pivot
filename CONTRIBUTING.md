@@ -1,8 +1,10 @@
 # Contributing
 
-This is the developer guide for `disbuf-pivot`.  It covers the repository
-layout, the commands, how to verify a change, and the dependency
-boundaries.  The conventions are under `docs/`.
+This is the developer guide for `disbuf-pivot`.  It covers the
+repository layout, the commands, verification, dependency boundaries,
+commits and history, and changelog entries.  Terms, prose, and
+documentation rules are in `docs/DOCUMENTATION_CONVENTION.md`; intended
+behavior is in `docs/DESIGN_RULESET.md`.
 
 ## The repository
 
@@ -54,8 +56,8 @@ make checkdoc        # checkdoc each CHECK_FILES entry
 make check-consult   # compile and checkdoc the optional consult library
 ```
 
-- Dependencies are found under `ELPA`; `make check` needs `ace-window`
-  and `avy`; `make check-consult` needs `consult` too.
+- Dependencies are found under `ELPA`; `make check` currently needs
+  `ace-window` and `avy`, and `make check-consult` needs `consult` too.
 - `eldev` must be on `PATH`; the checks call it directly.
 - `make check-consult` does not run tests.
 - The test files are `order-test.el`, `display-ask-test.el`, and
@@ -83,20 +85,82 @@ change.  Report what was verified and what was not.
 
 The display package does not require `emacs-utils` or `column-popup`;
 `emacs-utils` consumes the optional consult library.  `consult` is
-optional and only the consult library requires it.  The entry needs
-`ace-window`; `avy` is required by `ace-window`.  `tab-bar-mode`
-is needed for tab targets.
+optional and only the consult library requires it.  The current v0.1.0
+entry needs `ace-window` (`avy` is required by `ace-window`); the
+redesign in `docs/DESIGN_RULESET.md` replaces that dependency with the
+package's own window-labeling and split facility while optionally
+honoring `aw-keys` and `aw-dispatch-alist`.  `tab-bar-mode` is needed
+for tab targets.
 
 Keep that direction.  The display repository is separate from
 `emacs-utils`; do not make one require the other.
+
+## Commits and history
+
+Commit messages use the terms in `docs/DOCUMENTATION_CONVENTION.md`.
+
+### Atomic commits
+
+- One atomic commit per logical change: the code and the documentation
+  of that change in the same commit, so a checkout of any commit shows
+  the code and the documentation that describe it.
+- A change that touches only documentation is its own commit; unrelated
+  changes are separate commits even when they touch one file.
+- Stage explicit paths, never a directory.  The user's uncommitted files
+  are not yours; leave a file you were not asked to change alone.
+
+### Commit messages
+
+- Wrap commit-message lines at about 72 columns.
+- A title describes the current behavior; a body paragraph labels the
+  change: a fix uses `Symptom:`, `Root cause:`, and `Fix:`; a feature
+  uses `Add:`; a documentation-only change is `docs:` and can label
+  `Doc:`.
+- Subject type prefixes:
+  - `feat:` for a new behavior or option.
+  - `fix:` for a correction.
+  - `refactor:` for a change that keeps behavior.
+  - `docs:` for documentation only.
+  - `test:` for a change that only adds or changes tests.
+  - `build:` for the build system or dependencies.
+  - `ci:` for continuous integration.
+  - `perf:` for a performance change that keeps behavior.
+  - `style:` for formatting or whitespace only.
+  - `chore:` for routine maintenance.
+  - `revert:` for a revert of an earlier commit.
+- Do not rewrite an existing commit.  A message that violates a rule
+  written after it keeps its form.
+- An assistant-authored commit ends with a `Co-Authored-By:` trailer
+  naming the assistant.
+
+## Changelog
+
+`CHANGELOG.md` entries use the terms in
+`docs/DOCUMENTATION_CONVENTION.md`.
+
+- Update `CHANGELOG.md` at the top of `## Unreleased` for a
+  user-visible or internal change.
+- Put user-visible entries first under `### User-visible Changes`,
+  internal entries last under `### Internal Changes`, and omit an empty
+  section.
+- User-visible entries use `Add:`, `Fix:`, or `Doc:` as the label.
+- The entry names the change, not a commit hash.
+- An internal entry may use the subject type name as its label
+  (`Refactor:`, `Build:`, `CI:`, `Test:`, `Docs:`); use `Internal:` when
+  one type does not fit.
+- A pure refactor with no observable effect may be omitted or
+  summarized under `Internal Changes`.
+- When a change affects both audiences, state the user-visible effect
+  in the user section; do not repeat it in the internal section.
 
 ## Documents
 
 - `README.md` -- the user guide.
 - `CHANGELOG.md` -- user-visible and internal changes.
-- `docs/DOCUMENTATION_CONVENTION.md` -- terms, prose, and documentation.
-- `docs/GIT_CONVENTION.md` -- commits and history.
-- `docs/CHANGELOG_CONVENTION.md` -- changelog entries.
+- `CONTRIBUTING.md` -- commands, verification, dependencies, commits,
+  and changelog conventions.
+- `docs/DOCUMENTATION_CONVENTION.md` -- terms, prose, and documentation
+  conventions.
 - `docs/DESIGN_RULESET.md` -- intended behavior.
 - `docs/DISPLAY_BUFFER_MATRIX.md` -- Emacs 31.1 action matrix
   (reference, not normative).

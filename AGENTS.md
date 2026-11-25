@@ -2,11 +2,10 @@
 
 ## Read first
 
-- Commands, verification, and dependencies: `CONTRIBUTING.md`
+- Commands, verification, dependencies, commits, and changelog:
+  `CONTRIBUTING.md`
 - Terms, prose, and documentation: `docs/DOCUMENTATION_CONVENTION.md`
-- Commits and history: `docs/GIT_CONVENTION.md`
-- Changelog entries: `docs/CHANGELOG_CONVENTION.md`
-- Target behavior: `docs/DESIGN_RULESET.md`
+- Intended behavior: `docs/DESIGN_RULESET.md`
 - Emacs action matrix (reference, not normative):
   `docs/DISPLAY_BUFFER_MATRIX.md`
 
