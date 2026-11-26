@@ -11,13 +11,18 @@ updated.  Order of work (see `docs/DESIGN_RULESET.md` section 11):
 1. Core options/faces, per-buffer `displayable` / `eligible` /
    `splittable` predicates, cannot-prompt context guards, safe
    `dp-action--action` reentrancy, and `disbuf-pivot-exclude-conditions`.
-2. Own window-labeling overlays, built-in split primitives,
-   `disbuf-pivot-window-keys` and `disbuf-pivot-split-actions` (`'auto`
-   inheriting `aw-keys` / `aw-dispatch-alist` when bound), direct
-   `display-buffer-in-side-window` dispatch prompt menu (header, 3
-   horizontal groups, split-target read for >1 splittable windows,
-   `M-1`..`M-6` + always-present `M-0` with `(KEY . nil)` shadowing),
-   `C-g` abort, and cancel nil choice.  Remove `aw-select`,
+2. Own window-labeling overlays, own split primitives,
+   `disbuf-pivot-window-keys` (default digits `1`–`9`, uniform
+   fixed-width multi-key overflow) and `disbuf-pivot-split-actions`
+   (default `b`/`r`/`f`, zero `ace-window` coupling), direct
+   `display-buffer-in-side-window` dispatch prompt menu (header,
+   responsive logical-wrapped 3/2/1 groups governed by
+   `disbuf-pivot-menu-min-column-width` and
+   `disbuf-pivot-menu-min-height`, other-window scrolling without focus
+   change, small-frame echo-area fallback keeping window labels,
+   split-target read for >1 splittable windows, `M-1`..`M-6` +
+   always-present `M-0` with `(KEY . nil)` shadowing), `C-g` abort, and
+   `"Bypass pivot"` (`M-b`) nil choice.  Remove `aw-select`,
    `disbuf-pivot-mode-line-help`, and automatic splitting from core.
 3. Effective-intent classifier (reuse-first chains like `C-x 5 b`,
    non-list `ACTION` / dynamic `pop-up-frames` /
@@ -41,15 +46,6 @@ updated.  Order of work (see `docs/DESIGN_RULESET.md` section 11):
 6. Buttercup test coverage for `docs/DESIGN_RULESET.md` sections 2–10;
    drop `ace-window` from `Package-Requires`, `Makefile`, and CI; update
    `README.md`, `CONTRIBUTING.md`, and `CHANGELOG.md`.
-
-### Minor UI details to finalize during step 2
-
-- Exact default Meta-letter bindings for package dispatch actions (`M-c`
-  Use caller intent, `M-q` Cancel, `M-n` Leave undisplayed) and behavior
-  if every key of a kind is taken.
-- Default built-in key list when `disbuf-pivot-window-keys` is `'auto`
-  and `aw-keys` is unbound (e.g. home-row `a s d f g h j k l`), plus
-  Windows group width / grid wrapping on narrow frames.
 
 ## Deferred open decisions
 

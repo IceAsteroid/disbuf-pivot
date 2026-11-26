@@ -136,7 +136,7 @@ entries below are this package's terms, grouped by concept.
 - **dispatch prompt key**, **dispatch action**, **split action**,
   **dispatch action list** — a dispatch prompt key is any key the
   dispatch prompt reads: a window label, dispatch action,
-  window-setting toggle, window-settings group toggle, or the cancel
+  window-setting toggle, window-settings group toggle, or the bypass
   key.  A dispatch action is a command key in the dispatch prompt menu
   run instead of a window label; a split action splits a splittable
   window and displays the buffer in the new window.  The dispatch
@@ -206,8 +206,9 @@ entries below are this package's terms, grouped by concept.
   (`C-g`, via `quit`) ends the display without running later functions
   in the combined function list; the leave-undisplayed outcome (`fail`)
   is not an abort.  A nil choice is the prompt returning nil without
-  `C-g` (such as the cancel key), causing the action to return nil so
-  later functions in Emacs's combined function list run.  A failure
+  `C-g` (such as the bypass key, `"Bypass pivot"`), causing the action
+  to return nil so later functions in Emacs's combined function list
+  run.  A failure
   after the choice is a failure once the user has chosen a target or
   dispatch action (dead window, vanished tab or frame, split failure,
   or an action function returning nil or signaling an error).
@@ -276,7 +277,9 @@ commands, identifiers, and code fragments are not prose.
 - driver — say that the package reads the keys, or name the function.
 - placement entry — say **entry that names a place**, or name the entry.
 - fallback line — say the key for the dispatch prompt default, or name
-  the cancel key.
+  the bypass key.
+- cancel key — use **bypass key** (`"Bypass pivot"`, nil choice); `C-g`
+  is **abort**.
 - intended choice — use **dispatch prompt default**,
   **tab prompt default**, or **frame prompt default**.
 - window prompt — use **dispatch prompt** in design docs (current

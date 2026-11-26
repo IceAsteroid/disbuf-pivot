@@ -20,6 +20,16 @@
 
 ### Internal Changes
 
+- Docs: finalize dispatch prompt UI details in `docs/DESIGN_RULESET.md`,
+  `docs/DOCUMENTATION_CONVENTION.md`, and `TODO.md` — drop `ace-window`
+  `'auto` key/split inheritance (`disbuf-pivot-window-keys` defaults to
+  digits `1`–`9` with uniform fixed-width overflow;
+  `disbuf-pivot-split-actions` defaults to `b`/`r`/`f`), rename the nil
+  choice from `"Cancel"` (`M-q`) to the bypass key `"Bypass pivot"`
+  (`M-b`), add `disbuf-pivot-menu-min-column-width` and
+  `disbuf-pivot-menu-min-height` with logical column wrapping, standard
+  other-window scrolling without changing focus, and small-frame
+  echo-area fallback.
 - Docs: track implementation milestones and deferred open decisions in
   `TODO.md`.
 - Docs: use full backticked `display-buffer-*` action-function symbol

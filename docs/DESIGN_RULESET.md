@@ -58,7 +58,7 @@ and prompting remain the package's.
   (because the package's `display-buffer-alist` entry runs before the
   special action, base action, and fallback action).  Use
   `disbuf-pivot-exclude-conditions`, an earlier `display-buffer-alist`
-  entry, or the cancel key (nil choice) when those rules should govern
+  entry, or the bypass key (nil choice) when those rules should govern
   a buffer.  Action alist entries in `display-buffer-base-action` are
   still read through the combined action alist.
 
@@ -144,7 +144,7 @@ flowchart TD
     P -- "Window label" --> W1["window--display-buffer\n(type 'reuse)"]
     P -- "Split action" --> W2["Pick splittable target (if >1) ->\nsplit -> window--display-buffer (type 'window)"]
     P -- "Use caller intent" --> W3["Run caller's function list\nunder recursion guard"]
-    P -- "Cancel key" --> Z1
+    P -- "Bypass pivot" --> Z1
     P -- "C-g" --> Z5["Quit (abort, no fallbacks)"]
 ```
 
@@ -252,7 +252,7 @@ display path must pass the exact `TYPE` below:
 
 Cross-cutting entries (section 9) apply in addition to the row below.
 In every dispatch prompt, every displayable window in the window label
-scope is eligible (section 2), and split actions and the cancel key are
+scope is eligible (section 2), and split actions and the bypass key are
 always available.
 
 | Effective intent | Behavior | Dispatch prompt default | Header info |
@@ -287,11 +287,11 @@ window label scope and never labeled).
 
 ```text
 +---------------------------+---------------------------+
-| [a] main.el               | [b] notes.org             |
+| [1] main.el               | [2] notes.org             |
 | (eligible face)           | (eligible face)           |
 |                           |                           |
 +---------------------------+---------------------------+
-| [c] *compilation* (side)                              |  <- ineligible face
+| [3] *compilation* (side)                              |  <- ineligible face
 +=======================================================+
 | Caller: direction right, preserve size, a 20-line     |  <- caller intent info
 |         window                                        |
@@ -299,14 +299,14 @@ window label scope and never labeled).
 | Default: [M-c] Use caller intent                      |  <- dispatch prompt default (always shown)
 |-------------------------------------------------------|
 | Windows     | Dispatch actions      | Window settings |
-| [a] main.el | Split                 | [M-0] All (on)  |
-| [b] notes   |   [v] Split below     | [M-1] dedicated (on, new windows only; base)
-| [c] *comp*  |   [b] Split right     | [M-3] preserve-size (on, new windows only)
-|             |   [j] Split fair      | [M-4] window-height (on, new windows only)
+| [1] main.el | Split                 | [M-0] All (on)  |
+| [2] notes   |   [b] Split below     | [M-1] dedicated (on, new windows only; base)
+| [3] *comp*  |   [r] Split right     | [M-3] preserve-size (on, new windows only)
+|             |   [f] Split fair      | [M-4] window-height (on, new windows only)
 |             | Caller intent         |                 |
 |             |   [M-c] Use caller    |                 |
 |             | Other                 |                 |
-|             |   [M-q] Cancel        |                 |
+|             |   [M-b] Bypass pivot  |                 |
 +=======================================================+
   ^ dispatch prompt menu window (created directly via
     display-buffer-in-side-window; never labeled)
@@ -326,21 +326,57 @@ window label scope and never labeled).
   `display-buffer`) under a recursion guard so active
   `display-buffer-overriding-action` (in prefix commands) or earlier
   `display-buffer-alist` entries (such as `column-popup`) cannot
-  intercept the menu buffer.
-- **Own facility, no required `ace-window` dependency**: because
-  `aw-select` is not called, the package implements its own lightweight
-  window-overlay renderer and split primitives (`split-window-below`,
-  `split-window-right`, and aspect-ratio fair split), requiring only
-  Emacs 31.1 (`Package-Requires: ((emacs "31.1"))`).
-  - `disbuf-pivot-window-keys` defaults to `'auto`: inherits `aw-keys`
-    when `ace-window` is loaded and `aw-keys` is bound, else uses
-    built-in home-row defaults (falling back to two-key prefixes when
-    the window count exceeds the key list length).
-  - `disbuf-pivot-split-actions` defaults to `'auto`: inherits split
-    entries (`aw-split-window-vert`, `aw-split-window-horz`,
-    `aw-split-window-fair`) from `aw-dispatch-alist` when bound, else
-    uses built-in defaults (`v` split below, `b` split right, `j` split
-    fair).
+  intercept the menu buffer, and so insufficient space on the current
+  frame never jumps to another frame.
+- **Own facility, zero `ace-window` coupling**: because `aw-select` is
+  not called, the package implements its own lightweight window-overlay
+  renderer and split primitives (`split-window-below`,
+  `split-window-right`, and aspect-ratio fair split), with no runtime
+  reference to `ace-window` (`Package-Requires: ((emacs "31.1"))`).
+  - `disbuf-pivot-window-keys` defaults to `'(?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8
+    ?9)` (digits `1`–`9`; also accepts any explicit character list, with
+    Customize presets for digits and QWERTY home-row letters).  Keys
+    already taken by `disbuf-pivot-split-actions` are skipped and
+    duplicates are removed in order.  When the window count exceeds the
+    usable key count, labels switch to uniform fixed-width multi-key
+    strings: zero-padded decimal counting (`01`..`99`, `001`..`999`) for
+    standard decimal digit lists (`1`–`9` or `0`–`9`), or fixed-width
+    combinations strictly from the configured key list (`aa`, `as`, ...)
+    for any other list.  If fewer than 2 usable keys remain for more
+    than 1 window (or 0 usable keys for 1 or more windows), warn with
+    `message` and fall back to the default digits `1`–`9`.  During
+    multi-key input, echo the partial prefix (e.g., `Window key: 0-`);
+    `DEL` cancels the partial prefix and `C-g` aborts.
+  - `disbuf-pivot-split-actions` defaults to `?b` Split below
+    (`split-window-below`), `?r` Split right (`split-window-right`), and
+    `?f` Split fair (aspect-ratio fair split), customizable as an alist.
+- **Menu sizing, responsive layout, scrolling, and small frames**:
+  - `disbuf-pivot-menu-min-column-width` (default `20`): chooses how
+    many dispatch prompt menu groups sit side by side (3 columns when
+    `width >= 3 * min`, 2 columns when `>= 2 * min`, 1 stacked column
+    when `>= min`) and wraps long lines logically with hanging
+    indentation inside each column so multi-column alignment never
+    breaks.
+  - `disbuf-pivot-menu-min-height` (default `5`): the side window fits
+    the menu buffer up to available space on the current frame.  When
+    the menu is taller than available space and available height is at
+    least `disbuf-pivot-menu-min-height`, the side window is scrollable.
+    `selected-window` remains on the user's editing window (never moved
+    to the menu window); standard Emacs other-window scroll commands
+    (`scroll-other-window` and `scroll-other-window-down` — default
+    `C-M-v`, `C-M-S-v`, `M-<next>`, `M-<prior>`, plus any custom user
+    bindings for those commands and mouse wheel over the menu window)
+    scroll the menu window via `(with-selected-window menu-window ...)`.
+    `C-v` and `M-v` are not occupied (preserving standard Emacs
+    selected-window scroll semantics and avoiding accidental `M-c` or
+    `M-b` mistypes).  When scrollable, the menu window's mode line shows
+    the active scroll bindings via `substitute-command-keys`.
+  - When available width is below `disbuf-pivot-menu-min-column-width`,
+    available height is below `disbuf-pivot-menu-min-height`, or
+    `display-buffer-in-side-window` cannot create the menu window on the
+    current frame: skip the side-window menu, keep window labels drawn
+    on all windows in the scope, and display a compact echo-area prompt
+    listing the keys (every dispatch prompt key works identically).
 - **Window labels**: drawn on every window in the window label scope
   (selected tab's windows when `tab-bar-mode` is active, else selected
   frame's windows).
@@ -385,18 +421,19 @@ dispatch prompt menu groups, not dispatch actions):
 - **Other**:
   - `"Leave undisplayed"` (returns `fail`) **only** when
     `allow-no-window` is non-nil.
-  - The cancel key (always available; returns nil, a nil choice).
+  - The bypass key (`"Bypass pivot"`, `M-b`; always available; returns
+    nil, a nil choice).
   - Window dispatch prompts do **not** mix in tab or frame actions;
     tab and frame targets use tab/frame intents or the package prefix
     commands (section 7).
 
 ### Key precedence and collision rules
 
-- Configured window keys and split keys win (including `aw-keys` /
-  `aw-dispatch-alist` when inherited under `'auto`).  Window labels
-  skip keys already taken by split actions.
-- Package dispatch actions use Meta-letter defaults (e.g. `M-c` Use
-  caller intent, `M-q` Cancel, `M-n` Leave undisplayed).
+- Configured window keys and split keys win.  Window labels skip keys
+  already taken by split actions.
+- Package dispatch actions use Meta-letter defaults: `M-c` (`"Use caller
+  intent"`), `M-b` (`"Bypass pivot"`), and `M-n` (`"Leave undisplayed"`,
+  only when `allow-no-window` is non-nil).
 - Window-setting toggles use fixed Meta-digit defaults:
   - `M-0`: window-settings group toggle (All)
   - `M-1`: `dedicated`
@@ -409,7 +446,9 @@ dispatch prompt menu groups, not dispatch actions):
   reused by other entries (preserving positional muscle memory).
 - If any package default key collides with a user window/split key or
   another assigned key, assign the next free key of the same kind
-  (Meta-letter for dispatch actions, Meta-digit for toggles).
+  (Meta-letter for dispatch actions, Meta-digit for toggles; if every
+  key of that kind is taken, fall back to an unassigned `C-M-` key of
+  the same kind).
 
 ### Dispatch prompt menu header
 
@@ -657,8 +696,10 @@ ACTION; the caller's ACTION is never the dispatch prompt default.
 | `disbuf-pivot-exclude-conditions` | `nil` | List of `buffer-match-p` conditions (regexp, `derived-mode`, `major-mode`, `category`, `this-command`, predicate, `not`/`and`/`or`); `dp-action-control-p` passes `action` as the third argument to `buffer-match-p` so `(category . SYMBOL)` matches (`subr.el.gz:8016`); matching buffers return nil |
 | `disbuf-pivot-action-select` | `auto` | `auto` (honor caller/`post-command-select-window`), `t` (select chosen), `nil` (restore previous window at command end); applies to all dispatch prompts across both `disbuf-pivot-action-mode` and `disbuf-pivot-prefix-mode` |
 | `disbuf-pivot-tab-prompt-scope` | `nil` | `nil`, `t`, `visible`, or `0`; default tab prompt scope **outside the pivot only** |
-| `disbuf-pivot-window-keys` | `auto` | `auto` (inherit `aw-keys` if bound, else built-in home-row keys) or explicit list of key characters |
-| `disbuf-pivot-split-actions` | `auto` | `auto` (inherit split entries from `aw-dispatch-alist` if bound, else built-in `v`/`b`/`j` split actions) or explicit alist |
+| `disbuf-pivot-window-keys` | `'(?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9)` | List of key characters for window labels (digits `1`–`9` by default; Customize presets for digits or QWERTY home row, or any explicit list; uniform fixed-width multi-key overflow) |
+| `disbuf-pivot-split-actions` | `b` / `r` / `f` alist | Alist of split dispatch actions (defaults: `?b` Split below, `?r` Split right, `?f` Split fair) |
+| `disbuf-pivot-menu-min-column-width` | `20` | Minimum column width for dispatch prompt menu groups; drives 3/2/1-column layout, logical wrapping, and small-frame echo-area fallback |
+| `disbuf-pivot-menu-min-height` | `5` | Minimum height for the dispatch prompt menu side window; taller menus scroll via other-window scroll commands, shorter space falls back to echo area |
 | `disbuf-pivot-eligible-label` | face | Face for eligible window labels (on windows and in the Windows group) |
 | `disbuf-pivot-ineligible-label` | face | Face for ineligible window labels (on windows and in the Windows group) |
 
@@ -786,9 +827,9 @@ info and the window-settings group; toggleable via `M-1`..`M-6` and
 - **Abort vs. nil choice**:
   - `C-g` (`quit`): aborts the display; no later functions in Emacs's
     combined function list run.
-  - Nil choice (cancel key): returns nil without `C-g`; later functions
-    in Emacs's combined function list run with the original combined
-    action alist.
+  - Nil choice (bypass key, `"Bypass pivot"`): returns nil without
+    `C-g`; later functions in Emacs's combined function list run with
+    the original combined action alist.
   - Nil returns are reserved strictly for cannot-prompt contexts,
     excluded buffers, `Respect` / uncovered functions, and nil choices.
 
@@ -802,12 +843,17 @@ Implementation tasks (ordered by dependency):
    and safe `dp-action--action` recording (section 10); check
    `disbuf-pivot-exclude-conditions`.
 2. **Own window-labeling, split facility & dispatch prompt**: build
-   overlay labels, own split primitives + `disbuf-pivot-window-keys` /
-   `disbuf-pivot-split-actions` (`'auto` optional `aw-*` inheritance),
-   direct `display-buffer-in-side-window` dispatch prompt menu (header,
-   3 horizontal groups, split-target read for >1 splittable windows,
-   `M-1`..`M-6` + always-present `M-0` with `(KEY . nil)` shadowing),
-   `C-g` abort, and nil-choice cancel; remove `aw-select`,
+   overlay labels, own split primitives + `disbuf-pivot-window-keys`
+   (default digits `1`–`9` with uniform fixed-width overflow) /
+   `disbuf-pivot-split-actions` (default `b`/`r`/`f`, zero `ace-window`
+   coupling), direct `display-buffer-in-side-window` dispatch prompt
+   menu (header, responsive logical-wrapped 3/2/1 groups governed by
+   `disbuf-pivot-menu-min-column-width` and
+   `disbuf-pivot-menu-min-height`, other-window scrolling without focus
+   change, small-frame echo-area fallback with window labels,
+   split-target read for >1 splittable windows, `M-1`..`M-6` +
+   always-present `M-0` with `(KEY . nil)` shadowing), `C-g` abort, and
+   `"Bypass pivot"` (`M-b`) nil choice; remove `aw-select`,
    `disbuf-pivot-mode-line-help`, and automatic split from the core
    (section 5).
 3. **Effective-intent classifier & display dispatch**: implement
