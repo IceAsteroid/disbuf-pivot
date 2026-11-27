@@ -5,21 +5,191 @@
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;;; Commentary:
-;; The window test and the split options; the window prompt and the
-;; dispatch prompt that the package's `display-buffer-alist` entry and
-;; the prefix commands use; and the post-command selection that
-;; `display-buffer' uses for a `nil' `post-command-select-window' entry.
+;; The window predicates (displayable, eligible, and splittable), the
+;; cannot-prompt context guards, the split primitives and options, the
+;; dispatch prompt options and label faces, the window prompt that the
+;; package's `display-buffer-alist' entry and the prefix commands use,
+;; and the post-command selection that `display-buffer' uses for a `nil'
+;; `post-command-select-window' entry.
 
 ;;; Code:
 
 (require 'ace-window)
 (require 'cl-lib)
 
-(defun dp-window-utility-cannot-display-p (window)
-  "Return non-nil if WINDOW does not take another buffer's display.
-That is a window dedicated to its buffer or a side window."
-  (or (window-dedicated-p window)
-      (window-parameter window 'window-side)))
+(defun dp-window-utility-split-fair (&optional window)
+  "Split WINDOW right or below according to its aspect ratio.
+WINDOW defaults to the selected window.  On a graphic display compare
+pixel body dimensions; on a text terminal treat each character cell as
+twice as tall as it is wide.  When the preferred direction fails to
+split, fall back to the other direction before re-signaling the primary
+error.  Return the newly made window."
+  (let* ((win (or window (selected-window)))
+         (prefer-right
+          (if (display-graphic-p (window-frame win))
+              (> (window-body-width win t) (window-body-height win t))
+            (> (window-body-width win) (* 2 (window-body-height win)))))
+         (primary (if prefer-right #'split-window-right #'split-window-below))
+         (fallback (if prefer-right #'split-window-below #'split-window-right)))
+    (condition-case primary-err
+        (funcall primary nil win)
+      (error
+       (condition-case nil
+           (funcall fallback nil win)
+         (error
+          (signal (car primary-err) (cdr primary-err))))))))
+
+(defcustom dp-window-keys '(?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9)
+  "List of key characters used for window labels in the dispatch prompt.
+Keys already taken by `disbuf-pivot-split-actions' are skipped and
+duplicates are removed in order.  When the window count exceeds the
+usable key count, labels switch to uniform fixed-width multi-key
+strings."
+  :type '(choice (const :tag "Digits 1-9" (?1 ?2 ?3 ?4 ?5 ?6 ?7 ?8 ?9))
+                 (const :tag "QWERTY home row" (?a ?s ?d ?f ?g ?h ?j ?k ?l))
+                 (repeat :tag "Custom key list" character))
+  :group 'disbuf-pivot)
+
+(defcustom dp-split-actions
+  '((?b split-window-below "Split below")
+    (?r split-window-right "Split right")
+    (?f dp-window-utility-split-fair "Split fair"))
+  "Alist of split dispatch actions for the dispatch prompt.
+Each element has the form `(KEY FUNCTION DESCRIPTION)', where KEY is a
+character, FUNCTION splits the selected window and returns the newly
+made window, and DESCRIPTION is shown in the dispatch action group."
+  :type '(repeat (list (character :tag "Key")
+                       (function :tag "Split function")
+                       (string :tag "Description")))
+  :group 'disbuf-pivot)
+
+(defcustom dp-menu-min-column-width 20
+  "Minimum column width in columns for dispatch prompt menu groups.
+Controls how many dispatch prompt menu groups sit side by side (three,
+two, or one stacked column) and wraps long lines inside each column.
+When available frame width is below this value, the dispatch prompt
+falls back to a compact echo-area prompt while keeping window labels."
+  :type '(integer :match (lambda (_widget value)
+                           (and (integerp value) (> value 0))))
+  :group 'disbuf-pivot)
+
+(defcustom dp-menu-min-height 5
+  "Minimum height in lines for the dispatch prompt menu side window.
+When the dispatch prompt menu is taller than available space and
+available height is at least this value, the menu window is scrollable.
+When available height is below this value, the dispatch prompt falls
+back to a compact echo-area prompt while keeping window labels."
+  :type '(integer :match (lambda (_widget value)
+                           (and (integerp value) (> value 0))))
+  :group 'disbuf-pivot)
+
+(defface dp-eligible-label
+  '((t :inherit (bold font-lock-keyword-face)))
+  "Face for eligible window labels in the dispatch prompt."
+  :group 'disbuf-pivot)
+
+(defface dp-ineligible-label
+  '((t :inherit shadow))
+  "Face for ineligible window labels in the dispatch prompt."
+  :group 'disbuf-pivot)
+
+(defvar dp-window-utility--in-prompt nil
+  "Non-nil while the package is prompting or performing guarded display.")
+
+(defun dp-window-utility--resolve-buffer (buffer)
+  "Return the buffer object designated by BUFFER, or `nil'."
+  (cond ((bufferp buffer) buffer)
+        ((stringp buffer) (get-buffer buffer))))
+
+(defun dp-window-utility-displayable-p (window &optional buffer)
+  "Return non-nil if WINDOW can directly display BUFFER.
+WINDOW is displayable when it is live, is not a minibuffer window, is
+not a side window, and is not dedicated to another buffer.  A non-side
+window dedicated to BUFFER itself is displayable.  When BUFFER is `nil',
+any dedicated window is undisplayable."
+  (let ((buf (dp-window-utility--resolve-buffer buffer)))
+    (and (window-live-p window)
+         (not (window-minibuffer-p window))
+         (not (window-parameter window 'window-side))
+         (or (not (window-dedicated-p window))
+             (and buf (eq buf (window-buffer window)))))))
+
+(defun dp-window-utility-eligible-p (window buffer &optional excluded-window)
+  "Return non-nil if WINDOW is eligible for direct display of BUFFER.
+WINDOW must be displayable for BUFFER and not equal to EXCLUDED-WINDOW.
+Only explicit user prefix intent (`disbuf-pivot-other-window-prefix')
+passes EXCLUDED-WINDOW; caller intent never makes a displayable window
+ineligible."
+  (and (dp-window-utility-displayable-p window buffer)
+       (not (and excluded-window (eq window excluded-window)))))
+
+(defun dp-window-utility-ineligible-reason
+    (window buffer &optional excluded-window)
+  "Return why WINDOW is ineligible for BUFFER, or `nil' if eligible.
+EXCLUDED-WINDOW is the window excluded by
+`disbuf-pivot-other-window-prefix', if any."
+  (let ((buf (dp-window-utility--resolve-buffer buffer)))
+    (cond
+     ((not (window-live-p window))
+      "window is no longer live")
+     ((window-minibuffer-p window)
+      "minibuffer window")
+     ((window-parameter window 'window-side)
+      "side window")
+     ((and (window-dedicated-p window)
+           (not (and buf (eq buf (window-buffer window)))))
+      (format "dedicated to %s" (buffer-name (window-buffer window))))
+     ((and excluded-window (eq window excluded-window))
+      "excluded by other-window-prefix"))))
+
+(defun dp-window-utility-splittable-p (window)
+  "Return non-nil if WINDOW is a splittable target for a split action.
+WINDOW is splittable when it is live, is not a minibuffer window, is not
+a side window, and its frame does not have a non-nil `unsplittable'
+parameter.  A dedicated normal window is splittable."
+  (and (window-live-p window)
+       (not (window-minibuffer-p window))
+       (not (window-parameter window 'window-side))
+       (not (frame-parameter (window-frame window) 'unsplittable))))
+
+(defun dp-window-utility-cannot-display-p (window &optional buffer)
+  "Return non-nil if WINDOW cannot directly display BUFFER.
+This is the negation of `disbuf-pivot-window-utility-displayable-p'."
+  (not (dp-window-utility-displayable-p window buffer)))
+
+(defun dp-window-utility--in-async-context-p ()
+  "Return non-nil if running inside a timer or process callback."
+  (or inhibit-quit
+      (waiting-for-user-input-p)
+      (catch 'dp-window-utility--async
+        (mapbacktrace
+         (lambda (evald func args _flags)
+           (when (or (memq func '(timer-event-handler
+                                  accept-process-output
+                                  sit-for
+                                  sleep-for
+                                  delete-process))
+                     (and evald
+                          (consp args)
+                          (processp (car args))
+                          (let ((proc (car args)))
+                            (or (eq func (process-filter proc))
+                                (eq func (process-sentinel proc))))))
+             (throw 'dp-window-utility--async t))))
+        nil)))
+
+(defun dp-window-utility-cannot-prompt-p ()
+  "Return non-nil in a context where interactive prompting is impossible.
+This covers batch (`noninteractive'), an active minibuffer, keyboard
+macro execution (`executing-kbd-macro'), timers, process filters and
+sentinels, and recursive display during an open prompt, tab or frame
+creation, or consult preview."
+  (or noninteractive
+      (active-minibuffer-window)
+      executing-kbd-macro
+      dp-window-utility--in-prompt
+      (bound-and-true-p dp-tab-bar--in-progress)
+      (dp-window-utility--in-async-context-p)))
 
 (defcustom dp-window-utility-split-maximum 4
   "The number of windows under which a split is preferred over asking.
@@ -104,27 +274,29 @@ Append HINT on a new line when non-nil."
                    "the buffer; choose another")
            (if hint (concat "\n" hint) "")))
 
-(defun dp-window-utility-choose-display-window (scope ignore-current &optional mode-line)
-  "Ask for a window with `aw-select' to display a buffer in.
+(defun dp-window-utility-choose-display-window
+    (scope ignore-current &optional mode-line buffer)
+  "Ask for a window with `aw-select' to display BUFFER in.
 SCOPE and IGNORE-CURRENT are bound to `aw-scope' and
 `aw-ignore-current' for the choice; MODE-LINE is passed to `aw-select'
-and defaults to `Display buffer in window`; the mode line also offers
-`? for actions' when `aw-dispatch-alist' binds it.
+and defaults to `Display buffer in window'; the mode line also offers
+`? for actions' when `aw-dispatch-alist' binds it.  BUFFER is passed to
+`disbuf-pivot-window-utility-cannot-display-p' when provided.
 
 The echo area shows the dispatch hint before the choice.  Ask again
-while the chosen window cannot display the buffer, a window
-`disbuf-pivot-window-utility-cannot-display-p' answers for; the echo area
-says why.  Should the choice return the window it was told to ignore --
-`aw-select' has none other to offer -- choose nothing.
+while the chosen window cannot display BUFFER, a window
+`disbuf-pivot-window-utility-cannot-display-p' answers for; the echo
+area says why.  Should the choice return the window it was told to
+ignore -- `aw-select' has none other to offer -- choose nothing.
 
-Return the chosen window, or `nil' when SCOPE is nil, in batch, while
-the minibuffer is active, when the choice is cancelled, or when no
-window was chosen.  Cancelling the choice (`\\[keyboard-quit]')
-quits the command whose display it is."
+Return the chosen window, or `nil' when SCOPE is nil, in a cannot-prompt
+context (`disbuf-pivot-window-utility-cannot-prompt-p'), when the choice
+is cancelled, or when no window was chosen.  Cancelling the choice
+\(`\\[keyboard-quit]') quits the command whose display it is."
   (when (and scope
-             (not noninteractive)
-             (not (active-minibuffer-window)))
-    (let ((aw-scope scope)
+             (not (dp-window-utility-cannot-prompt-p)))
+    (let ((dp-window-utility--in-prompt t)
+          (aw-scope scope)
           (aw-ignore-current ignore-current)
           (base (or mode-line "Display buffer in window"))
           (first t)
@@ -149,7 +321,7 @@ quits the command whose display it is."
          ((and aw-ignore-current (eq win (selected-window)))
           (setq done t
                 win nil))
-         ((dp-window-utility-cannot-display-p win))
+         ((dp-window-utility-cannot-display-p win buffer))
          (t (setq done t))))
       win)))
 
@@ -219,46 +391,48 @@ quits."
         (unless ignore
           window)))))
 
-(defun dp-window-utility-choose-tab-window (alist)
-  "Ask for a window of the selected frame for ALIST.
-With one window, `disbuf-pivot-window-utility-choose-sole-window' shows the
-split keys and reads a key.  With more, `aw-select' shows the labels;
-the echo area shows the dispatch hint and the mode line may copy it.
-Ask again while the chosen window cannot display a buffer; the echo
-area says why.  The `inhibit-same-window' entry of ALIST, and a
-selected window that cannot display a buffer, are excluded.  Return
-the window, or nil."
-  (let ((windows (window-list nil 'no-minibuf))
-        (ignore-current
-         (or (cdr (assq 'inhibit-same-window alist))
-             (dp-window-utility-cannot-display-p (selected-window)))))
-    (if (null (cdr windows))
-        (dp-window-utility-choose-sole-window (car windows) ignore-current)
-      (let ((aw-scope 'frame)
-            (aw-ignore-current ignore-current)
-            (aw-dispatch-when-more-than 0)
-            (first t)
-            done win)
-        (while (and (not done)
-                    (progn
-                      (if first
-                          (dp-window-utility--aw-show-hint
-                           first "Display buffer in window")
-                        (dp-window-utility--aw-repeat-message
-                         (dp-window-utility--dispatch-hint
-                          nil "Display buffer in window")))
-                      (let ((mode-line
-                             (dp-window-utility--aw-mode-line
-                              first "Display buffer in window")))
-                        (setq first nil)
-                        (let ((aw-minibuffer-flag nil))
-                          (setq win (aw-select mode-line)))))
-                    (window-live-p win))
-          (cond
-           ((dp-window-utility-cannot-display-p win))
-           ((and aw-ignore-current (eq win (selected-window))))
-           (t (setq done t))))
-        win))))
+(defun dp-window-utility-choose-tab-window (alist &optional buffer)
+  "Ask for a window of the selected frame for ALIST and BUFFER.
+With one window, `disbuf-pivot-window-utility-choose-sole-window' shows
+the split keys and reads a key.  With more, `aw-select' shows the
+labels; the echo area shows the dispatch hint and the mode line may copy
+it.  Ask again while the chosen window cannot display BUFFER; the echo
+area says why.  The `inhibit-same-window' entry of ALIST, and a selected
+window that cannot display BUFFER, are excluded.  Return the window, or
+`nil' in a cannot-prompt context or when no window is chosen."
+  (unless (dp-window-utility-cannot-prompt-p)
+    (let ((dp-window-utility--in-prompt t)
+          (windows (window-list nil 'no-minibuf))
+          (ignore-current
+           (or (cdr (assq 'inhibit-same-window alist))
+               (dp-window-utility-cannot-display-p (selected-window) buffer))))
+      (if (null (cdr windows))
+          (dp-window-utility-choose-sole-window (car windows) ignore-current)
+        (let ((aw-scope 'frame)
+              (aw-ignore-current ignore-current)
+              (aw-dispatch-when-more-than 0)
+              (first t)
+              done win)
+          (while (and (not done)
+                      (progn
+                        (if first
+                            (dp-window-utility--aw-show-hint
+                             first "Display buffer in window")
+                          (dp-window-utility--aw-repeat-message
+                           (dp-window-utility--dispatch-hint
+                            nil "Display buffer in window")))
+                        (let ((mode-line
+                               (dp-window-utility--aw-mode-line
+                                first "Display buffer in window")))
+                          (setq first nil)
+                          (let ((aw-minibuffer-flag nil))
+                            (setq win (aw-select mode-line)))))
+                      (window-live-p win))
+            (cond
+             ((dp-window-utility-cannot-display-p win buffer))
+             ((and aw-ignore-current (eq win (selected-window))))
+             (t (setq done t))))
+          win)))))
 
 (provide 'dp-window-utility)
 

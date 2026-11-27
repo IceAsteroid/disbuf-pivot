@@ -58,27 +58,29 @@ another cleanup.")
 ORIG-INDEX is the current tab's 1-based index, ORIG-TABS its tab list,
 and ORIG-WC the window configuration to restore when the preview ends."
   (lambda (action cand)
-    (cond
-     ((and (eq action 'preview) cand)
-      (let* ((match (assoc-string cand candidates))
-             (target-idx (nth 1 match)))
-        (when target-idx
-          (funcall dp-tab-bar-consult-select-tab-function
-                   target-idx))))
-     ((and (eq action 'preview) (not cand))
-      (funcall dp-tab-bar-consult-select-tab-function
-               orig-index))
-     ((eq action 'return)
-      (set-frame-parameter nil 'tabs orig-tabs)
-      (set-window-configuration orig-wc)
-      (funcall dp-tab-bar-consult-select-tab-function
-               orig-index)))))
+    (let ((dp-tab-bar--in-progress t))
+      (cond
+       ((and (eq action 'preview) cand)
+        (let* ((match (assoc-string cand candidates))
+               (target-idx (nth 1 match)))
+          (when target-idx
+            (funcall dp-tab-bar-consult-select-tab-function
+                     target-idx))))
+       ((and (eq action 'preview) (not cand))
+        (funcall dp-tab-bar-consult-select-tab-function
+                 orig-index))
+       ((eq action 'return)
+        (set-frame-parameter nil 'tabs orig-tabs)
+        (set-window-configuration orig-wc)
+        (funcall dp-tab-bar-consult-select-tab-function
+                 orig-index))))))
 
 (defun dp-tab-bar-consult-read (prompt candidates initial)
   "Read a tab name from CANDIDATES with consult previews.
 PROMPT is the prompt string.  INITIAL is the default candidate; an
 empty string means a new tab.  Return the chosen name."
-  (dp-tab-bar-consult-purge-child-frames)
+  (let ((dp-tab-bar--in-progress t))
+    (dp-tab-bar-consult-purge-child-frames))
   (let* ((orig-index (1+ (tab-bar--current-tab-index)))
          (orig-tabs (copy-tree (frame-parameter nil 'tabs)))
          (orig-wc (current-window-configuration))

@@ -12,8 +12,9 @@ behavior is in `docs/DESIGN_RULESET.md`.
 `Package-Requires`.  It holds the package's `display-buffer-alist`
 entry, its options, the tab and frame prompts, and the mode.
 
-`disbuf-pivot-window-utility.el` holds the window test, the split
-options, the window prompt, the dispatch prompt, and the post-command
+`disbuf-pivot-window-utility.el` holds the window predicates, the
+cannot-prompt guards, the split primitives and options, the dispatch
+prompt options and label faces, the window prompt, and the post-command
 selection.
 
 `disbuf-pivot-prefix.el` holds the prefix commands and the global minor
@@ -60,8 +61,8 @@ make check-consult   # compile and checkdoc the optional consult library
   `ace-window` and `avy`, and `make check-consult` needs `consult` too.
 - `eldev` must be on `PATH`; the checks call it directly.
 - `make check-consult` does not run tests.
-- The test files are `order-test.el`, `display-ask-test.el`, and
-  `tab-frame-test.el`.
+- The test files are `core-test.el`, `order-test.el`,
+  `display-ask-test.el`, and `tab-frame-test.el`.
 - One test file: `eldev test -f order-test.el`.
 - One spec:
   `eldev test -f order-test.el "disbuf-pivot display-buffer-alist entry ordering"`.

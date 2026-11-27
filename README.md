@@ -34,22 +34,34 @@ For every buffer an earlier entry does not take, the entry:
   rule allows it or ask with the window prompt.
 
 `disbuf-pivot-action-functions` changes the functions and their order.
-`disbuf-pivot-action-select` says whether the window chosen with the
-window prompt is selected.  The window prompt uses `aw-select`;
-`disbuf-pivot-mode-line-help` controls only the mode-line copy of the
-dispatch hint.  The echo area also shows the dispatch hint, appended to
-caller intent info when that line is shown.  The dispatch action list is
-grouped by Split, Caller intent, and Other; `?` shows it.
-`disbuf-pivot-exclude-conditions` lists
-`buffer-match-p` conditions; a matching buffer is left to the caller's
-action and the remaining `display-buffer` rules.  The echo area says
-when a chosen window cannot display the buffer.  The action declines in
-batch, while the minibuffer is active, and when no window can display
-the buffer; the remaining `display-buffer` rules then apply.  If a
-failure occurs after you choose a window, tab, or frame and the package
-can still prompt, it asks again or aborts; it does not run the caller's
-fallbacks.  C-g aborts the display; it does not run the caller's
-fallbacks.
+`disbuf-pivot-action-select` (default `auto`) says whether the window
+chosen with the window prompt is selected.  The window prompt uses
+`aw-select`; `disbuf-pivot-mode-line-help` controls only the mode-line
+copy of the dispatch hint.  The echo area also shows the dispatch hint.
+`disbuf-pivot-exclude-conditions` lists `buffer-match-p` conditions
+(regexp, `derived-mode`, `major-mode`, `category`, `this-command`,
+predicate, `not`/`and`/`or`); `disbuf-pivot-action-control-p` passes
+the caller's `ACTION` as the third argument to `buffer-match-p` so
+`category` conditions match, and a matching buffer is left to later
+`display-buffer-alist` entries and Emacs display actions.  The echo
+area says when a chosen window cannot display the buffer; a non-side
+window dedicated to the buffer being displayed is displayable.  The
+action returns nil in cannot-prompt contexts -- batch
+(`noninteractive`), an active minibuffer, keyboard macro execution
+(`executing-kbd-macro`), timers, process filters and sentinels, and
+recursive display (during an open prompt, tab or frame creation, or
+consult preview) -- and when no window can display the buffer; later
+functions in Emacs's combined function list then run.  C-g aborts the
+display; it does not run the caller's fallbacks.
+
+Options and faces defined for the redesign in `docs/DESIGN_RULESET.md`
+(`disbuf-pivot-reuse`, `disbuf-pivot-same-window-conflict`,
+`disbuf-pivot-header-info`, `disbuf-pivot-tab-prompt-scope`,
+`disbuf-pivot-window-keys`, `disbuf-pivot-split-actions`,
+`disbuf-pivot-menu-min-column-width`, `disbuf-pivot-menu-min-height`,
+`disbuf-pivot-eligible-label`, and `disbuf-pivot-ineligible-label`) are
+present in the package ahead of the upcoming dispatch prompt, intent
+classifier, and tab-scope milestones.
 
 ## The prefix commands
 
@@ -132,8 +144,9 @@ a separate library:
 
 - `disbuf-pivot` holds the package's `display-buffer-alist` entry, its
   options, and the tab and frame prompts.
-- `disbuf-pivot-window-utility` holds the window test, the split
-  options, and the window prompt.
+- `disbuf-pivot-window-utility` holds the window predicates,
+  cannot-prompt guards, split primitives and options, dispatch prompt
+  options and label faces, and the window prompt.
 - `disbuf-pivot-prefix` holds the prefix commands and the prefix mode.
 - `disbuf-pivot-tab-bar` holds the tab candidates, history, selection
   and the plain tab reader.

@@ -28,7 +28,8 @@
 
 (defgroup dp-tab-bar nil
   "Customizations for index-safe tab bar management."
-  :group 'tab-bar)
+  :group 'tab-bar
+  :group 'disbuf-pivot)
 
 (defcustom dp-tab-bar-enable-history t
   "Non-nil to enable history tracking and display closed tabs as candidates."
@@ -86,8 +87,29 @@ own candidates and previews; the consult integration in
   :type '(choice (const :tag "completing-read" nil) function)
   :group 'dp-tab-bar)
 
+(defcustom dp-tab-prompt-scope nil
+  "Default tab prompt scope outside the pivot.
+Determines which top-level frames supply tab candidates when
+`disbuf-pivot-tab-bar-read-tab-name' runs outside the pivot:
+
+nil -- selected frame only.
+t -- all existing top-level frames.
+`visible' -- visible top-level frames.
+`0' -- all top-level frames on the current terminal.
+
+At the pivot, the package uses the selected frame (plus reusable tabs
+for `display-buffer-in-tab') and ignores this option."
+  :type '(choice (const :tag "Selected frame" nil)
+                 (const :tag "All existing frames" t)
+                 (const :tag "Visible frames" visible)
+                 (const :tag "Current terminal" 0))
+  :group 'dp-tab-bar)
+
 (defvar dp-tab-bar--history nil
   "Tracked history list containing raw selection entries.")
+
+(defvar dp-tab-bar--in-progress nil
+  "Non-nil while creating, selecting, or previewing a tab.")
 
 ;; --- Custom Faces ---
 
@@ -335,7 +357,8 @@ ALIST."
   (let* ((candidates (dp-tab-bar--get-candidates))
          (match (and name (assoc-string name candidates)))
          (index (nth 1 match))
-         (target-name (if match (nth 2 match) name)))
+         (target-name (if match (nth 2 match) name))
+         (dp-tab-bar--in-progress t))
     (if index
         (progn
           (tab-bar-select-tab index)

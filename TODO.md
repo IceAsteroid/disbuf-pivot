@@ -5,10 +5,11 @@ Normative specification: `docs/DESIGN_RULESET.md`.
 
 ## Implementation milestones
 
-Design settled in `docs/DESIGN_RULESET.md`; v0.1.0 Elisp source not yet
-updated.  Order of work (see `docs/DESIGN_RULESET.md` section 11):
+Design settled in `docs/DESIGN_RULESET.md`; Milestone 1 implemented,
+milestones 2–6 remaining.  Order of work (see `docs/DESIGN_RULESET.md`
+section 11):
 
-1. Core options/faces, per-buffer `displayable` / `eligible` /
+1. [x] Core options/faces, per-buffer `displayable` / `eligible` /
    `splittable` predicates, cannot-prompt context guards, safe
    `dp-action--action` reentrancy, and `disbuf-pivot-exclude-conditions`.
 2. Own window-labeling overlays, own split primitives,

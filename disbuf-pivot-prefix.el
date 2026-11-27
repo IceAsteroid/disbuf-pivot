@@ -29,12 +29,12 @@
 
 (defgroup dp-prefix nil
   "Pivot prefix commands for windows, tabs and frames."
-  :group 'windows)
+  :group 'disbuf-pivot)
 
-(defun dp-prefix--find-last-active-window ()
+(defun dp-prefix--find-last-active-window (&optional buffer)
   "Return the most recently used displayable window of the selected frame.
 Use the parent frame when the selected frame is a child frame.  Leave out
-minibuffer windows and windows that cannot display a buffer."
+minibuffer windows and windows that cannot display BUFFER."
   (let* ((frame (selected-frame))
          (parent (frame-parent frame))
          (frame-windows (window-list (or parent frame) 'no-minibuf)))
@@ -45,17 +45,18 @@ minibuffer windows and windows that cannot display a buffer."
     ;; Scan for the first displayable window
     (cl-find-if (lambda (w)
                   (not (or (window-minibuffer-p w)
-                           (dp-window-utility-cannot-display-p w))))
+                           (dp-window-utility-cannot-display-p w buffer))))
                 frame-windows)))
 
-(defun dp-prefix--with-displayable-window (function)
+(defun dp-prefix--with-displayable-window (function &optional buffer)
   "Call FUNCTION with the displayable window selected when one is needed.
-When the selected window cannot display a buffer, select the most
-recently used displayable window of the frame, or of the parent frame
-when a child frame is selected.  FUNCTION runs with that window
-selected, and the previous selection is restored when it returns."
-  (let ((window (if (dp-window-utility-cannot-display-p (selected-window))
-                    (dp-prefix--find-last-active-window)
+When the selected window cannot display BUFFER, select the most recently
+used displayable window of the frame, or of the parent frame when a
+child frame is selected.  FUNCTION runs with that window selected, and
+the previous selection is restored when it returns."
+  (let ((window (if (dp-window-utility-cannot-display-p
+                     (selected-window) buffer)
+                    (dp-prefix--find-last-active-window buffer)
                   (selected-window))))
     (if (and window (not (eq window (selected-window))))
         (with-selected-window window (funcall function))
@@ -97,7 +98,7 @@ selected again, the way `display-buffer' treats a `nil'
                       (aw-ignore-current
                        (or (cdr (assq 'inhibit-same-window alist))
                            (dp-window-utility-cannot-display-p
-                            (selected-window))))
+                            (selected-window) buffer)))
                       window type)
                   ;; If the current windows are less than the maximum amount,
                   ;; try to pop up a new window, which also respects split
@@ -108,7 +109,7 @@ selected again, the way `display-buffer' treats a `nil'
                                  (display-buffer-pop-up-window buffer alist)))
                       (setq type 'window)
                     (setq choice (dp-window-utility-choose-display-window
-                                  aw-scope aw-ignore-current))
+                                  aw-scope aw-ignore-current nil buffer))
                     (if choice
                         (progn
                           (setq window choice
@@ -116,7 +117,8 @@ selected again, the way `display-buffer' treats a `nil'
                                 answering (selected-window))
                           (window--display-buffer buffer choice 'reuse alist))
                       (setq window nil)))
-                  (cons window type)))))
+                  (cons window type)))
+              buffer))
        (when choice
          (pcase dp-other-window-prefix-select
            ('t (select-window choice))
@@ -138,9 +140,13 @@ frame is selected.  `disbuf-pivot-prefix-mode' remaps
      (dp-prefix--with-displayable-window
       (lambda ()
         (let ((alist (cons '(inhibit-same-window . nil) alist)))
-          (cons (or (display-buffer-same-window buffer alist)
+          (cons (or (and (dp-window-utility-displayable-p
+                          (selected-window) buffer)
+                         (selected-window))
+                    (display-buffer-same-window buffer alist)
                     (display-buffer-use-some-window buffer alist))
-                'reuse)))))
+                'reuse)))
+      buffer))
    nil "[same-window]")
   (message
    "disbuf-pivot: Display next command buffer in the same window..."))
@@ -169,7 +175,8 @@ does not show the tab prompt again."
             (cons nil 'reuse)
           (let ((dp-other-tab-prefix--in-progress t))
             (let ((result (dp-action-tab buffer alist)))
-              (cons (car-safe result) (or (cdr-safe result) 'reuse))))))))
+              (cons (car-safe result) (or (cdr-safe result) 'reuse))))))
+      buffer))
    nil "[other-tab]")
   (message
    "disbuf-pivot: Display next command buffer in a tab..."))
@@ -198,7 +205,8 @@ rules, so it does not show the frame prompt again."
         (if dp-other-frame-prefix--in-progress
             (cons nil 'reuse)
           (let ((dp-other-frame-prefix--in-progress t))
-            (cons (dp-action--frame buffer alist) 'reuse))))))
+            (cons (dp-action--frame buffer alist) 'reuse))))
+      buffer))
    nil "[other-frame]")
   (message
    "disbuf-pivot: Display next command buffer in a frame..."))

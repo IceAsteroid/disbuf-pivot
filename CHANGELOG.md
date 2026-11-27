@@ -4,6 +4,30 @@
 
 ### User-visible Changes
 
+- Add: `disbuf-pivot-exclude-conditions`; buffers matching any
+  `buffer-match-p` condition (including `category` via the caller's
+  ACTION and `this-command`) return nil from
+  `disbuf-pivot-action-control-p`, so later `display-buffer-alist`
+  entries and Emacs display actions handle them.
+- Add: cannot-prompt guards for keyboard macro execution
+  (`executing-kbd-macro`), timers, process filters and sentinels, and
+  recursive display (open prompt, tab or frame creation, and consult
+  preview), in addition to batch and an active minibuffer.
+- Add: core redesign options and faces (`disbuf-pivot-reuse`,
+  `disbuf-pivot-same-window-conflict`, `disbuf-pivot-header-info`,
+  `disbuf-pivot-tab-prompt-scope`, `disbuf-pivot-window-keys`,
+  `disbuf-pivot-split-actions`, `disbuf-pivot-menu-min-column-width`,
+  `disbuf-pivot-menu-min-height`, `disbuf-pivot-eligible-label`, and
+  `disbuf-pivot-ineligible-label`), and change the default of
+  `disbuf-pivot-action-select` to `auto`.
+- Fix: per-buffer displayable window checks treat a non-side window
+  dedicated to the buffer being displayed as displayable (across both
+  the `display-buffer-alist` entry and the package prefix commands), and
+  `disbuf-pivot-action--display` resolves the caller's ACTION from the
+  active `display-buffer` call frame without mutating
+  `display-buffer-alist`, so nested `display-buffer` calls inside
+  `display-buffer-overriding-action` cannot clobber an outer call's
+  ACTION.
 - Fix: with `disbuf-pivot-mode-line-help` nil, the dispatch hint
   remains in the echo area; the option controls only the mode-line
   copy.
@@ -20,6 +44,15 @@
 
 ### Internal Changes
 
+- Internal: add `disbuf-pivot-window-utility-displayable-p`,
+  `disbuf-pivot-window-utility-eligible-p`,
+  `disbuf-pivot-window-utility-ineligible-reason`,
+  `disbuf-pivot-window-utility-splittable-p`,
+  `disbuf-pivot-window-utility-split-fair`, and
+  `disbuf-pivot-window-utility-cannot-prompt-p`.
+- Test: add `test/core-test.el` covering Milestone 1 options and faces,
+  window predicates, cannot-prompt guards, `disbuf-pivot-action--action`
+  reentrancy, and `disbuf-pivot-exclude-conditions`.
 - Docs: finalize dispatch prompt UI details in `docs/DESIGN_RULESET.md`,
   `docs/DOCUMENTATION_CONVENTION.md`, and `TODO.md` — drop `ace-window`
   `'auto` key/split inheritance (`disbuf-pivot-window-keys` defaults to
