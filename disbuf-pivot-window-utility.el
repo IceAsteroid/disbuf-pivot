@@ -144,8 +144,8 @@ any dedicated window is undisplayable."
   "Return non-nil if WINDOW is eligible for direct display of BUFFER.
 WINDOW must be displayable for BUFFER and not equal to EXCLUDED-WINDOW.
 Only explicit user prefix intent (`disbuf-pivot-other-window-prefix')
-passes EXCLUDED-WINDOW; caller intent never makes a displayable window
-ineligible."
+passes EXCLUDED-WINDOW; effective intent never makes a displayable
+window ineligible."
   (and (dp-window-utility-displayable-p window buffer)
        (not (and excluded-window (eq window excluded-window)))))
 

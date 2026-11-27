@@ -5,8 +5,8 @@ Normative specification: `docs/DESIGN_RULESET.md`.
 
 ## Implementation milestones
 
-Design settled in `docs/DESIGN_RULESET.md`; Milestones 1–2 implemented,
-milestones 3–6 remaining.  Order of work (see `docs/DESIGN_RULESET.md`
+Design settled in `docs/DESIGN_RULESET.md`; Milestones 1–3 implemented,
+milestones 4–6 remaining.  Order of work (see `docs/DESIGN_RULESET.md`
 section 11):
 
 1. [x] Core options/faces, per-buffer `displayable` / `eligible` /
@@ -27,7 +27,7 @@ section 11):
    `disbuf-pivot-mode-line-help`, and automatic splitting from core
    (keeping a compatibility bridge for `disbuf-pivot-prefix.el` until
    step 5 removes the legacy split helper and prefix select option).
-3. Effective-intent classifier (reuse-first chains like `C-x 5 b`,
+3. [x] Effective-intent classifier (reuse-first chains like `C-x 5 b`,
    non-list `ACTION` / dynamic `pop-up-frames` /
    `display-buffer-reuse-frames`), `dp-action--run` regulated dispatch
    for `display-buffer-reuse-window` and `display-buffer-same-window`,

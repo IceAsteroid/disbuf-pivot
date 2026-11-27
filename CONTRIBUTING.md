@@ -62,7 +62,8 @@ make check-consult   # compile and checkdoc the optional consult library
 - `eldev` must be on `PATH`; the checks call it directly.
 - `make check-consult` does not run tests.
 - The test files are `core-test.el`, `dispatch-prompt-test.el`,
-  `order-test.el`, `display-ask-test.el`, and `tab-frame-test.el`.
+  `intent-rules-test.el`, `order-test.el`, `display-ask-test.el`, and
+  `tab-frame-test.el`.
 - One test file: `eldev test -f order-test.el`.
 - One spec:
   `eldev test -f order-test.el "disbuf-pivot display-buffer-alist entry ordering"`.

@@ -7,31 +7,66 @@ frame; a buffer visible in another tab or frame can be reused; and a
 repeated tab or frame name can be ambiguous.  The buffer can then appear
 in a place the user did not choose.  disbuf-pivot replaces that implicit
 pick with an explicit one.  The *pivot* is the point at which the package
-either respects the caller's intent or replaces that intent with the
+either respects the effective intent or replaces that intent with the
 user's explicit choice.
 
 ## The package's `display-buffer-alist` entry
 
 `disbuf-pivot-action-mode` adds one entry to `display-buffer-alist`.
-For every buffer an earlier entry does not take, the entry:
+For every non-excluded buffer an earlier entry does not take, the entry
+classifies the effective intent (covering all 19 Emacs 31.1
+`display-buffer-*` action functions, reuse-first chains such as
+`display-buffer--other-frame-action`, non-list `ACTION` values, and
+dynamic `pop-up-frames` and `display-buffer-reuse-frames`):
 
-- leaves a request that names a place -- a window, direction, side, slot,
-  or child frame -- to the caller's action functions;
-- asks for a tab or frame when the request names one.  A tab name can
-  come from `tab-name`; a frame name is read from the top-level frames.
-  A name on the tab bar or a frame name selects the tab or frame; an
-  empty name makes a new tab or frame; any other name makes a new tab or
-  a new frame with that name.  An existing frame asks for its tab when
-  `tab-bar-mode` is active or it has more than one; a new frame uses its
-  selected tab.
-- asks for the window inside the chosen tab or frame.  A tab asks for its
-  window when no window in it displays the buffer; an existing frame
-  asks for its window; a new frame uses its selected window.  The
-  dispatch prompt inside the chosen tab or frame honors
-  `inhibit-same-window` and offers explicit split actions;
-- otherwise tries `disbuf-pivot-action-functions`: reuse a window that
-  displays the buffer, use the selected window when displayable, and
-  otherwise open the synchronous dispatch prompt.
+- respects fixed-place requests (`display-buffer-in-side-window`,
+  `display-buffer-in-atom-window`, `display-buffer-in-child-frame`) and
+  any uncovered action function by returning nil without prompting;
+- returns `fail` without prompting for `display-buffer-no-window` when
+  `allow-no-window` is non-nil (otherwise continues to any later
+  function in the caller's function list or no preference);
+- handles reuse-first chains (`display-buffer-reuse-window` and
+  `display-buffer-reuse-mode-window`, honoring `reusable-frames`,
+  `reuse-indirect` including `'buffer` no-swap semantics, `mode`
+  defaulting to the buffer's `major-mode` with 4-tier priority,
+  `pop-up-frames`, and `display-buffer-reuse-frames`): when a reusable
+  window exists, `disbuf-pivot-reuse` (`auto` or `ask`) either reuses it
+  silently or opens the dispatch prompt (offering `"Reuse in frame
+  NAME"` when the preferred reuse window is on another frame); when none
+  exists, the classifier continues with the next function in the
+  caller's function list;
+- runs the tab prompt or frame prompt for tab or frame actions
+  (`display-buffer-in-tab`, `display-buffer-in-new-tab`,
+  `display-buffer-pop-up-frame`, `display-buffer-use-some-frame`),
+  `tab-name`, `tab-group`, or effective `pop-up-frames`.  A tab name can
+  come from `tab-name`; a frame name is read from live visible top-level
+  frames.  An existing name selects the tab or frame; an empty name makes
+  a new tab or frame; any other name makes a new tab or frame with that
+  name.  An existing frame asks for its tab when `tab-bar-mode` is
+  active or it has more than one; a new frame uses its selected tab;
+- displays directly in a displayable selected window for
+  `display-buffer-same-window` when not inhibited; reports conflicts
+  with `inhibit-same-window` under `disbuf-pivot-same-window-conflict`
+  (`ask` or `same-window`); and opens the dispatch prompt when the
+  selected window cannot display;
+- regulates strategy, relative placement, `display-buffer-full-frame`
+  (where window labels display normally without deleting other windows,
+  while `"Display full frame"` runs the caller's full-frame action),
+  `display-buffer-in-previous-window` (dereferencing bound variable
+  symbols in `previous-window` and consulting `disbuf-pivot-reuse` when
+  no previous window is usable), and empty-function `inhibit-same-window`
+  calls (including non-list `ACTION` such as `t` or `'other-window`,
+  keeping the selected window eligible and binding `inhibit-same-window`
+  to nil if chosen) through the synchronous dispatch prompt;
+- otherwise runs `disbuf-pivot-action-functions` (default: regulated
+  `display-buffer-reuse-window`, regulated `display-buffer-same-window`,
+  and `disbuf-pivot-action-choose-window`), propagating exact
+  `window--display-buffer` `TYPE` values (`'reuse`, `'window`, `'tab`,
+  `'frame`), showing formatted header info (`Caller (<category>): ...`,
+  source-labeled entries, and window facts), and recovering cleanly from
+  failure after the choice (re-prompting on dead windows, frames, or
+  vanished tabs; reporting and returning `fail` when a display primitive
+  returns nil; propagating errors).
 
 `disbuf-pivot-action-functions` changes the functions and their order.
 `disbuf-pivot-action-select` (default `auto`) says whether the window
@@ -75,10 +110,8 @@ sentinels, and recursive display (during an open prompt, tab or frame
 creation, or consult preview) -- so later functions in Emacs's combined
 function list run.
 
-Options defined for upcoming milestones (`disbuf-pivot-reuse`,
-`disbuf-pivot-same-window-conflict`, and
-`disbuf-pivot-tab-prompt-scope`) are present in the package ahead of
-the intent-classifier and tab-scope milestones.
+`disbuf-pivot-tab-prompt-scope` is defined ahead of the upcoming
+tab-scope milestone.
 
 ## The prefix commands
 

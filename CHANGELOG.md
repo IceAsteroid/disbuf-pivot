@@ -4,6 +4,32 @@
 
 ### User-visible Changes
 
+- Add: effective-intent classifier covering all 19 Emacs 31.1
+  `display-buffer-*` action functions, reuse-first chains (such as
+  `display-buffer--other-frame-action`), non-list `ACTION` values (`t`,
+  `'other-window`), and dynamic `pop-up-frames` /
+  `display-buffer-reuse-frames`.  Fixed-place
+  (`display-buffer-in-side-window`, `display-buffer-in-atom-window`,
+  `display-buffer-in-child-frame`) and uncovered action functions return
+  nil without prompting; `display-buffer-no-window` returns `fail` when
+  `allow-no-window` is non-nil; `disbuf-pivot-reuse` (`auto` or `ask`,
+  including cross-frame `"Reuse in frame NAME"` default, `reuse-indirect`
+  with `'buffer` no-swap semantics, and `display-buffer-reuse-mode-window`
+  `mode` default and 4-tier priority) and `disbuf-pivot-same-window-conflict`
+  (`ask` or `same-window`) now govern display; `display-buffer-full-frame`
+  offers `"Display full frame"` while window labels keep other windows;
+  `display-buffer-in-previous-window` dereferences bound variable
+  symbols in `previous-window` and consults `disbuf-pivot-reuse` when no
+  previous window is usable; `disbuf-pivot-action--run` dispatches
+  `display-buffer-reuse-window` and `display-buffer-same-window` through
+  regulated handlers regardless of list order; every display path
+  propagates exact `window--display-buffer` `TYPE` values (`'reuse`,
+  `'window`, `'tab`, `'frame`); the dispatch prompt menu header formats
+  caller intent info (`Caller (<category>): ...`, window-setting effects,
+  and `; else ...` fallback chains), source-labeled entries, and window
+  facts; and failure after the choice re-prompts on dead windows, dead
+  frames, or vanished tabs, reports and returns `fail` when a display
+  primitive returns nil, and propagates errors.
 - Add: replace `aw-select`, `disbuf-pivot-mode-line-help`, and
   automatic core splitting (`disbuf-pivot-action-split-or-ask`) with the
   package's own synchronous dispatch prompt (`disbuf-pivot-window-utility-dispatch-prompt`).
@@ -65,6 +91,15 @@
 
 ### Internal Changes
 
+- Test: add `test/intent-rules-test.el` covering Milestone 3
+  effective-intent classification, reuse-first chains, `reuse-indirect`,
+  `display-buffer-reuse-mode-window` priority, `inhibit-same-window`
+  conflicts, `display-buffer-in-previous-window`,
+  `display-buffer-full-frame`, relative placement, regulated
+  `disbuf-pivot-action--run`, `TYPE` propagation, header info
+  formatting, and failure-after-choice recovery; update
+  `test/core-test.el`, `test/order-test.el`, and
+  `test/dispatch-prompt-test.el` for Milestone 3 rules.
 - Docs: define `effective intent` separately from `caller intent` in
   `docs/DOCUMENTATION_CONVENTION.md` (narrowing `caller intent` to the
   caller's ACTION alone and grounding `intent class` on `effective

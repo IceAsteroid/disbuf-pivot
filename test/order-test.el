@@ -57,7 +57,7 @@
       (check "O2 another buffer reaches the entry" (= cp-hits 1))))
   (dp-action-mode -1))
 
-;;; ---- O3: the entry pre-empts a caller's ACTION
+;;; ---- O3: reuse-mode-window is regulated by `disbuf-pivot-reuse'
 (defvar man-win (get-buffer-create "*man-win*"))
 (with-current-buffer man-win (Man-mode))
 (set-window-buffer w2 man-win)
@@ -67,15 +67,24 @@
   (cl-letf (((symbol-function 'dp-window-utility-dispatch-prompt)
              (lambda (_b a &rest _)
                (setq calls (1+ calls))
-               (list :action 'window :window w2 :alist a))))
+               (list :action 'window :window w1 :alist a))))
     (select-window w1)
-    (let ((result (display-buffer (get-buffer-create "*man2*")
-                                  '(display-buffer-reuse-mode-window
-                                    (mode . Man-mode)))))
-      (check "O3 the caller's ACTION is pre-empted by the entry"
-             (and (eq result w1) (= calls 0)))
-      (check "O3 the man window was not reused"
-             (eq (window-buffer w2) man-win))))
+    ;; With dp-reuse = 'ask, package pre-empts unconditional mode reuse via prompt
+    (let* ((dp-reuse 'ask)
+           (result (display-buffer (get-buffer-create "*man2*")
+                                   '(display-buffer-reuse-mode-window
+                                     (mode . Man-mode)))))
+      (check "O3 reuse-mode-window with reuse=ask prompts and lets user pick w1"
+             (and (eq result w1) (= calls 1)))
+      (check "O3 the man window was not reused when user chose w1"
+             (eq (window-buffer w2) man-win)))
+    ;; With dp-reuse = 'auto, matching mode window w2 is reused silently
+    (let* ((dp-reuse 'auto)
+           (result (display-buffer (get-buffer-create "*man2-auto*")
+                                   '(display-buffer-reuse-mode-window
+                                     (mode . Man-mode)))))
+      (check "O3 reuse-mode-window with reuse=auto reuses matching mode window w2"
+             (and (eq result w2) (= calls 1)))))
   ;; a named place is left to the caller's ACTION
   (let ((calls 0))
     (cl-letf (((symbol-function 'dp-window-utility-dispatch-prompt)
