@@ -76,24 +76,19 @@ entries below are this package's terms, grouped by concept.
   form the caller's fallback chain.
 - **caller intent**, **effective intent**, **intent class**,
   **effect**, **caller intent info** — the caller intent is what the
-  caller's ACTION alone asks for.  The effective intent is the resolved
-  intent that governs the display call at the pivot: determined from the
-  caller's function list (never action functions from
-  `display-buffer-base-action`, `display-buffer-fallback-action`, or the
-  special action) after stepping past reuse misses or a spent
-  `display-buffer-no-window`, and—when no caller's action function
-  remains—from `pop-up-frames` (in the combined action alist or the
-  dynamic variable), `tab-name`, `tab-group`, or `inhibit-same-window`
-  in the combined action alist.  The intent class classifies the
-  effective intent into fixed place, tab or frame, relative placement,
-  strategy, no display, or no preference.  An effect is a user-facing
-  phrase for a consequence other than the primary placement (a window
-  setting, constraint, display outcome, or fallback placement), not a
-  raw Lisp symbol or alist cell.  The caller intent info is the part of
-  header info that summarizes the caller's ACTION alone: its primary
-  intent, the effects of its primary intent and the caller's action
-  alist entries, and the caller's fallback chain (for a package prefix
-  command, the user's prefix request).
+  caller's ACTION alone asks for.  The effective intent is the intent
+  that the pivot classifies for a `display-buffer` call—derived from the
+  caller intent together with the relevant combined action alist entries
+  and Emacs display variables (see `docs/DESIGN_RULESET.md` section 3).
+  The intent class classifies the effective intent into fixed place, tab
+  or frame, relative placement, strategy, no display, or no preference.
+  An effect is a user-facing phrase for a consequence other than the
+  primary placement (a window setting, constraint, display outcome, or
+  fallback placement), not a raw Lisp symbol or alist cell.  The caller
+  intent info is the part of header info that summarizes the caller's
+  ACTION alone: its primary intent, the effects of its primary intent
+  and the caller's action alist entries, and the caller's fallback chain
+  (for a package prefix command, the user's prefix request).
 - **source label**, **source-labeled entries**, **window fact** — a
   source label is the short label used in the dispatch prompt menu when
   an action alist entry comes from an action other than the caller's

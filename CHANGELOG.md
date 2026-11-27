@@ -91,6 +91,10 @@
 
 ### Internal Changes
 
+- Docs: tighten the `effective intent` definition in
+  `docs/DOCUMENTATION_CONVENTION.md` to a concise definition pointing
+  to `docs/DESIGN_RULESET.md` section 3 without duplicating behavioral
+  rules.
 - Test: add `test/intent-rules-test.el` covering Milestone 3
   effective-intent classification, reuse-first chains, `reuse-indirect`,
   `display-buffer-reuse-mode-window` priority, `inhibit-same-window`
