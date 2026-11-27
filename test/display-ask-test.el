@@ -61,144 +61,115 @@
 
 ;;; ---- layout: w1 above w2
 (defvar w1) (defvar w2)
+(delete-other-windows)
 (setq w1 (selected-window))
 (setq w2 (split-window w1 nil 'below))
 
-;;; ---- the split rule: under the maximum, split before asking
+;;; ---- legacy prefix split bridge: under the maximum, prefix splits
 (let ((windows (list w1 w2)))
-  (cl-letf (((symbol-function 'aw-window-list) (lambda () windows)))
+  (cl-letf (((symbol-function 'dp-window-utility--scope-windows)
+             (lambda (&optional _) windows)))
     (let ((dp-window-utility-split-maximum 3))
-      (check "split: two windows are under a maximum of three"
+      (check "legacy split bridge: two windows are under a maximum of three"
              (dp-window-utility-split-p)))
     (let ((dp-window-utility-split-maximum 2))
-      (check "split: two windows are not under a maximum of two"
+      (check "legacy split bridge: two windows are not under a maximum of two"
              (not (dp-window-utility-split-p))))
     (set-window-dedicated-p w2 t)
     (let ((dp-window-utility-split-maximum 2)
           (dp-window-utility-split-maximum-exclude-dedicated t))
-      (check "split: a dedicated window is left out"
+      (check "legacy split bridge: a dedicated window is left out"
              (dp-window-utility-split-p)))
     (let ((dp-window-utility-split-maximum 2)
           (dp-window-utility-split-maximum-exclude-dedicated nil))
-      (check "split: a dedicated window is counted when not excluded"
+      (check "legacy split bridge: a dedicated window is counted when not excluded"
              (not (dp-window-utility-split-p))))
     (set-window-dedicated-p w2 nil)))
 (let ((side (display-buffer-in-side-window (get-buffer-create "*side-free*")
                                            '((side . right))))
       (windows nil))
   (setq windows (list w1 side))
-  (cl-letf (((symbol-function 'aw-window-list) (lambda () windows)))
+  (cl-letf (((symbol-function 'dp-window-utility--scope-windows)
+             (lambda (&optional _) windows)))
     (let ((dp-window-utility-split-maximum 2)
           (dp-window-utility-split-maximum-exclude-side t))
-      (check "split: a side window is left out"
+      (check "legacy split bridge: a side window is left out"
              (dp-window-utility-split-p)))
     (let ((dp-window-utility-split-maximum 2)
           (dp-window-utility-split-maximum-exclude-side nil)
           (dp-window-utility-split-maximum-exclude-dedicated nil))
-      (check "split: a side window is counted when not excluded"
+      (check "legacy split bridge: a side window is counted when not excluded"
              (not (dp-window-utility-split-p)))))
   (delete-window side))
 
-;;; ---- the action function splits under the maximum, asks at it
-(let ((noninteractive nil)
-      (dp-action-select 'auto)
-      (split-calls 0)
-      (ask-calls 0)
-      (windows (list w1 w2)))
-  (cl-letf (((symbol-function 'aw-window-list) (lambda () windows))
-            ((symbol-function 'display-buffer-pop-up-window)
-             (lambda (_buffer _alist) (setq split-calls (1+ split-calls)) w2))
-            ((symbol-function 'aw-select)
-             (lambda (&rest _) (setq ask-calls (1+ ask-calls)) w2)))
-    (let ((dp-window-utility-split-maximum 4))
-      (check "split-or-ask: under the maximum, the split decides"
-             (and (eq (dp-action-split-or-ask
-                       (get-buffer-create "*split*") nil)
-                      w2)
-                  (= split-calls 1)
-                  (= ask-calls 0))))
-    (setq split-calls 0)
-    (let ((dp-window-utility-split-maximum 2))
-      (check "split-or-ask: at the maximum, the question decides"
-             (and (eq (dp-action-split-or-ask
-                       (get-buffer-create "*split2*") nil)
-                      w2)
-                  (= split-calls 0)
-                  (= ask-calls 1))))
-    (setq split-calls 0
-          ask-calls 0)
-    (cl-letf (((symbol-function 'display-buffer-pop-up-window)
-               (lambda (&rest _) nil)))
-      (let ((dp-window-utility-split-maximum 4))
-        (check "split-or-ask: a failed split asks"
-               (and (eq (dp-action-split-or-ask
-                         (get-buffer-create "*split3*") nil)
-                        w2)
-                    (= split-calls 0)
-                    (= ask-calls 1)))))))
-
-;; The question path is what the rest of the checks below exercise.
+;; Disable legacy prefix auto-split for the remaining prefix checks below.
 (setq dp-window-utility-split-maximum 0)
 
-;;; ---- the rule, with the batch gate lifted and aw-select stubbed
+;;; ---- the rule, with the batch gate lifted and dispatch prompt exercised
 (let ((noninteractive nil))
-  ;; a plain selected window takes the buffer; the choice never runs
+  ;; a plain selected window takes the buffer; the dispatch prompt never runs
   (let ((calls 0))
-    (cl-letf (((symbol-function 'aw-select)
+    (cl-letf (((symbol-function 'dp-window-utility-dispatch-prompt)
                (lambda (&rest _) (setq calls (1+ calls)) nil)))
       (let ((result (display-buffer (get-buffer-create "*t1*"))))
         (check "plain window: the buffer takes the selected window"
                (eq result w1))
-        (check "plain window: the choice never runs" (= calls 0)))))
-  ;; a dedicated selected window asks; a dedicated choice asks again
+        (check "plain window: the dispatch prompt never runs" (= calls 0)))))
+  ;; a dedicated selected window prompts; pressing an ineligible dedicated
+  ;; label keeps the prompt open until an eligible label is pressed
   (set-window-dedicated-p w1 t)
   (let* ((dp-action-select 'auto)
          (w3 (split-window w2 nil 'below))
          (calls 0)
-         (choices (list w2 w3)))
+         (keys (list [?2] [?3])))
     (set-window-dedicated-p w2 t)
-    (cl-letf (((symbol-function 'aw-select)
+    (cl-letf (((symbol-function 'dp-window-utility--read-key-vector)
                (lambda (&rest _)
                  (setq calls (1+ calls))
-                 (pop choices))))
+                 (pop keys))))
       (let ((result (display-buffer (get-buffer-create "*t2*"))))
-        (check "dedicated choice: asked again" (= calls 2))
+        (check "dedicated choice: prompted again" (= calls 2))
         (check "dedicated choice: the second choice gets the buffer"
                (eq result w3))
         (check "dedicated choice: the buffer is in the chosen window"
                (eq (window-buffer w3) (get-buffer "*t2*")))))
     (set-window-dedicated-p w2 nil)
     (delete-window w3))
-  ;; a nil choice returns nil and the following action functions run
+  ;; a nil choice (Bypass pivot, M-b) returns nil and later functions run
   (let ((result nil))
-    (cl-letf (((symbol-function 'aw-select) (lambda (&rest _) nil)))
+    (cl-letf (((symbol-function 'dp-window-utility--read-key-vector)
+               (lambda (&rest _) (kbd "M-b"))))
       (setq result (display-buffer (get-buffer-create "*t3*"))))
     (check "nil choice: a window is still returned"
            (and result (window-live-p result))))
-  ;; in batch the rule declines without choosing
+  ;; in batch the rule declines without prompting
   (let ((noninteractive t)
         (calls 0)
         (result nil))
-    (cl-letf (((symbol-function 'aw-select)
+    (cl-letf (((symbol-function 'dp-window-utility-dispatch-prompt)
                (lambda (&rest _) (setq calls (1+ calls)) nil)))
       (setq result (display-buffer (get-buffer-create "*t4*"))))
-    (check "batch gate: the choice never runs" (= calls 0))
+    (check "batch gate: the dispatch prompt never runs" (= calls 0))
     (check "batch gate: a window is still returned"
            (and result (window-live-p result))))
   ;; a request that names a place is left to the caller
   (let ((calls 0))
-    (cl-letf (((symbol-function 'aw-select)
-               (lambda (&rest _) (setq calls (1+ calls)) w2)))
+    (cl-letf (((symbol-function 'dp-window-utility-dispatch-prompt)
+               (lambda (_b a &rest _)
+                 (setq calls (1+ calls))
+                 (list :action 'window :window w2 :alist a))))
       (let ((win (display-buffer (get-buffer-create "*side*")
                                  '((display-buffer-in-side-window)
                                    (side . right)))))
         (check "a side request is left to the caller"
                (and (= calls 0)
-                    (eq (window-parameter win 'window-side) 'right))))))
+                    (eq (window-parameter win 'window-side) 'right)))
+        (when (window-live-p win) (delete-window win)))))
   ;; t selects the chosen window
   (select-window w1)
   (let ((dp-action-select t))
-    (cl-letf (((symbol-function 'aw-select) (lambda (&rest _) w2)))
+    (cl-letf (((symbol-function 'dp-window-utility--read-key-vector)
+               (lambda (&rest _) [?2])))
       (display-buffer (get-buffer-create "*t5*"))
       (check "select t: the chosen window is selected"
              (eq (selected-window) w2))))
@@ -206,7 +177,8 @@
   (select-window w1)
   (let ((dp-action-select 'auto)
         (post-command-hook nil))
-    (cl-letf (((symbol-function 'aw-select) (lambda (&rest _) w2)))
+    (cl-letf (((symbol-function 'dp-window-utility--read-key-vector)
+               (lambda (&rest _) [?2])))
       (display-buffer (get-buffer-create "*t6*"))
       (check "select auto: the selection is unchanged"
              (eq (selected-window) w1))
@@ -216,7 +188,8 @@
   (select-window w1)
   (let ((dp-action-select nil)
         (post-command-hook nil))
-    (cl-letf (((symbol-function 'aw-select) (lambda (&rest _) w2)))
+    (cl-letf (((symbol-function 'dp-window-utility--read-key-vector)
+               (lambda (&rest _) [?2])))
       (let ((pop-up-windows t))
         (pop-to-buffer (get-buffer-create "*t7*") t))
       (check "select nil: the caller selected during the command"
@@ -231,19 +204,23 @@
   (select-window w1)
   (set-window-dedicated-p w1 nil))
 
-;;; ---- the function list, read at display time
+;;; ---- the function list, read at display time (no automatic splitting)
+(check "default action functions omit automatic splitting"
+       (equal (default-value 'dp-action-functions)
+              '(display-buffer-reuse-window
+                display-buffer-same-window
+                dp-action-choose-window)))
+(check "legacy split-or-ask and mode-line-help are removed"
+       (and (not (fboundp 'dp-action-split-or-ask))
+            (not (boundp 'dp-mode-line-help))))
 (let ((noninteractive nil)
       (probe (get-buffer-create "*list-default*")))
   (set-window-buffer w2 probe)
   (select-window w1)
-  (let ((dp-action-functions
-         '(display-buffer-reuse-window
-           display-buffer-same-window
-           dp-action-choose-window)))
-    (let ((win (display-buffer probe)))
-      (check "the default list: one view, the existing window wins"
-             (and (eq win w2)
-                  (= 1 (length (get-buffer-window-list probe nil nil)))))))
+  (let ((win (display-buffer probe)))
+    (check "the default list: one view, the existing window wins"
+           (and (eq win w2)
+                (= 1 (length (get-buffer-window-list probe nil nil))))))
   (set-window-buffer w1 (get-buffer-create "*other*")))
 (let ((noninteractive nil)
       (probe (get-buffer-create "*list-same*")))
@@ -257,98 +234,57 @@
              (and (eq win w1)
                   (= 2 (length (get-buffer-window-list probe nil nil)))))))
   (set-window-buffer w1 (get-buffer-create "*other2*")))
-;; without the chooser the rule never asks
+;; without the chooser the rule never prompts
 (let ((noninteractive nil)
       (calls 0))
   (set-window-dedicated-p w1 t)
   (let ((dp-action-functions '(display-buffer-reuse-window)))
-    (cl-letf (((symbol-function 'aw-select)
+    (cl-letf (((symbol-function 'dp-window-utility-dispatch-prompt)
                (lambda (&rest _) (setq calls (1+ calls)) nil)))
       (display-buffer (get-buffer-create "*night*"))
-      (check "a list without the chooser never asks" (= calls 0))))
+      (check "a list without the chooser never prompts" (= calls 0))))
   (set-window-dedicated-p w1 nil))
 
-;;; ---- the patched prefix: the ace path asks again on a utility choice
+;;; ---- the prefix bridge: ineligible choice keeps prompt open until valid
 (let ((noninteractive nil)
       (pop-up-windows nil)
       (calls 0)
-      (mode-lines nil)
-      (messages nil)
-      (dp-mode-line-help t))
+      (messages nil))
   (set-window-dedicated-p w2 t)
   (dp-other-window-prefix)
-  (let ((choices (list w2 w1)))
+  (let ((keys (list [?2] [?1])))
     (cl-letf (((symbol-function 'display-buffer-pop-up-window)
                (lambda (&rest _) nil))
-              ((symbol-function 'aw-select)
-               (lambda (mode-line)
-                 (push mode-line mode-lines)
+              ((symbol-function 'dp-window-utility--read-key-vector)
+               (lambda (&rest _)
                  (setq calls (1+ calls))
-                 (pop choices)))
+                 (pop keys)))
               ((symbol-function 'message)
                (lambda (format-string &rest args)
                  (push (apply #'format format-string args) messages))))
       (let ((result (display-buffer (get-buffer-create "*t9*"))))
-        (check "prefix: a dedicated choice asked again" (= calls 2))
-        (check "prefix: the repeat uses a separate mode line"
-               (equal (nreverse mode-lines)
-                      '("Display buffer in window (? for actions)"
-                        "Choose another window (? for actions)")))
-        (check "prefix: the echo area shows the hint and the repeat"
-               (equal (nreverse messages)
-                      '("Display buffer in window (? for actions)"
-                        "disbuf-pivot: the chosen window cannot display the buffer; choose another\nChoose another window (? for actions)")))
+        (check "prefix: a dedicated choice keeps the prompt open" (= calls 2))
+        (check "prefix: echo area reports ineligibility reason"
+               (cl-some (lambda (m) (string-match-p "dedicated to" m))
+                        messages))
         (check "prefix: the buffer is in the second choice"
                (eq (window-buffer w1) (get-buffer "*t9*")))
         (check "prefix: the display returns that window" (eq result w1)))))
   (set-window-dedicated-p w2 nil))
 
-;;; ---- the mode-line help is off by default
-(let ((disbuf-pivot-mode-line-help nil))
-  (check "mode line: the help string is off by default"
-         (null (disbuf-pivot-window-utility--aw-mode-line
-                t "Display buffer in window"))))
-
-;;; ---- the echo hint is independent of the mode-line option
-(let ((disbuf-pivot-mode-line-help nil)
-      (messages nil))
-  (cl-letf (((symbol-function 'message)
-             (lambda (format-string &rest args)
-               (push (apply #'format format-string args) messages))))
-    (dp-window-utility--aw-show-hint t "Display buffer in window")
-    (check "echo: the dispatch hint is shown when the mode-line option is nil"
-           (equal (nreverse messages)
-                  '("Display buffer in window (? for actions)")))))
-
-;;; ---- the prompt passes nil for the mode line and binds aw-minibuffer-flag
-(let ((noninteractive nil)
-      (disbuf-pivot-mode-line-help nil)
-      (aw-minibuffer-flag t)
-      (seen-mode-line 'unset)
-      (seen-flag 'unset))
-  (cl-letf (((symbol-function 'aw-select)
-             (lambda (mode-line)
-               (setq seen-mode-line mode-line
-                     seen-flag aw-minibuffer-flag)
-               w1)))
-    (dp-window-utility-choose-display-window 'frame nil)
-    (check "prompt: the mode-line option nil passes nil to aw-select"
-           (null seen-mode-line))
-    (check "prompt: aw-minibuffer-flag is nil around aw-select"
-           (null seen-flag))))
-
-;;; ---- the prefix splits under the maximum
+;;; ---- the prefix legacy split bridge splits under the maximum
 (let ((noninteractive nil)
       (pop-up-windows nil)
       (split-calls 0)
       (ask-calls 0)
       (dp-window-utility-split-maximum 4))
   (select-window w1)
-  (cl-letf (((symbol-function 'aw-window-list) (lambda () (list w1 w2)))
+  (cl-letf (((symbol-function 'dp-window-utility--scope-windows)
+             (lambda (&optional _) (list w1 w2)))
             ((symbol-function 'display-buffer-pop-up-window)
              (lambda (_buffer _alist) (setq split-calls (1+ split-calls)) w2))
-            ((symbol-function 'aw-select)
-             (lambda (&rest _) (setq ask-calls (1+ ask-calls)) w1)))
+            ((symbol-function 'dp-window-utility-dispatch-prompt)
+             (lambda (&rest _) (setq ask-calls (1+ ask-calls)) nil)))
     (dp-other-window-prefix)
     (let ((result (display-buffer (get-buffer-create "*prefix-split*"))))
       (check "prefix: under the maximum, the split decides"
@@ -364,7 +300,8 @@
     (dp-other-window-prefix)
     (cl-letf (((symbol-function 'display-buffer-pop-up-window)
                (lambda (&rest _) nil))
-              ((symbol-function 'aw-select) (lambda (&rest _) w2)))
+              ((symbol-function 'dp-window-utility--read-key-vector)
+               (lambda (&rest _) [?2])))
       (display-buffer (get-buffer-create "*t10*"))
       (check "prefix select t: the chosen window is selected"
              (eq (selected-window) w2))))
@@ -374,7 +311,8 @@
     (dp-other-window-prefix)
     (cl-letf (((symbol-function 'display-buffer-pop-up-window)
                (lambda (&rest _) nil))
-              ((symbol-function 'aw-select) (lambda (&rest _) w2)))
+              ((symbol-function 'dp-window-utility--read-key-vector)
+               (lambda (&rest _) [?2])))
       (display-buffer (get-buffer-create "*t11*"))
       (check "prefix select auto: the selection is unchanged"
              (eq (selected-window) w1))))
@@ -384,7 +322,8 @@
     (dp-other-window-prefix)
     (cl-letf (((symbol-function 'display-buffer-pop-up-window)
                (lambda (&rest _) nil))
-              ((symbol-function 'aw-select) (lambda (&rest _) w2)))
+              ((symbol-function 'dp-window-utility--read-key-vector)
+               (lambda (&rest _) [?2])))
       (pop-to-buffer (get-buffer-create "*t12*") t))
     (check "prefix select nil: the caller selected during the command"
            (eq (selected-window) w2))
@@ -393,19 +332,17 @@
            (eq (selected-window) w1)))
   (setq display-buffer-overriding-action '(nil . nil)))
 
-;;; ---- the prefix's ace scope and same-window exclusion
+;;; ---- the prefix's excluded window for inhibit-same-window
 (let ((noninteractive nil)
       (pop-up-windows nil)
-      (ask-scope nil)
-      (ask-ignore nil))
+      (seen-excluded nil))
   (select-window w1)
   (cl-letf (((symbol-function 'display-buffer-pop-up-window)
              (lambda (&rest _) nil))
-            ((symbol-function 'aw-select)
-             (lambda (&rest _)
-               (setq ask-scope aw-scope
-                     ask-ignore aw-ignore-current)
-               w2)))
+            ((symbol-function 'dp-window-utility-dispatch-prompt)
+             (lambda (_b a &rest args)
+               (setq seen-excluded (plist-get args :excluded-window))
+               (list :action 'window :window w2 :alist a))))
     (unwind-protect
         (progn
           (dp-other-window-prefix)
@@ -413,10 +350,8 @@
            (get-buffer-create "*prefix-scope*")
            '(nil (reusable-frames . visible)
              (inhibit-same-window . t)))
-          (check "prefix: the ace scope follows reusable-frames"
-                 (eq ask-scope 'visible))
-          (check "prefix: inhibit-same-window reaches ace-window"
-                 ask-ignore))
+          (check "prefix: inhibit-same-window excludes selected window"
+                 (eq seen-excluded w1)))
       (setq display-buffer-overriding-action '(nil . nil)))))
 
 ;;; ---- the prefix commands search the parent frame
@@ -434,44 +369,22 @@
              (and (eq seen 'parent)
                   (memq result windows))))))
 
-;;; ---- the default list reaches the split rule
+;;; ---- the core entry does not auto-split; it prompts instead
 (let ((noninteractive nil)
-      (split-height-threshold 10)
-      (split-width-threshold 20)
-      (dp-window-utility-split-maximum 4)
       (ask-calls 0))
   (set-window-dedicated-p w1 t)
   (select-window w1)
-  (cl-letf (((symbol-function 'aw-window-list) (lambda () (list w1 w2)))
-            ((symbol-function 'aw-select)
-             (lambda (&rest _) (setq ask-calls (1+ ask-calls)) nil)))
-    (let ((probe (get-buffer-create "*default-split*")))
-      (let ((win (display-buffer probe)))
-        (check "default list: under the maximum, `display-buffer' splits"
-               (and win
-                    (not (eq win w1))
-                    (= ask-calls 0)
-                    (eq (window-buffer win) probe))))))
+  (cl-letf (((symbol-function 'dp-window-utility-dispatch-prompt)
+             (lambda (_b a &rest _)
+               (setq ask-calls (1+ ask-calls))
+               (list :action 'window :window w2 :alist a))))
+    (let* ((probe (get-buffer-create "*no-auto-split*"))
+           (win (display-buffer probe)))
+      (check "default list: core prompts instead of auto-splitting"
+             (and (eq win w2)
+                  (= ask-calls 1)
+                  (eq (window-buffer win) probe)))))
   (set-window-dedicated-p w1 nil))
-
-;;; ---- one window: a request for another window splits instead of reusing it
-(let ((noninteractive nil)
-      (pop-up-windows t)
-      (split-height-threshold 10)
-      (split-width-threshold 20))
-  (delete-other-windows)
-  (let ((start (selected-window)))
-    (cl-letf (((symbol-function 'aw-select)
-               (lambda (&rest _) (selected-window))))
-      (let* ((probe (get-buffer-create "*one-window*"))
-             (win (display-buffer probe t)))
-        (check "one window, ACTION t: a new window is split"
-               (and win
-                    (not (eq win start))
-                    (= 2 (length (window-list)))
-                    (eq (window-buffer win) probe)))
-        (check "one window, ACTION t: the selected window keeps its buffer"
-               (not (eq (window-buffer start) probe)))))))
 
 ;;; ---- the prefix mode remaps the built-in prefix commands
 (dp-prefix-mode +1)

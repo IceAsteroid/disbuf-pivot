@@ -13,8 +13,8 @@ behavior is in `docs/DESIGN_RULESET.md`.
 entry, its options, the tab and frame prompts, and the mode.
 
 `disbuf-pivot-window-utility.el` holds the window predicates, the
-cannot-prompt guards, the split primitives and options, the dispatch
-prompt options and label faces, the window prompt, and the post-command
+cannot-prompt guards, the window-labeling overlays and split
+primitives, the synchronous dispatch prompt menu, and the post-command
 selection.
 
 `disbuf-pivot-prefix.el` holds the prefix commands and the global minor
@@ -37,7 +37,7 @@ The internal dependency directions are:
 disbuf-pivot.el (feature disbuf-pivot)
 ├── disbuf-pivot-window-utility.el (dp-window-utility)
 ├── disbuf-pivot-tab-bar.el (dp-tab-bar)
-└── ace-window, tab-bar
+└── tab-bar
 
 disbuf-pivot-prefix.el (dp-prefix)
 ├── disbuf-pivot.el
@@ -61,8 +61,8 @@ make check-consult   # compile and checkdoc the optional consult library
   `ace-window` and `avy`, and `make check-consult` needs `consult` too.
 - `eldev` must be on `PATH`; the checks call it directly.
 - `make check-consult` does not run tests.
-- The test files are `core-test.el`, `order-test.el`,
-  `display-ask-test.el`, and `tab-frame-test.el`.
+- The test files are `core-test.el`, `dispatch-prompt-test.el`,
+  `order-test.el`, `display-ask-test.el`, and `tab-frame-test.el`.
 - One test file: `eldev test -f order-test.el`.
 - One spec:
   `eldev test -f order-test.el "disbuf-pivot display-buffer-alist entry ordering"`.
@@ -86,12 +86,12 @@ change.  Report what was verified and what was not.
 
 The display package does not require `emacs-utils` or `column-popup`;
 `emacs-utils` consumes the optional consult library.  `consult` is
-optional and only the consult library requires it.  The current v0.1.0
-entry needs `ace-window` (`avy` is required by `ace-window`); the
-redesign in `docs/DESIGN_RULESET.md` replaces that dependency with the
-package's own window-labeling and split facility while optionally
-honoring `aw-keys` and `aw-dispatch-alist`.  `tab-bar-mode` is needed
-for tab targets.
+optional and only the consult library requires it.  The package's own
+window-labeling and split facility in `disbuf-pivot-window-utility.el`
+has no runtime reference to `ace-window`; `Package-Requires`,
+`Makefile`, and CI still carry `ace-window` (`avy` is required by
+`ace-window`) until the dependency cleanup milestone removes them.
+`tab-bar-mode` is needed for tab targets.
 
 Keep that direction.  The display repository is separate from
 `emacs-utils`; do not make one require the other.

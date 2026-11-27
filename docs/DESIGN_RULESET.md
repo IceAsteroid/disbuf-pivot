@@ -93,11 +93,45 @@ must not be conflated:
 | Window kind | Displayable for `buffer`? | Eligible (direct display)? | Splittable target? |
 |---|---|---|---|
 | Normal window (non-selected) | Yes | Yes | Yes |
-| Normal window (selected) | Yes | Yes (`No` for `other-window-prefix`) | Yes (including `other-window-prefix`) |
+| Normal window (selected) | Yes | Yes (`No` for `disbuf-pivot-other-window-prefix`) | Yes (including `disbuf-pivot-other-window-prefix`) |
 | Dedicated to *this* `buffer` (non-side) | Yes | Yes | Yes |
 | Dedicated to *another* buffer (non-side) | No | No | **Yes** (new split is non-dedicated) |
 | Side window | No | No | No (`split-window` signals error) |
 | Minibuffer / dead window | No | No | No |
+
+### Ineligibility and unsplittable reason reference
+
+When the user presses an ineligible window label in the dispatch prompt,
+`disbuf-pivot-window-utility-ineligible-reason` evaluates conditions in
+priority order and returns the first matching reason string (or nil when
+eligible).  When a split action rejects a window during split-target
+selection, `disbuf-pivot-window-utility-unsplittable-reason` evaluates
+conditions in priority order and returns the first matching reason
+string (or nil when splittable); pressing a split key when zero
+splittable windows exist in the window label scope reports the scope
+reason below.
+
+**Ineligibility reasons (`disbuf-pivot-window-utility-ineligible-reason`):**
+
+| Priority | Condition | Exact reason string | Echo-area message |
+|---|---|---|---|
+| 1 | `(not (window-live-p win))` | `"window is no longer live"` | `disbuf-pivot: window [LABEL] is ineligible (window is no longer live)` |
+| 2 | `(window-minibuffer-p win)` | `"minibuffer window"` | `disbuf-pivot: window [LABEL] is ineligible (minibuffer window)` |
+| 3 | `(window-parameter win 'window-side)` | `"side window"` | `disbuf-pivot: window [LABEL] is ineligible (side window)` |
+| 4 | Dedicated to another buffer (or any dedicated window when `buffer` is nil) | `"dedicated to <buffer-name>"` | `disbuf-pivot: window [LABEL] is ineligible (dedicated to <buffer-name>)` |
+| 5 | `(eq win excluded-window)` (`disbuf-pivot-other-window-prefix`) | `"excluded by other-window-prefix"` | `disbuf-pivot: window [LABEL] is ineligible (excluded by other-window-prefix)` |
+
+**Unsplittable reasons (`disbuf-pivot-window-utility-unsplittable-reason` and split rejection):**
+
+| Priority | Condition | Exact reason string | Echo-area message |
+|---|---|---|---|
+| 1 | `(not (window-live-p win))` | `"window is no longer live"` | `disbuf-pivot: cannot split <buffer-name> (window is no longer live)` |
+| 2 | `(window-minibuffer-p win)` | `"minibuffer window"` | `disbuf-pivot: cannot split <buffer-name> (minibuffer window)` |
+| 3 | `(window-parameter win 'window-side)` | `"side window"` | `disbuf-pivot: cannot split <buffer-name> (side window)` |
+| 4 | `(frame-parameter (window-frame win) 'unsplittable)` | `"unsplittable frame"` | `disbuf-pivot: cannot split <buffer-name> (unsplittable frame)` |
+| — | 0 splittable windows in scope (`unsplittable` frame) | `"unsplittable frame"` | `disbuf-pivot: no splittable window (unsplittable frame)` |
+| — | 0 splittable windows in scope (only side windows) | `"only side windows"` | `disbuf-pivot: no splittable window (only side windows)` |
+| — | 0 splittable windows in scope (no live windows) | `"no live windows"` | `disbuf-pivot: no splittable window (no live windows)` |
 
 **Verified Emacs 31.1 quirks behind these predicates:**
 
@@ -361,7 +395,7 @@ window label scope and never labeled).
     the menu buffer up to available space on the current frame.  When
     the menu is taller than available space and available height is at
     least `disbuf-pivot-menu-min-height`, the side window is scrollable.
-    `selected-window` remains on the user's editing window (never moved
+    `selected-window` remains on the previously selected window (never moved
     to the menu window); standard Emacs other-window scroll commands
     (`scroll-other-window` and `scroll-other-window-down` — default
     `C-M-v`, `C-M-S-v`, `M-<next>`, `M-<prior>`, plus any custom user

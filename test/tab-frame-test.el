@@ -17,6 +17,7 @@
   (setq nfail 0)
 
 (defvar w1) (defvar w2)
+(delete-other-windows)
 (setq w1 (selected-window))
 (setq w2 (split-window w1 nil 'below))
 
@@ -78,12 +79,11 @@
 (defun tab-stub-tabs ()
   '(((name . "one") (index . 0))
     ((name . "two") (index . 1))))
-(defun ask-stub (mode-line)
-  (setq ask-seen (list mode-line aw-scope aw-ignore-current
-                       aw-dispatch-when-more-than aw-dispatch-always))
-  w2)
+(defun ask-stub (buffer alist &rest _args)
+  (setq ask-seen (list buffer alist))
+  (list :action 'window :window w2 :alist alist))
 
-;;; ---- the tab question and its window
+;;; ---- the tab prompt and its window
 (let ((noninteractive nil)
       (tab-calls nil)
       (ask-seen nil))
@@ -97,7 +97,7 @@
             ((symbol-function 'tab-bar-change-tab-group)
              (lambda (group) (tab-record 'group group)))
             ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
-            ((symbol-function 'aw-select) #'ask-stub)
+            ((symbol-function 'dp-window-utility-dispatch-prompt) #'ask-stub)
             ((symbol-function 'completing-read) (lambda (&rest _) "two")))
     (let ((result (dp-action-tab
                    (get-buffer-create "*tab1*") '((tab-name . "two")))))
@@ -107,8 +107,7 @@
                   (equal (nreverse tab-calls) '((select 2))))))))
 (let ((noninteractive nil)
       (tab-calls nil)
-      (ask-seen nil)
-      (dp-mode-line-help t))
+      (ask-seen nil))
   (cl-letf (((symbol-function 'tab-bar-tabs) #'tab-stub-tabs)
             ((symbol-function 'tab-bar-new-tab)
              (lambda (&rest _) (tab-record 'new)))
@@ -117,7 +116,7 @@
             ((symbol-function 'tab-bar-change-tab-group)
              (lambda (group) (tab-record 'group group)))
             ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
-            ((symbol-function 'aw-select) #'ask-stub)
+            ((symbol-function 'dp-window-utility-dispatch-prompt) #'ask-stub)
             ((symbol-function 'completing-read) (lambda (&rest _) "")))
     (let ((result (dp-action-tab
                    (get-buffer-create "*tab2*") '((tab-group . "work")))))
@@ -125,8 +124,9 @@
              (and (eq (car-safe result) w2)
                   (eq (cdr-safe result) 'tab)
                   (equal (nreverse tab-calls) '((new) (group "work")))))))
-  (check "tab: the window question uses the tab frame and reads a key"
-         (equal ask-seen '("Display buffer in window (? for actions)" frame nil 0 nil))))
+  (check "tab: the dispatch prompt receives buffer and alist"
+         (and (bufferp (car ask-seen))
+              (equal (cadr ask-seen) '((tab-group . "work"))))))
 (let ((noninteractive nil)
       (tab-calls nil))
   (cl-letf (((symbol-function 'tab-bar-tabs) #'tab-stub-tabs)
@@ -137,7 +137,7 @@
             ((symbol-function 'tab-bar-change-tab-group)
              (lambda (group) (tab-record 'group group)))
             ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
-            ((symbol-function 'aw-select) #'ask-stub)
+            ((symbol-function 'dp-window-utility-dispatch-prompt) #'ask-stub)
             ((symbol-function 'completing-read) (lambda (&rest _) "three")))
     (let ((result (dp-action-tab
                    (get-buffer-create "*tab3*") nil)))
@@ -153,45 +153,38 @@
   (cl-letf (((symbol-function 'tab-bar-tabs) #'tab-stub-tabs)
             ((symbol-function 'tab-bar-select-tab) #'ignore)
             ((symbol-function 'get-buffer-window) (lambda (&rest _) w2))
-            ((symbol-function 'aw-select)
-             (lambda (&rest _) (setq ask-calls (1+ ask-calls)) w1)))
+            ((symbol-function 'dp-window-utility-dispatch-prompt)
+             (lambda (&rest _) (setq ask-calls (1+ ask-calls)) nil)))
     (let ((result (dp-action-tab
                    (get-buffer-create "*tab-reuse*") '((tab-name . "two")))))
-      (check "tab: a window showing the buffer is reused without a question"
+      (check "tab: a window showing the buffer is reused without prompting"
              (and (eq (car-safe result) w2)
                   (eq (cdr-safe result) 'reuse)
                   (zerop ask-calls))))))
 
-;;; ---- a chosen window that cannot display asks again
+;;; ---- a chosen window that cannot display keeps the prompt open
 (let ((noninteractive nil)
       (calls 0)
-      (mode-lines nil)
       (messages nil)
-      (dp-mode-line-help t))
+      (keys (list [?1] [?2])))
   (set-window-dedicated-p w1 t)
   (cl-letf (((symbol-function 'tab-bar-tabs) #'tab-stub-tabs)
             ((symbol-function 'tab-bar-select-tab) #'ignore)
             ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
-            ((symbol-function 'aw-select)
-             (lambda (mode-line)
-               (push mode-line mode-lines)
+            ((symbol-function 'dp-window-utility--read-key-vector)
+             (lambda (&rest _)
                (setq calls (1+ calls))
-               (if (= calls 1) w1 w2)))
+               (pop keys)))
             ((symbol-function 'message)
              (lambda (format-string &rest args)
                (push (apply #'format format-string args) messages))))
     (let ((result (dp-action-tab
                    (get-buffer-create "*tab-ask*") '((tab-name . "two")))))
-      (check "tab: a dedicated choice asks again"
+      (check "tab: a dedicated choice keeps the prompt open"
              (and (eq (car-safe result) w2) (= calls 2)))
-      (check "tab: the repeat uses a separate mode line"
-             (equal (nreverse mode-lines)
-                    '("Display buffer in window (? for actions)"
-                      "Choose another window (? for actions)")))
-      (check "tab: the echo area shows the hint and the repeat"
-             (equal (nreverse messages)
-                    '("Display buffer in window (? for actions)"
-                      "disbuf-pivot: the chosen window cannot display the buffer; choose another\nChoose another window (? for actions)")))))
+      (check "tab: echo area reports ineligibility reason"
+             (cl-some (lambda (m) (string-match-p "dedicated to" m))
+                      messages))))
   (set-window-dedicated-p w1 nil))
 
 ;;; ---- the tab package's reader supplies the name
@@ -210,7 +203,8 @@
                       ((symbol-function 'tab-bar-select-tab)
                        (lambda (index) (tab-record 'select index)))
                       ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
-                      ((symbol-function 'aw-select) #'ask-stub)
+                      ((symbol-function 'dp-window-utility-dispatch-prompt)
+                       #'ask-stub)
                       ((symbol-function 'completing-read)
                        (lambda (&rest _) (setq reader-calls (1+ reader-calls)) "")))
               (let ((result (dp-action-tab
@@ -253,7 +247,7 @@
             ((symbol-function 'tab-bar-new-tab)
              (lambda (&rest _) (push '(new) tab-calls)))
             ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
-            ((symbol-function 'aw-select) #'ask-stub))
+            ((symbol-function 'dp-window-utility-dispatch-prompt) #'ask-stub))
     (dp-action-tab
      (get-buffer-create "*tab-dup*") '((tab-name . "dup<2>")))
     (check "tab: a duplicate name selects its own tab"
@@ -261,47 +255,19 @@
 
 ;;; ---- inhibit-same-window in the tab path
 (let ((noninteractive nil)
-      (aw-called 0))
+      (prompt-called 0))
   (select-window w1)
   (cl-letf (((symbol-function 'get-buffer-window)
              (lambda (&rest _) (selected-window)))
-            ((symbol-function 'aw-select)
-             (lambda (&rest _)
-               (setq aw-called (1+ aw-called))
-               w2)))
+            ((symbol-function 'dp-window-utility-dispatch-prompt)
+             (lambda (_b a &rest _)
+               (setq prompt-called (1+ prompt-called))
+               (list :action 'window :window w2 :alist a))))
     (let ((result (dp-action--display-in-tab
                    (get-buffer-create "*tab-inhibit*")
                    '((inhibit-same-window . t)))))
       (check "tab: inhibit-same-window declines the selected window"
-             (and (eq (car-safe result) w2) (= aw-called 1))))))
-
-;;; ---- the split help follows the user's dispatch list
-(let ((aw-dispatch-alist
-       '((?s aw-split-window-vert "Split Vert Window")
-         (?x aw-delete-window "Delete Window"))))
-  (let ((actions (dp-window-utility--split-actions)))
-    (check "split help: the user's split key is used"
-           (string-match-p "s: Split Vert Window"
-                           (dp-window-utility--split-help actions)))
-    (check "split help: a delete action is left out"
-           (not (string-match-p "Delete Window"
-                                (dp-window-utility--split-help actions))))))
-
-;;; ---- the sole window's key
-(let ((aw-dispatch-alist '((?s aw-split-window-vert "Split Test"))))
-  (cl-letf (((symbol-function 'read-char) (lambda (&rest _) ?x)))
-    (check "sole window: any other key uses it"
-           (eq (dp-window-utility-choose-sole-window w1) w1)))
-  (cl-letf (((symbol-function 'read-char) (lambda (&rest _) ?s))
-            ((symbol-function 'aw-split-window-vert)
-             (lambda (_window) w2)))
-    (check "sole window: a split key uses the new window"
-           (eq (dp-window-utility-choose-sole-window w1) w2))))
-(let ((aw-dispatch-alist '((?s aw-split-window-vert "Split Test"))))
-  (select-window w1)
-  (cl-letf (((symbol-function 'read-char) (lambda (&rest _) ?x)))
-    (check "sole window: an ignored selected window cancels"
-           (null (dp-window-utility-choose-sole-window w1 t)))))
+             (and (eq (car-safe result) w2) (= prompt-called 1))))))
 
 ;;; ---- batch asks nothing
 (let ((noninteractive t))
@@ -312,7 +278,7 @@
          (null (dp-action--frame
                 (get-buffer-create "*frame3*") '((pop-up-frames . t))))))
 
-;;; ---- the frame question
+;;; ---- the frame prompt
 (let ((noninteractive nil)
       (calls nil))
   (cl-letf (((symbol-function 'dp-action--frames)
@@ -326,7 +292,7 @@
              (lambda (frame) (setq calls (list 'select frame))))
             ((symbol-function 'tab-bar-tabs) (lambda () '(((name . "one")))))
             ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
-            ((symbol-function 'aw-select) #'ask-stub))
+            ((symbol-function 'dp-window-utility-dispatch-prompt) #'ask-stub))
     (check "frame: a name selects that frame"
            (and (eq (dp-action--frame
                      (get-buffer-create "*frame1*") nil)
@@ -350,7 +316,7 @@
             ((symbol-function 'tab-bar-rename-tab) #'ignore)
             ((symbol-function 'tab-bar-change-tab-group) #'ignore)
             ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
-            ((symbol-function 'aw-select) #'ask-stub))
+            ((symbol-function 'dp-window-utility-dispatch-prompt) #'ask-stub))
     (check "frame: tab-bar-mode asks for a tab with one tab"
            (and (eq (dp-action--frame
                      (get-buffer-create "*frame-tab*") nil)
@@ -389,7 +355,7 @@
             ((symbol-function 'tab-bar-select-tab)
              (lambda (index) (tab-record 'select index)))
             ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
-            ((symbol-function 'aw-select) #'ask-stub))
+            ((symbol-function 'dp-window-utility-dispatch-prompt) #'ask-stub))
     (check "frame: a frame with several tabs asks the tab, then the window"
            (and (eq (dp-action--frame
                      (get-buffer-create "*frame4*") nil)
@@ -412,7 +378,7 @@
             ((symbol-function 'tab-bar-tabs)
              (lambda () '(((name . "one")))))
             ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
-            ((symbol-function 'aw-select) #'ask-stub))
+            ((symbol-function 'dp-window-utility-dispatch-prompt) #'ask-stub))
     (check "frame: a repeated name selects the second frame"
            (and (eq (dp-action--frame
                      (get-buffer-create "*frame-dup*") nil)
@@ -454,11 +420,11 @@
             ((symbol-function 'completing-read)
              (lambda (&rest _) (setq asked (1+ asked)) ""))
             ((symbol-function 'get-buffer-window) (lambda (&rest _) nil))
-            ((symbol-function 'aw-select) #'ask-stub))
+            ((symbol-function 'dp-window-utility-dispatch-prompt) #'ask-stub))
     (let ((win (display-buffer (get-buffer-create "*tab-core*")
                                '((display-buffer-in-tab)
                                  (inhibit-same-window . nil)))))
-      (check "core: a tab ACTION reaches the tab question"
+      (check "core: a tab ACTION reaches the tab prompt"
              (and (eq win w2) (= asked 1) (= made 1))))))
 
 ;;; ---- the core frame action through display-buffer
@@ -473,7 +439,7 @@
              (lambda (&rest _) (setq popped (1+ popped)) w2)))
     (let ((win (display-buffer (get-buffer-create "*frame-core*")
                                display-buffer--other-frame-action)))
-      (check "core: an other-frame ACTION reaches the frame question"
+      (check "core: an other-frame ACTION reaches the frame prompt"
              (and (eq win w2) (= asked 1) (= popped 1))))))
 
 ;;; ---- the reusable tab

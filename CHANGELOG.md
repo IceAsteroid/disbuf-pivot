@@ -4,6 +4,27 @@
 
 ### User-visible Changes
 
+- Add: replace `aw-select`, `disbuf-pivot-mode-line-help`, and
+  automatic core splitting (`disbuf-pivot-action-split-or-ask`) with the
+  package's own synchronous dispatch prompt (`disbuf-pivot-window-utility-dispatch-prompt`).
+  `disbuf-pivot-action-functions` now defaults to
+  `(display-buffer-reuse-window display-buffer-same-window
+  disbuf-pivot-action-choose-window)`.
+- Add: own window-labeling overlays (`disbuf-pivot-eligible-label` and
+  `disbuf-pivot-ineligible-label` faces), uniform fixed-width window-key
+  overflow (`disbuf-pivot-window-keys`), explicit split actions
+  (`disbuf-pivot-split-actions`, defaulting to `b`/`r`/`f`, splitting a
+  sole splittable window immediately or reading a splittable target when
+  more than one exists), direct `display-buffer-in-side-window` dispatch
+  prompt menu with responsive 3/2/1 logical hanging-indent wrapping
+  (`disbuf-pivot-menu-min-column-width`, `disbuf-pivot-menu-min-height`),
+  standard Emacs `scroll-other-window` / `scroll-other-window-down`
+  scrolling without moving `selected-window`, small-frame echo-area
+  fallback keeping window labels drawn and showing the dispatch prompt
+  default, `M-1`..`M-6` and always-present `M-0` window-setting toggles
+  shadowing disabled keys locally with `(KEY . nil)`, `"Use caller
+  intent"` (`M-c`), `"Leave undisplayed"` (`M-n` when `allow-no-window`
+  is non-nil), `"Bypass pivot"` (`M-b` nil choice), and `C-g` abort.
 - Add: `disbuf-pivot-exclude-conditions`; buffers matching any
   `buffer-match-p` condition (including `category` via the caller's
   ACTION and `this-command`) return nil from
@@ -44,6 +65,22 @@
 
 ### Internal Changes
 
+- Docs: add the ineligibility and unsplittable reason reference tables
+  (covering `disbuf-pivot-window-utility-ineligible-reason`,
+  `disbuf-pivot-window-utility-unsplittable-reason`, and
+  0-splittable-window split rejection) to `docs/DESIGN_RULESET.md`
+  section 2, and sync `CONTRIBUTING.md` and `README.md` with the
+  Milestone 2 dispatch prompt and dependency state.
+- Internal: add `disbuf-pivot-window-utility-unsplittable-reason`.
+- Test: add `test/dispatch-prompt-test.el` covering Milestone 2
+  window-label generation, collision allocation, overlays, direct
+  side-window menu rendering (including non-clobbering existing bottom
+  side windows), responsive wrapping, scrolling, small-frame fallback,
+  split-target selection, `(KEY . nil)` toggle shadowing, real
+  `read-key-sequence-vector` key reads, and exit outcomes; update
+  `core-test.el`, `order-test.el`, `display-ask-test.el`, and
+  `tab-frame-test.el` to exercise the dispatch prompt instead of
+  `aw-select`.
 - Docs: clarify the Milestone 2-to-5 prefix compatibility bridge and
   Milestone 3 items (`dp-action--run` regulated dispatch, header info
   formatting, and failure-after-choice handling) in `TODO.md`.

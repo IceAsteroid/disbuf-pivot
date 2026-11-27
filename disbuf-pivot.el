@@ -9,33 +9,32 @@
 
 ;;; Commentary:
 ;; When the selected window cannot display a buffer -- it is dedicated
-;; or a side window -- the window the buffer goes to is Emacs's choice,
-;; made by its default action functions, so the buffer can go where the
-;; user does not expect it.  `disbuf-pivot-action-mode' replaces that
-;; with one rule and one explicit choice.  By default the action
-;; functions display a buffer in a window that already displays it,
-;; else in the selected window, and a buffer the selected window cannot
-;; display in a new window when `disbuf-pivot-window-utility-split-p'
-;; says a split is preferred, else in a window the user chooses with
-;; `ace-window' -- choosing again while the chosen window cannot display
-;; it either.  `disbuf-pivot-action-functions' changes the functions and
-;; their order, so the rule is the user's.  A call that asks for a tab
-;; or a frame is asked which one, or a new one.  A tab asks for its
-;; window when no window in it displays the buffer; an existing frame
-;; asks for its tab when it has more than one, then for its window,
-;; while a new frame uses its selected window.
+;; to another buffer or a side window -- the window the buffer goes to
+;; is Emacs's choice, made by its default action functions, so the
+;; buffer can go where the user does not expect it.
+;; `disbuf-pivot-action-mode' replaces that with one rule and one
+;; explicit choice.  By default `disbuf-pivot-action-functions' tries
+;; `display-buffer-reuse-window', `display-buffer-same-window', and
+;; `disbuf-pivot-action-choose-window', which opens the synchronous
+;; dispatch prompt with window labels, explicit split actions, caller
+;; intent, bypass pivot, and window-setting toggles.  A call that asks
+;; for a tab or a frame asks which one, or a new one.  A tab asks for
+;; its window when no window in it displays the buffer; an existing
+;; frame asks for its tab when `tab-bar-mode' is active or it has more
+;; than one, then for its window, while a new frame uses its selected
+;; window.
 ;;
 ;; The mode conses one `display-buffer-alist' entry at the front of the
-;; list, matched by every buffer an earlier entry does not take.  Priority
-;; is list order, and a package conses its entry at the front when its
-;; mode is enabled, so enable a popup manager's mode after this one when
-;; its rule is to take precedence for its buffers.  A request whose alist
-;; names a place for the buffer -- a window, a direction, a side, a slot,
-;; a tab or a frame -- is left to the caller's own action functions.
+;; list, matched by every non-excluded buffer an earlier entry does not
+;; take.  Priority is list order, and a package conses its entry at the
+;; front when its mode is enabled, so enable a pop-up window manager's
+;; mode after this one when its rule is to take precedence for its
+;; buffers.  A request whose alist names a place for the buffer -- a
+;; window, a direction, a side, a slot, a tab, or a frame -- is left to
+;; the caller's own action functions.
 
 (require 'cl-lib)
 (require 'subr-x)
-(require 'ace-window)
 (require 'tab-bar)
 (require 'dp-window-utility)
 (require 'dp-tab-bar)
@@ -137,24 +136,23 @@ entry."
 (defcustom dp-action-functions
   '(display-buffer-reuse-window
     display-buffer-same-window
-    dp-action-split-or-ask)
+    dp-action-choose-window)
   "The action functions the mode's entry tries, in order.
 Each is called with the buffer and the action alist, and the first one
-that returns a window decides the display.  The default shows a buffer
-in a window that already displays it, else in the selected window, and
-otherwise splits a new window when
-`disbuf-pivot-window-utility-split-p' says a split is preferred, or
-asks for a window with `ace-window'.
+that returns a non-nil result decides the display.  The default shows a
+buffer in a window that already displays it, else in the selected
+window, and otherwise opens the dispatch prompt via
+`disbuf-pivot-action-choose-window'.
 
-An action function can be added, dropped or reordered here: putting
+An action function can be added, dropped, or reordered here: putting
 `display-buffer-same-window' first gives a buffer that another window
 already displays a second window, and dropping
-`disbuf-pivot-action-split-or-ask' removes the split and the
-prompt.  A request whose alist names a place for the buffer -- a
-window, a direction, a side, a slot, or a child frame -- is left to the
-caller's own action functions before any function here is tried; a call
-that asks for a tab or a frame is asked which one first, and the window
-inside it is chosen with `aw-select'."
+`disbuf-pivot-action-choose-window' removes the dispatch prompt.  A
+request whose alist names a place for the buffer -- a window, a
+direction, a side, a slot, or a child frame -- is left to the caller's
+own action functions before any function here is tried; a call that
+asks for a tab or a frame asks which one first, then runs the dispatch
+prompt inside it."
   :type '(choice (function :tag "One action function")
                  (repeat :tag "Action functions" function))
   :group 'dp-action)
@@ -274,14 +272,52 @@ empty name is returned as such."
           (t (dp-tab-bar-read-tab-name
               "Display buffer in tab (empty for a new tab): " "")))))
 
+(defun dp-action--alist-entry-sources (alist)
+  "Return an alist mapping present window-setting keys in ALIST to source labels.
+Entries coming from the caller's ACTION map to nil (omitted in toggle
+labels); entries from `display-buffer-overriding-action',
+`display-buffer-base-action', or `display-buffer-fallback-action' map
+to their source label."
+  (let ((ov-alist (cdr-safe display-buffer-overriding-action))
+        (caller-alist (cdr-safe dp-action--action))
+        (base-alist (cdr-safe display-buffer-base-action))
+        (fb-alist (cdr-safe display-buffer-fallback-action))
+        (sources nil))
+    (dolist (spec dp-window-utility--window-setting-specs)
+      (let ((key (car spec)))
+        (when (alist-get key alist)
+          (let ((src (cond
+                      ((assq key ov-alist) "overriding action")
+                      ((assq key caller-alist) nil)
+                      ((assq key base-alist) "base action")
+                      ((assq key fb-alist) "fallback action"))))
+            (when src
+              (push (cons key src) sources))))))
+    (nreverse sources)))
+
+(defun dp-action--apply-selection (chosen answering)
+  "Apply `disbuf-pivot-action-select' to CHOSEN window and ANSWERING window."
+  (pcase dp-action-select
+    ('t (when (window-live-p chosen) (select-window chosen)))
+    ('nil (dp-window-utility-select-window-post-command answering))))
+
+(defun dp-action--run-caller-intent (buffer alist)
+  "Run the caller's function list for BUFFER with ALIST under recursion guard.
+Return the first non-nil result from the caller's functions, or `nil' if
+every function returns `nil'."
+  (let ((dp-window-utility--in-prompt t)
+        (fns (dp-action--functions dp-action--action)))
+    (cl-some (lambda (fn) (funcall fn buffer alist)) fns)))
+
 (defun dp-action--display-in-tab (buffer alist)
-  "Display BUFFER in the selected tab, reusing a window or asking.
+  "Display BUFFER in the selected tab, reusing a window or prompting.
 A window of the selected frame that already displays BUFFER is used
 first, unless ALIST's `inhibit-same-window' names the selected window.
-Otherwise ask with `disbuf-pivot-window-utility-choose-tab-window' and
-display BUFFER in the chosen or split window.  ALIST is passed to
-`window--display-buffer'.  Return the window and `reuse' as a cons, or
-`nil' when no window was chosen."
+Otherwise run the dispatch prompt via
+`disbuf-pivot-window-utility-choose-tab-window' and display BUFFER in
+the chosen or newly split window.  Return `(WINDOW . TYPE)',
+`(fail . fail)' when left undisplayed, or `nil' on bypass or in a
+cannot-prompt context."
   (let ((window (get-buffer-window buffer (selected-frame)))
         (inhibit-same (alist-get 'inhibit-same-window alist)))
     (if (and window
@@ -289,9 +325,54 @@ display BUFFER in the chosen or split window.  ALIST is passed to
         (progn
           (window--display-buffer buffer window 'reuse alist)
           (cons window 'reuse))
-      (when-let* ((window (dp-window-utility-choose-tab-window alist buffer)))
-        (window--display-buffer buffer window 'reuse alist)
-        (cons window 'reuse)))))
+      (let ((answering (selected-window))
+            (sources (dp-action--alist-entry-sources alist))
+            (feedback nil)
+            (done nil)
+            (outcome nil))
+        (while (not done)
+          (let* ((fb feedback)
+                 (res (progn
+                        (setq feedback nil)
+                        (dp-window-utility-choose-tab-window
+                         alist buffer
+                         :sources sources
+                         :initial-feedback fb))))
+            (pcase (plist-get res :action)
+              ('window
+               (let* ((win (plist-get res :window))
+                      (eff (plist-get res :alist))
+                      (disp-alist (if (eq win answering)
+                                      (cons '(inhibit-same-window . nil) eff)
+                                    eff)))
+                 (if (window-live-p win)
+                     (progn
+                       (window--display-buffer buffer win 'reuse disp-alist)
+                       (dp-action--apply-selection win answering)
+                       (setq outcome (cons win 'reuse)
+                             done t))
+                   (setq feedback
+                         "disbuf-pivot: chosen window is no longer live")
+                   (message "%s" feedback))))
+              ('split
+               (let ((win (plist-get res :window))
+                     (eff (plist-get res :alist)))
+                 (if (window-live-p win)
+                     (progn
+                       (window--display-buffer buffer win 'window eff)
+                       (dp-action--apply-selection win answering)
+                       (setq outcome (cons win 'window)
+                             done t))
+                   (setq feedback
+                         "disbuf-pivot: chosen window is no longer live")
+                   (message "%s" feedback))))
+              ('leave-undisplayed
+               (setq outcome (cons 'fail 'fail)
+                     done t))
+              (_
+               (setq outcome nil
+                     done t)))))
+        outcome))))
 
 (defun dp-action-tab (buffer alist)
   "Display BUFFER in a tab, asking which and in which window.
@@ -300,10 +381,10 @@ as `display-buffer-in-tab' does, and select the tab that already
 displays BUFFER.  Otherwise read a name with
 `disbuf-pivot-action--read-tab-name' and select or make that tab.
 In the tab, reuse a window that already displays BUFFER; if there is
-none, ask with `aw-select', where the split dispatch keys split the
-chosen window.  ALIST is the action alist of the display.  Return the
-window and the tab's type as a cons, `reuse' for an existing tab and
-`tab' for a new one, or `nil' in a cannot-prompt context."
+none, run the dispatch prompt.  ALIST is the action alist of the
+display.  Return `(WINDOW . TYPE)' (`reuse' for an existing tab, `tab'
+for a new one, or `fail' when left undisplayed), or `nil' in a
+cannot-prompt context."
   (unless (dp-window-utility-cannot-prompt-p)
     (let ((reusable (and (alist-get 'reusable-frames alist)
                          (tab-bar-get-buffer-tab
@@ -326,7 +407,10 @@ window and the tab's type as a cons, `reuse' for an existing tab and
                     (dp-tab-bar-select-tab buffer alist name))))
                (result (dp-action--display-in-tab buffer alist)))
           (when result
-            (cons (car result) type)))))))
+            (if (eq (car result) 'fail)
+                result
+              (cons (car result)
+                    (if (eq type 'tab) 'tab (cdr result))))))))))
 
 (defun dp-action--frames (alist)
   "Return the live visible frames the frame prompt can offer.
@@ -375,10 +459,9 @@ a new frame with that name, and an empty name makes a new frame with
 the default name.  Selecting a frame gives it focus unless
 `inhibit-switch-frame'.  Read a tab name when `tab-bar-mode' is active or
 the frame has more than one tab, and select or make that tab.  Then reuse
-a window of the tab that already displays BUFFER, or ask with `aw-select',
-where the split dispatch keys split the chosen window.  ALIST is passed
-to the action functions.  Return the window, or `nil' in a
-cannot-prompt context."
+a window of the tab that already displays BUFFER, or run the dispatch
+prompt.  ALIST is passed to the action functions.  Return the window, or
+`nil' in a cannot-prompt context."
   (unless (dp-window-utility-cannot-prompt-p)
     (let* ((frames (dp-action--frames alist))
            (candidates (dp-action--frame-candidates frames))
@@ -418,43 +501,81 @@ or a frame that is not a child frame is asked about instead."
              parent-frame child-frame-parameters)))
 
 (defun dp-action-choose-window (buffer alist)
-  "Display BUFFER in a window chosen with `ace-window'.
-`disbuf-pivot-window-utility-choose-display-window' asks for the
-window: it asks again while the chosen window cannot display BUFFER,
-and chooses nothing when no window can answer.  The chosen window
-displays BUFFER through `window--display-buffer' with ALIST, so the
-caller's entries -- a `body-function' among them -- still take effect.
-What `disbuf-pivot-action-select' does with the selected window is its
-own choice: `t' selects the chosen window, `auto' selects nothing, and
-`nil' selects nothing now and selects the answering window again at the
-end of the command."
-  (let* ((aw-scope (cl-case (cdr (assq 'reusable-frames alist))
-                     ((nil) 'frame)
-                     (visible 'visible)
-                     ((0 t) 'global)))
-         (aw-ignore-current
-          (or (cdr (assq 'inhibit-same-window alist))
-              (dp-window-utility-cannot-display-p (selected-window) buffer))))
-    (when-let* ((win (dp-window-utility-choose-display-window
-                      aw-scope aw-ignore-current nil buffer)))
-      (let ((answering (selected-window)))
-        (window--display-buffer buffer win 'reuse alist)
-        (pcase dp-action-select
-          ('t (select-window win))
-          ('nil (dp-window-utility-select-window-post-command answering))))
-      win)))
-
-(defun dp-action-split-or-ask (buffer alist)
-  "Display BUFFER in a new window when a split is preferred, else ask.
-`disbuf-pivot-window-utility-split-p' decides through
-`disbuf-pivot-window-utility-split-maximum' and its two exclusion
-options.  When it says a split is preferred, try
-`display-buffer-pop-up-window'; when that fails, and when the count is
-not under the maximum, ask with `disbuf-pivot-action-choose-window'.
-BUFFER and ALIST are passed to whichever of the two displays it."
-  (or (and (dp-window-utility-split-p)
-           (display-buffer-pop-up-window buffer alist))
-      (dp-action-choose-window buffer alist)))
+  "Display BUFFER via the synchronous dispatch prompt.
+Runs `disbuf-pivot-window-utility-dispatch-prompt' for BUFFER and ALIST.
+A chosen window displays BUFFER with `window--display-buffer' type
+`reuse' (binding `inhibit-same-window' to `nil' if the selected window
+is chosen); a split action displays BUFFER in the new window with type
+`window'.  \"Use caller intent\" runs the caller's function list with
+the prompt's local toggled alist under the recursion guard, reopening
+the dispatch prompt if every caller function returns `nil'.  \"Leave
+undisplayed\" returns `fail', and \"Bypass pivot\" returns `nil'.
+`disbuf-pivot-action-select' controls post-choice window selection."
+  (let* ((answering (selected-window))
+         (caller-fns (dp-action--functions dp-action--action))
+         (caller-action (when caller-fns
+                          '(:label "Use caller intent" :action caller-intent)))
+         (sources (dp-action--alist-entry-sources alist))
+         (facts (when (dp-window-utility-cannot-display-p answering buffer)
+                  '("selected window cannot display")))
+         (header-info (when facts (list :window-facts facts)))
+         (feedback nil)
+         (done nil)
+         (outcome nil))
+    (while (not done)
+      (let* ((fb feedback)
+             (res (progn
+                    (setq feedback nil)
+                    (dp-window-utility-dispatch-prompt
+                     buffer alist
+                     :caller-action caller-action
+                     :header-info header-info
+                     :sources sources
+                     :initial-feedback fb))))
+        (pcase (plist-get res :action)
+          ('window
+           (let* ((win (plist-get res :window))
+                  (eff (plist-get res :alist))
+                  (disp-alist (if (eq win answering)
+                                  (cons '(inhibit-same-window . nil) eff)
+                                eff)))
+             (if (window-live-p win)
+                 (progn
+                   (window--display-buffer buffer win 'reuse disp-alist)
+                   (dp-action--apply-selection win answering)
+                   (setq outcome win
+                         done t))
+               (setq feedback
+                     "disbuf-pivot: chosen window is no longer live")
+               (message "%s" feedback))))
+          ('split
+           (let ((win (plist-get res :window))
+                 (eff (plist-get res :alist)))
+             (if (window-live-p win)
+                 (progn
+                   (window--display-buffer buffer win 'window eff)
+                   (dp-action--apply-selection win answering)
+                   (setq outcome win
+                         done t))
+               (setq feedback
+                     "disbuf-pivot: chosen window is no longer live")
+               (message "%s" feedback))))
+          ('caller-intent
+           (let ((caller-res (dp-action--run-caller-intent
+                              buffer (plist-get res :alist))))
+             (if caller-res
+                 (setq outcome caller-res
+                       done t)
+               (setq feedback
+                     "disbuf-pivot: caller's action functions returned nil")
+               (message "%s" feedback))))
+          ('leave-undisplayed
+           (setq outcome 'fail
+                 done t))
+          (_
+           (setq outcome nil
+                 done t)))))
+    outcome))
 
 (defun dp-action--display (buffer alist)
   "Display BUFFER by the mode's rule.
@@ -500,18 +621,17 @@ list, matching every non-excluded buffer an earlier entry does not take;
 see `disbuf-pivot-exclude-conditions'.  Priority is list order: a pop-up
 window manager's rule takes precedence for its buffers when that
 manager's mode is enabled after this one, since its entry is then consed
-above.  The entry's function displays a buffer in a window that already
-displays it or in the selected window, then splits a new window when
-`disbuf-pivot-window-utility-split-p' says a split is preferred, and
-otherwise asks for a window with `ace-window', by the action functions
-`disbuf-pivot-action-functions' lists in order.  A call that asks for a
-tab or a frame -- through `tab-name', `tab-group', `pop-up-frames', or a
-tab or frame action function in its ACTION -- is asked which one, or a
-new one, then asked for the window inside it with `aw-select', where the
-split dispatch keys split the chosen window.  A request whose alist
-names a window, a direction, a side, a slot, or a child frame is left to
-the caller's own action functions, and `display-buffer-overriding-action'
-is consulted before the entry.  When disabled, remove that entry."
+above.  By default `disbuf-pivot-action-functions' reuses a window that
+already displays the buffer, uses the selected window when displayable,
+and otherwise opens the synchronous dispatch prompt (with window labels,
+explicit split actions, caller intent, bypass pivot, and window-setting
+toggles).  A call that asks for a tab or a frame -- through `tab-name',
+`tab-group', `pop-up-frames', or a tab or frame action function in its
+ACTION -- asks which one, or a new one, then runs the dispatch prompt
+inside it.  A request whose alist names a window, a direction, a side, a
+slot, or a child frame is left to the caller's own action functions, and
+`display-buffer-overriding-action' is consulted before the entry.  When
+disabled, remove that entry."
   :global t
   :group 'dp-action
   (if dp-action-mode

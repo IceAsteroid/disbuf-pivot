@@ -5,14 +5,14 @@ Normative specification: `docs/DESIGN_RULESET.md`.
 
 ## Implementation milestones
 
-Design settled in `docs/DESIGN_RULESET.md`; Milestone 1 implemented,
-milestones 2–6 remaining.  Order of work (see `docs/DESIGN_RULESET.md`
+Design settled in `docs/DESIGN_RULESET.md`; Milestones 1–2 implemented,
+milestones 3–6 remaining.  Order of work (see `docs/DESIGN_RULESET.md`
 section 11):
 
 1. [x] Core options/faces, per-buffer `displayable` / `eligible` /
    `splittable` predicates, cannot-prompt context guards, safe
    `dp-action--action` reentrancy, and `disbuf-pivot-exclude-conditions`.
-2. Own window-labeling overlays, own split primitives,
+2. [x] Own window-labeling overlays, own split primitives,
    `disbuf-pivot-window-keys` (default digits `1`–`9`, uniform
    fixed-width multi-key overflow) and `disbuf-pivot-split-actions`
    (default `b`/`r`/`f`, zero `ace-window` coupling), direct

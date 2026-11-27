@@ -26,42 +26,59 @@ For every buffer an earlier entry does not take, the entry:
   selected tab.
 - asks for the window inside the chosen tab or frame.  A tab asks for its
   window when no window in it displays the buffer; an existing frame
-  asks for its window; a new frame uses its selected window.  The tab
-  and frame window prompts honor `inhibit-same-window` and can split a
-  window;
+  asks for its window; a new frame uses its selected window.  The
+  dispatch prompt inside the chosen tab or frame honors
+  `inhibit-same-window` and offers explicit split actions;
 - otherwise tries `disbuf-pivot-action-functions`: reuse a window that
-  displays the buffer, the selected window, then split when the split
-  rule allows it or ask with the window prompt.
+  displays the buffer, use the selected window when displayable, and
+  otherwise open the synchronous dispatch prompt.
 
 `disbuf-pivot-action-functions` changes the functions and their order.
 `disbuf-pivot-action-select` (default `auto`) says whether the window
-chosen with the window prompt is selected.  The window prompt uses
-`aw-select`; `disbuf-pivot-mode-line-help` controls only the mode-line
-copy of the dispatch hint.  The echo area also shows the dispatch hint.
+chosen with the dispatch prompt is selected.  The dispatch prompt draws
+window labels on every window in the window label scope
+(`disbuf-pivot-eligible-label` and `disbuf-pivot-ineligible-label`
+faces) and shows the dispatch prompt menu directly via
+`display-buffer-in-side-window` with three responsive, logically wrapped
+groups (`Windows`, `Dispatch actions`, and `Window settings`), governed
+by `disbuf-pivot-window-keys` (digits `1`–`9` by default with uniform
+fixed-width multi-key overflow), `disbuf-pivot-split-actions` (`b` Split
+below, `r` Split right, `f` Split fair; splits a sole splittable window
+immediately or reads a splittable target when more than one exists),
+`disbuf-pivot-header-info` (always showing the dispatch prompt default
+when present), `disbuf-pivot-menu-min-column-width` (`20`), and
+`disbuf-pivot-menu-min-height` (`5`).  Tall menus scroll via standard
+Emacs `scroll-other-window` / `scroll-other-window-down` bindings
+without changing `selected-window`; frames below the minimum width or
+height keep window labels drawn and fall back to a compact echo-area
+prompt.  Present window-setting entries (`dedicated`,
+`window-parameters`, `preserve-size`, `window-height`, `window-width`,
+`window-size`) get fixed `M-1`..`M-6` toggles plus `M-0` (`All`),
+shadowing disabled entries locally with `(KEY . nil)`.  `M-c` runs the
+caller's function list under a recursion guard, `M-n` leaves the buffer
+undisplayed (`fail`, when `allow-no-window` is non-nil), `M-b` bypasses
+the pivot (nil choice), and `C-g` aborts without running later action
+functions.
+
 `disbuf-pivot-exclude-conditions` lists `buffer-match-p` conditions
 (regexp, `derived-mode`, `major-mode`, `category`, `this-command`,
 predicate, `not`/`and`/`or`); `disbuf-pivot-action-control-p` passes
 the caller's `ACTION` as the third argument to `buffer-match-p` so
 `category` conditions match, and a matching buffer is left to later
-`display-buffer-alist` entries and Emacs display actions.  The echo
-area says when a chosen window cannot display the buffer; a non-side
-window dedicated to the buffer being displayed is displayable.  The
-action returns nil in cannot-prompt contexts -- batch
-(`noninteractive`), an active minibuffer, keyboard macro execution
-(`executing-kbd-macro`), timers, process filters and sentinels, and
-recursive display (during an open prompt, tab or frame creation, or
-consult preview) -- and when no window can display the buffer; later
-functions in Emacs's combined function list then run.  C-g aborts the
-display; it does not run the caller's fallbacks.
+`display-buffer-alist` entries and Emacs display actions.  Pressing an
+ineligible window label reports why in the echo area and keeps the
+prompt open; a non-side window dedicated to the buffer being displayed
+is displayable.  The action returns nil in cannot-prompt contexts --
+batch (`noninteractive`), an active minibuffer, keyboard macro
+execution (`executing-kbd-macro`), timers, process filters and
+sentinels, and recursive display (during an open prompt, tab or frame
+creation, or consult preview) -- so later functions in Emacs's combined
+function list run.
 
-Options and faces defined for the redesign in `docs/DESIGN_RULESET.md`
-(`disbuf-pivot-reuse`, `disbuf-pivot-same-window-conflict`,
-`disbuf-pivot-header-info`, `disbuf-pivot-tab-prompt-scope`,
-`disbuf-pivot-window-keys`, `disbuf-pivot-split-actions`,
-`disbuf-pivot-menu-min-column-width`, `disbuf-pivot-menu-min-height`,
-`disbuf-pivot-eligible-label`, and `disbuf-pivot-ineligible-label`) are
-present in the package ahead of the upcoming dispatch prompt, intent
-classifier, and tab-scope milestones.
+Options defined for upcoming milestones (`disbuf-pivot-reuse`,
+`disbuf-pivot-same-window-conflict`, and
+`disbuf-pivot-tab-prompt-scope`) are present in the package ahead of
+the intent-classifier and tab-scope milestones.
 
 ## The prefix commands
 
@@ -82,10 +99,11 @@ frame is selected, when the selected window cannot display a buffer.
 
 - `disbuf-pivot-same-window-prefix` displays the buffer in the same
   window.
-- `disbuf-pivot-other-window-prefix` splits when the split rule allows
-  it, and otherwise asks with the window prompt.  It follows
-  `reusable-frames`, passes `inhibit-same-window` as the ignored window,
-  and its `disbuf-pivot-other-window-prefix-select` option controls the
+- `disbuf-pivot-other-window-prefix` splits when
+  `disbuf-pivot-window-utility-split-p` allows it, and otherwise opens
+  the dispatch prompt.  It follows `reusable-frames`, passes
+  `inhibit-same-window` as the excluded window, and its
+  `disbuf-pivot-other-window-prefix-select` option controls the
   selected window after the choice.
 - `disbuf-pivot-other-tab-prefix` reuses a tab that already displays the
   buffer, and otherwise reads a tab name and asks for its window.  A
@@ -115,9 +133,11 @@ and overrides.
 
 ## Requirements and installation
 
-Emacs 31.1 is the tested version.  `ace-window` is required; `avy` is
-required by `ace-window`.  Consult is optional and needed only by the
-consult tab reader.  `tab-bar-mode` is needed for tab targets.
+Emacs 31.1 is the tested version.  The core dispatch prompt has no
+runtime dependency on `ace-window`, though `Package-Requires` and
+`Makefile` currently still list `ace-window` (with `avy`) until the
+dependency cleanup milestone.  Consult is optional and needed only by
+the consult tab reader.  `tab-bar-mode` is needed for tab targets.
 
 Add the repository root to `load-path`, or install the package, then
 require the libraries and enable the modes:
@@ -145,8 +165,8 @@ a separate library:
 - `disbuf-pivot` holds the package's `display-buffer-alist` entry, its
   options, and the tab and frame prompts.
 - `disbuf-pivot-window-utility` holds the window predicates,
-  cannot-prompt guards, split primitives and options, dispatch prompt
-  options and label faces, and the window prompt.
+  cannot-prompt guards, own window-labeling overlays, split primitives,
+  and synchronous dispatch prompt menu.
 - `disbuf-pivot-prefix` holds the prefix commands and the prefix mode.
 - `disbuf-pivot-tab-bar` holds the tab candidates, history, selection
   and the plain tab reader.
