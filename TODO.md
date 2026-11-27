@@ -24,15 +24,20 @@ section 11):
    split-target read for >1 splittable windows, `M-1`..`M-6` +
    always-present `M-0` with `(KEY . nil)` shadowing), `C-g` abort, and
    `"Bypass pivot"` (`M-b`) nil choice.  Remove `aw-select`,
-   `disbuf-pivot-mode-line-help`, and automatic splitting from core.
+   `disbuf-pivot-mode-line-help`, and automatic splitting from core
+   (keeping a compatibility bridge for `disbuf-pivot-prefix.el` until
+   step 5 removes the legacy split helper and prefix select option).
 3. Effective-intent classifier (reuse-first chains like `C-x 5 b`,
    non-list `ACTION` / dynamic `pop-up-frames` /
-   `display-buffer-reuse-frames`), `window--display-buffer` `TYPE`
-   propagation (`'reuse` / `'window` / `'tab` / `'frame`),
-   `inhibit-same-window` override and conflict,
-   `display-buffer-full-frame`, `reuse-indirect`, `mode` default, variable-symbol `previous-window`,
-   cross-frame reuse default, and `"Use caller intent"` under recursion
-   guard.
+   `display-buffer-reuse-frames`), `dp-action--run` regulated dispatch
+   for `display-buffer-reuse-window` and `display-buffer-same-window`,
+   `window--display-buffer` `TYPE` propagation (`'reuse` / `'window` /
+   `'tab` / `'frame`), `inhibit-same-window` override and conflict,
+   `display-buffer-full-frame`, `reuse-indirect`, `mode` default,
+   variable-symbol `previous-window`, cross-frame reuse default, `"Use
+   caller intent"` under recursion guard, header info formatting
+   (`Caller (<category>): ...`, source-labeled entries, window facts),
+   and Section 10 failure-after-choice handling.
 4. Tab prompt scope (`disbuf-pivot-tab-prompt-scope`, suffixes,
    reusable tab candidates, single-evaluation `tab-name` / `tab-group`,
    `tab-bar-show` enabling, frame annotation column, scope-relative

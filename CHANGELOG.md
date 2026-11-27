@@ -44,6 +44,9 @@
 
 ### Internal Changes
 
+- Docs: clarify the Milestone 2-to-5 prefix compatibility bridge and
+  Milestone 3 items (`dp-action--run` regulated dispatch, header info
+  formatting, and failure-after-choice handling) in `TODO.md`.
 - Internal: add `disbuf-pivot-window-utility-displayable-p`,
   `disbuf-pivot-window-utility-eligible-p`,
   `disbuf-pivot-window-utility-ineligible-reason`,
