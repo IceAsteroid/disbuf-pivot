@@ -91,6 +91,12 @@
 
 ### Internal Changes
 
+- Docs: refine the `effective intent` definition in
+  `docs/DOCUMENTATION_CONVENTION.md` to break circularity with `pivot`,
+  scope it to the package's `display-buffer-alist` entry, link it to
+  `caller intent`, cover inapplicable leading functions (such as reuse
+  misses), and name `pop-up-frames` and `display-buffer-reuse-frames`
+  explicitly.
 - Docs: tighten the `effective intent` definition in
   `docs/DOCUMENTATION_CONVENTION.md` to a concise definition pointing
   to `docs/DESIGN_RULESET.md` section 3 without duplicating behavioral

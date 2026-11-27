@@ -76,10 +76,14 @@ entries below are this package's terms, grouped by concept.
   form the caller's fallback chain.
 - **caller intent**, **effective intent**, **intent class**,
   **effect**, **caller intent info** — the caller intent is what the
-  caller's ACTION alone asks for.  The effective intent is the intent
-  that the pivot classifies for a `display-buffer` call—derived from the
-  caller intent together with the relevant combined action alist entries
-  and Emacs display variables (see `docs/DESIGN_RULESET.md` section 3).
+  caller's ACTION alone asks for.  The effective intent is what the
+  package's `display-buffer-alist` entry determines a `display-buffer`
+  call asks for, derived from the caller intent (never action functions
+  from other actions) by stepping past inapplicable leading functions
+  (such as a reuse function with no match) and incorporating the
+  relevant combined action alist entries, `pop-up-frames`, and
+  `display-buffer-reuse-frames` (see `docs/DESIGN_RULESET.md`
+  section 3).
   The intent class classifies the effective intent into fixed place, tab
   or frame, relative placement, strategy, no display, or no preference.
   An effect is a user-facing phrase for a consequence other than the
