@@ -65,6 +65,11 @@
 
 ### Internal Changes
 
+- Docs: define `effective intent` separately from `caller intent` in
+  `docs/DOCUMENTATION_CONVENTION.md` (narrowing `caller intent` to the
+  caller's ACTION alone and grounding `intent class` on `effective
+  intent`), and align references in `docs/DOCUMENTATION_CONVENTION.md`
+  and `docs/DESIGN_RULESET.md`.
 - Docs: add the ineligibility and unsplittable reason reference tables
   (covering `disbuf-pivot-window-utility-ineligible-reason`,
   `disbuf-pivot-window-utility-unsplittable-reason`, and

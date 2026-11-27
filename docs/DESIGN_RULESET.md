@@ -62,7 +62,7 @@ and prompting remain the package's.
   a buffer.  Action alist entries in `display-buffer-base-action` are
   still read through the combined action alist.
 
-**Predictability and zero surprises:** the same caller intent, window
+**Predictability and zero surprises:** the same effective intent, window
 state, and options always produce the same target or the same dispatch
 prompt; there is no hidden cache across multiple `display-buffer` calls
 in one command.
@@ -79,12 +79,13 @@ must not be conflated:
 2. **Eligible for direct display** in the current dispatch prompt: a
    displayable window not excluded by explicit *user* prefix intent
    (`disbuf-pivot-other-window-prefix` marks the selected window
-   ineligible).  **Caller intent never makes a displayable window
-   ineligible**: caller preferences (`inhibit-same-window`,
-   `display-buffer-pop-up-window`, `display-buffer-use-least-recent-window`,
-   `display-buffer-full-frame`, etc.) affect header info and the
-   dispatch prompt default, never blocking the user from choosing any
-   displayable window.
+   ineligible).  **Effective intent never makes a displayable window
+   ineligible**: neither caller preferences nor combined action alist
+   entries (`inhibit-same-window`, `display-buffer-pop-up-window`,
+   `display-buffer-use-least-recent-window`,
+   `display-buffer-full-frame`, etc.) block the user from choosing any
+   displayable window; they affect only header info and the dispatch
+   prompt default.
 3. **Splittable target** for a split action: live, not a minibuffer
    window, not a side window, and its frame does not have a non-nil
    `unsplittable` parameter.  **A dedicated normal window is
@@ -161,7 +162,7 @@ alist.
 flowchart TD
     A["display-buffer reaches package entry"] --> B{"Excluded buffer or\ncannot-prompt context?"}
     B -- "Yes" --> Z1["Return nil\n(Emacs runs later functions)"]
-    B -- "No" --> C["Resolve effective intent\n(caller's ACTION + pop-up-frames +\ninhibit-same-window)"]
+    B -- "No" --> C["Resolve effective intent\n(caller's ACTION + pop-up-frames +\ntab-name / tab-group + inhibit-same-window)"]
     C --> D{"Intent class"}
     D -- "Respect\n(side / atom / child-frame / unknown)" --> Z1
     D -- "No display\n(display-buffer-no-window +\nallow-no-window)" --> Z2["Return 'fail\n(leave undisplayed)"]
@@ -209,7 +210,7 @@ flowchart TD
      function list (preserving the full caller function list for caller
      intent info and `"Use caller intent"`).  If no later function
      exists, show the dispatch prompt (Reuse, no window found).
-3. **Caller function intent classes** (on the effective function):
+3. **Intent classes** (on the effective caller's action function):
    - **Fixed place (`Respect`)**: `display-buffer-in-side-window`,
      `display-buffer-in-atom-window`, `display-buffer-in-child-frame`,
      or any action function not covered by section 9.  Return nil so

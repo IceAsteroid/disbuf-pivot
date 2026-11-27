@@ -18,12 +18,12 @@ entries below are this package's terms, grouped by concept.
 ### Pivot, targets, and prefixes
 
 - **pivot**, **outside the pivot** — the pivot is the point at which
-  the package either respects the caller's intent or replaces that
+  the package either respects the effective intent or replaces that
   intent with the user's explicit choice.  A tab prompt is outside the
   pivot when neither the package's `display-buffer-alist` entry nor a
   package prefix command shows it.  The package name uses the word.
 - **target**, **placement path** — a target is a frame, tab, or window
-  that the caller's intent names or the user chooses through a prompt.
+  that the effective intent names or the user chooses through a prompt.
   A frame or tab target is a container; a window target is the window
   that displays the buffer.  The placement path is the sequence frame,
   then tab, then window; tab, then window; or window, ending at the
@@ -50,9 +50,10 @@ entries below are this package's terms, grouped by concept.
   minibuffer window, a side window, or dedicated to another buffer.
 - **eligible window**, **ineligible window** — an eligible window is a
   displayable window that the current dispatch prompt offers for direct
-  display.  Caller intent never makes a displayable window ineligible;
-  only an undisplayable window, or the selected window under explicit
-  user intent (`disbuf-pivot-other-window-prefix`), is ineligible.
+  display.  Effective intent never makes a displayable window
+  ineligible; only an undisplayable window, or the selected window under
+  explicit user intent (`disbuf-pivot-other-window-prefix`), is
+  ineligible.
 - **splittable window**, **unsplittable window** — a splittable window
   is a window that a split action can split to make a new displayable
   window: it is live, is not a minibuffer window, is not a side window,
@@ -62,7 +63,7 @@ entries below are this package's terms, grouped by concept.
   unsplittable window is dead, a minibuffer window, a side window, or
   on an `unsplittable` frame.
 
-### Caller intent and action alist roles
+### Caller intent, effective intent, and action alist roles
 
 - **caller**, **caller's ACTION**, **caller's function list**,
   **caller's action function**, **caller's fallback chain** — the
@@ -73,18 +74,26 @@ entries below are this package's terms, grouped by concept.
   caller's function list (one function or a list); each function in it
   is a caller's action function; the functions after the primary one
   form the caller's fallback chain.
-- **caller intent**, **intent class**, **effect**, **caller intent info**
-  — the caller intent is what the caller's ACTION (together with
-  effective `pop-up-frames` and `inhibit-same-window` entries) asks
-  for.  The intent class classifies that request into fixed place, tab
-  or frame, relative placement, strategy, no display, or no preference.
-  An effect is a user-facing phrase for a consequence other than the
-  primary placement (a window setting, constraint, display outcome, or
-  fallback placement), not a raw Lisp symbol or alist cell.  The caller
-  intent info is the part of header info that summarizes the caller's
-  ACTION alone: its primary intent, the effects of its primary intent
-  and the caller's action alist entries, and the caller's fallback chain
-  (for a package prefix command, the user's prefix request).
+- **caller intent**, **effective intent**, **intent class**,
+  **effect**, **caller intent info** — the caller intent is what the
+  caller's ACTION alone asks for.  The effective intent is the resolved
+  intent that governs the display call at the pivot: determined from the
+  caller's function list (never action functions from
+  `display-buffer-base-action`, `display-buffer-fallback-action`, or the
+  special action) after stepping past reuse misses or a spent
+  `display-buffer-no-window`, and—when no caller's action function
+  remains—from `pop-up-frames` (in the combined action alist or the
+  dynamic variable), `tab-name`, `tab-group`, or `inhibit-same-window`
+  in the combined action alist.  The intent class classifies the
+  effective intent into fixed place, tab or frame, relative placement,
+  strategy, no display, or no preference.  An effect is a user-facing
+  phrase for a consequence other than the primary placement (a window
+  setting, constraint, display outcome, or fallback placement), not a
+  raw Lisp symbol or alist cell.  The caller intent info is the part of
+  header info that summarizes the caller's ACTION alone: its primary
+  intent, the effects of its primary intent and the caller's action
+  alist entries, and the caller's fallback chain (for a package prefix
+  command, the user's prefix request).
 - **source label**, **source-labeled entries**, **window fact** — a
   source label is the short label used in the dispatch prompt menu when
   an action alist entry comes from an action other than the caller's
